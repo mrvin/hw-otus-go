@@ -14,11 +14,10 @@ import (
 	"github.com/beevik/ntp"
 )
 
-// Default ntp server name.
-var srvNTP = "2.ru.pool.ntp.org"
-
 func main() {
-	flag.StringVar(&srvNTP, "n", srvNTP, "ntp server name")
+	var srvNTP string // ntp server name.
+
+	flag.StringVar(&srvNTP, "n", "2.ru.pool.ntp.org", "ntp server name")
 	flag.Parse()
 	log.Printf("server name: %s\n", srvNTP)
 
