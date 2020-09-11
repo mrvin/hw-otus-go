@@ -23,10 +23,12 @@ const (
 
 func Unpack(str string) (string, error) {
 	var resultStr strings.Builder
+
 	state := start
 	var prevCh rune
 	for _, ch := range str {
 		switch state {
+	splitStr := SplitAfterDigit(str)
 			case start:
 				var err error
 				if state, err = startState(ch); err != nil {
@@ -83,5 +85,34 @@ func backSlashState(ch rune) (state, error) {
 	return exit, ErrInvalidString
 }
 
+// SplitAfterDigit splits the string into digit-terminated substrings, not counting the escaped digits.
+func SplitAfterDigit(str string) []string {
+	var result []string
+	var substr strings.Builder
+	var prevCh rune
+	var countBS int
+
+	for _, ch := range str {
+		switch {
+		case !unicode.IsDigit(ch) || (unicode.IsDigit(ch) && prevCh == '\\' && countBS == 1):
+			substr.WriteRune(ch)
+			if ch == '\\' {
+				countBS++
+			} else {
+				countBS = 0
+			}
+		default:
+			substr.WriteRune(ch)
+			result = append(result, substr.String())
+			substr.Reset()
+			countBS = 0
+		}
+		prevCh = ch
 	}
+
+	if substr.Len() != 0 {
+		result = append(result, substr.String())
+	}
+
+	return result
 }
