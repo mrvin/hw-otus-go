@@ -28,18 +28,21 @@ func Unpack(str string) (string, error) {
 	var prevCh rune
 	for _, ch := range str {
 		switch state {
-		case start:
-			startState(&state, ch)
-		case print:
-			if err := printState(&state, ch, prevCh, &resultStr); err != nil {
-				return "", err
+			case start:
+				var err error
+				if state, err = startState(ch); err != nil {
+					return "", err
+				}
+			case print:
+				state = printState(ch, prevCh, &resultStr)
+			case backSlash:
+				var err error
+				if state, err = backSlashState(ch); err != nil {
+					return "", err
+				}
 			}
-		case backSlash:
-			backSlashState(&state, ch)
 		case digit:
 			digitState(&state, ch)
-		case exit:
-			return "", ErrInvalidString
 		}
 		prevCh = ch
 	}
@@ -51,36 +54,37 @@ func Unpack(str string) (string, error) {
 	return resultStr.String(), nil
 }
 
-func startState(state *state, ch rune) {
+func startState(ch rune) (state, error) {
 	switch {
 	case unicode.IsDigit(ch):
-		*state = exit
+		return exit, ErrInvalidString
 	case ch == '\\':
-		*state = backSlash
+		return backSlash, nil
 	default:
-		*state = print
+		return print, nil
 	}
 }
 
-func printState(state *state, ch rune, prevCh rune, resultStr *strings.Builder) error {
+func printState(ch rune, prevCh rune, resultStr *strings.Builder) state {
 	switch {
 	case unicode.IsDigit(ch):
 		num := int(ch - '0')
-		*state = digit
+		resultStr.WriteString(strings.Repeat(string(prevCh), num))
+		return start
 	case ch == '\\':
-		*state = backSlash
+		resultStr.WriteRune(prevCh)
+		return backSlash
 	default:
-		*state = print
+		resultStr.WriteRune(prevCh)
+		return print
 	}
-	return nil
 }
 
-func backSlashState(state *state, ch rune) {
+func backSlashState(ch rune) (state, error) {
 	if unicode.IsDigit(ch) || ch == '\\' {
-		*state = print
-	} else {
-		*state = exit
+		return print, nil
 	}
+	return exit, ErrInvalidString
 }
 
 func digitState(state *state, ch rune) {
