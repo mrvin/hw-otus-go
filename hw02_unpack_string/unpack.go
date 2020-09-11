@@ -11,7 +11,6 @@ import (
 )
 
 var ErrInvalidString = errors.New("invalid string")
-var ErrWrite = errors.New("write error")
 
 type state uint8
 
@@ -46,8 +45,6 @@ func Unpack(str string) (string, error) {
 	}
 
 	if state != digit && str != "" {
-		if _, err := resultStr.WriteRune(prevCh); err != nil {
-			return "", ErrWrite
 		}
 	}
 
@@ -69,19 +66,10 @@ func printState(state *state, ch rune, prevCh rune, resultStr *strings.Builder) 
 	switch {
 	case unicode.IsDigit(ch):
 		num := int(ch - '0')
-		if _, err := resultStr.WriteString(strings.Repeat(string(prevCh), num)); err != nil {
-			return ErrWrite
-		}
 		*state = digit
 	case ch == '\\':
-		if _, err := resultStr.WriteRune(prevCh); err != nil {
-			return ErrWrite
-		}
 		*state = backSlash
 	default:
-		if _, err := resultStr.WriteRune(prevCh); err != nil {
-			return ErrWrite
-		}
 		*state = print
 	}
 	return nil
