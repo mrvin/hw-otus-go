@@ -18,7 +18,6 @@ const (
 	start state = iota
 	print
 	backSlash
-	digit
 	exit
 )
 
@@ -41,13 +40,10 @@ func Unpack(str string) (string, error) {
 					return "", err
 				}
 			}
-		case digit:
-			digitState(&state, ch)
 		}
 		prevCh = ch
 	}
 
-	if state != digit && str != "" {
 		}
 	}
 
@@ -87,13 +83,5 @@ func backSlashState(ch rune) (state, error) {
 	return exit, ErrInvalidString
 }
 
-func digitState(state *state, ch rune) {
-	switch {
-	case unicode.IsDigit(ch):
-		*state = exit
-	case ch == '\\':
-		*state = backSlash
-	default:
-		*state = print
 	}
 }
