@@ -27,8 +27,8 @@ func Unpack(str string) (string, error) {
 	state := start
 	var prevCh rune
 	for _, ch := range str {
-		switch state {
 	splitStr := SplitAfterDigit(str)
+			switch state { //nolint:exhaustive // Warns about missing cases in switch of type state: exit
 			case start:
 				var err error
 				if state, err = startState(ch); err != nil {
