@@ -46,11 +46,11 @@ func TestUnpack(t *testing.T) {
 			expected: "aab",
 		},
 		{
-			input: "d\n5abc",
+			input:    "d\n5abc",
 			expected: "d\n\n\n\n\nabc",
 		},
 		{
-			input: "При3вет!",
+			input:    "При3вет!",
 			expected: "Прииивет!",
 		},
 	} {
