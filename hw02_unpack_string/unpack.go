@@ -24,10 +24,13 @@ const (
 func Unpack(str string) (string, error) {
 	var resultStr strings.Builder
 
-	state := start
-	var prevCh rune
-	for _, ch := range str {
 	splitStr := SplitAfterDigit(str)
+
+	for _, substr := range splitStr {
+		var prevCh rune
+
+		state := start
+		for _, ch := range substr {
 			switch state { //nolint:exhaustive // Warns about missing cases in switch of type state: exit
 			case start:
 				var err error
@@ -42,10 +45,11 @@ func Unpack(str string) (string, error) {
 					return "", err
 				}
 			}
+			prevCh = ch
 		}
-		prevCh = ch
-	}
 
+		if state != start {
+			resultStr.WriteRune(prevCh)
 		}
 	}
 
