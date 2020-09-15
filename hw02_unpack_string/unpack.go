@@ -28,24 +28,20 @@ func Unpack(str string) (string, error) {
 
 	state := start
 	for _, ch := range str {
-		switch state { //nolint:exhaustive // Warns about missing cases in switch of type state: exit
+		switch state {
 		case start:
-			var err error
-			if state, err = startState(ch); err != nil {
-				return "", err
-			}
+			state = startState(ch)
 		case print:
 			state = printState(ch, prevCh, &resultStr)
 		case backSlash:
-			var err error
-			if state, err = backSlashState(ch); err != nil {
-				return "", err
-			}
+			state = backSlashState(ch)
+		case exit:
+			return "", ErrInvalidString
 		}
 		prevCh = ch
 	}
 
-	if state == backSlash {
+	if state == backSlash || state == exit {
 		return "", ErrInvalidString
 	}
 
@@ -56,14 +52,14 @@ func Unpack(str string) (string, error) {
 	return resultStr.String(), nil
 }
 
-func startState(ch rune) (state, error) {
+func startState(ch rune) state {
 	switch {
 	case unicode.IsDigit(ch):
-		return exit, ErrInvalidString
+		return exit
 	case ch == '\\':
-		return backSlash, nil
+		return backSlash
 	default:
-		return print, nil
+		return print
 	}
 }
 
@@ -82,9 +78,9 @@ func printState(ch rune, prevCh rune, resultStr *strings.Builder) state {
 	}
 }
 
-func backSlashState(ch rune) (state, error) {
+func backSlashState(ch rune) state {
 	if unicode.IsDigit(ch) || ch == '\\' {
-		return print, nil
+		return print
 	}
-	return exit, ErrInvalidString
+	return exit
 }
