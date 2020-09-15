@@ -24,34 +24,34 @@ const (
 func Unpack(str string) (string, error) {
 	var resultStr strings.Builder
 
-		var prevCh rune
+	var prevCh rune
 
-		state := start
-		for _, ch := range str {
-			switch state { //nolint:exhaustive // Warns about missing cases in switch of type state: exit
-			case start:
-				var err error
-				if state, err = startState(ch); err != nil {
-					return "", err
-				}
-			case print:
-				state = printState(ch, prevCh, &resultStr)
-			case backSlash:
-				var err error
-				if state, err = backSlashState(ch); err != nil {
-					return "", err
-				}
+	state := start
+	for _, ch := range str {
+		switch state { //nolint:exhaustive // Warns about missing cases in switch of type state: exit
+		case start:
+			var err error
+			if state, err = startState(ch); err != nil {
+				return "", err
 			}
-			prevCh = ch
+		case print:
+			state = printState(ch, prevCh, &resultStr)
+		case backSlash:
+			var err error
+			if state, err = backSlashState(ch); err != nil {
+				return "", err
+			}
 		}
+		prevCh = ch
+	}
 
-		if state == backSlash {
-			return "", ErrInvalidString
-		}
+	if state == backSlash {
+		return "", ErrInvalidString
+	}
 
-		if state != start {
-			resultStr.WriteRune(prevCh)
-		}
+	if state != start {
+		resultStr.WriteRune(prevCh)
+	}
 
 	return resultStr.String(), nil
 }
