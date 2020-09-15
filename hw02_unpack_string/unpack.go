@@ -45,6 +45,10 @@ func Unpack(str string) (string, error) {
 			prevCh = ch
 		}
 
+		if state == backSlash {
+			return "", ErrInvalidString
+		}
+
 		if state != start {
 			resultStr.WriteRune(prevCh)
 		}
