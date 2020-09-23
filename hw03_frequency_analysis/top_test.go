@@ -57,4 +57,47 @@ func TestTop10(t *testing.T) {
 			require.ElementsMatch(t, expected, Top10(text))
 		}
 	})
+
+	t.Run("10 words", func(t *testing.T) {
+		if taskWithAsteriskIsCompleted {
+			text := `All work and no play makes Jack a dull boy.
+					All work and no play makes Jack a dull boy.
+					All work and no play makes Jack a dull boy.`
+			expected := []string{"all", "work", "and", "no", "play", "makes", "jack", "a", "dull", "boy"}
+			require.ElementsMatch(t, expected, Top10(text))
+		}
+	})
+
+	t.Run("1 words", func(t *testing.T) {
+		if taskWithAsteriskIsCompleted {
+			text := `All.`
+			expected := []string{"all"}
+			require.Equal(t, expected, Top10(text))
+		}
+	})
+
+	t.Run("Different forms of the word", func(t *testing.T) {
+		if taskWithAsteriskIsCompleted {
+			text := `Нога нога нога! 'нога' (нога) -нога- "нога"`
+			expected := []string{"нога"}
+			require.Equal(t, expected, Top10(text))
+		}
+	})
+
+	t.Run("word starts with a dash", func(t *testing.T) {
+		if taskWithAsteriskIsCompleted {
+			text := `Но увы -сосредоточиться-то`
+			expected := []string{"но", "увы", "сосредоточиться-то"}
+			require.ElementsMatch(t, expected, Top10(text))
+		}
+	})
+
+	t.Run("word ends with a dash", func(t *testing.T) {
+		if taskWithAsteriskIsCompleted {
+			text := `Но увы- сосредоточиться-то`
+			expected := []string{"но", "увы", "сосредоточиться-то"}
+			require.ElementsMatch(t, expected, Top10(text))
+		}
+	})
+
 }
