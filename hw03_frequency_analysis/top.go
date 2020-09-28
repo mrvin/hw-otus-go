@@ -9,11 +9,6 @@ import (
 
 const numTOP = 10
 
-type wordCount struct {
-	word  string
-	count int
-}
-
 func Top10(str string) []string {
 	wordCounts := make(map[string]int)
 
@@ -24,27 +19,23 @@ func Top10(str string) []string {
 		wordCounts[word]++
 	}
 
-	sortWordCounts := make([]wordCount, len(wordCounts))
+	uniqueWords := make([]string, len(wordCounts))
 	i := 0
 	for word := range wordCounts {
-		sortWordCounts[i] = wordCount{word, wordCounts[word]}
+		uniqueWords[i] = word
 		i++
 	}
 
-	sort.Slice(sortWordCounts, func(i, j int) bool {
-		return sortWordCounts[i].count > sortWordCounts[j].count
+	sort.Slice(uniqueWords, func(i, j int) bool {
+		return wordCounts[uniqueWords[i]] > wordCounts[uniqueWords[j]]
 	})
 
 	numTopWords := numTOP
-	if len(sortWordCounts) < numTOP {
-		numTopWords = len(sortWordCounts)
-	}
-	top10Words := make([]string, numTopWords)
-	for i, strutWordCount := range sortWordCounts[:numTopWords] {
-		top10Words[i] = strutWordCount.word
+	if len(uniqueWords) < numTOP {
+		numTopWords = len(uniqueWords)
 	}
 
-	return top10Words
+	return uniqueWords[:numTopWords]
 }
 
 // splitStr splits the string into words.
