@@ -48,4 +48,23 @@ func TestList(t *testing.T) {
 		}
 		require.Equal(t, []int{70, 80, 60, 40, 10, 30, 50}, elems)
 	})
+
+	t.Run("list shift", func(t *testing.T) {
+		sl := []int{80, 60, 40, 10, 30, 50, 70}
+		l := NewList()
+
+		for _, v := range sl {
+			l.PushBack(v)
+		} // [80, 60, 40, 10, 30, 50, 70]
+
+		for i := 0; i < len(sl); i++ {
+			l.MoveToFront(l.Front())
+		}
+
+		elems := make([]int, 0, l.Len())
+		for i := l.Front(); i != nil; i = i.Next {
+			elems = append(elems, i.Value.(int))
+		}
+		require.Equal(t, []int{80, 60, 40, 10, 30, 50, 70}, elems)
+	})
 }
