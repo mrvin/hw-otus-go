@@ -95,19 +95,21 @@ func (l *list) Remove(i *listItem) {
 
 // MoveToFront moves item to front of list.
 func (l *list) MoveToFront(i *listItem) {
-	if l.head != i {
-		if l.tail == i {
-			l.tail = i.Prev
-		} else {
-			i.Next.Prev = i.Prev
-		}
-		i.Prev.Next = i.Next
-
-		i.Prev = nil
-		i.Next = l.head
-
-		l.head.Prev = i
-
-		l.head = i
+	if l.head == i {
+		return
 	}
+
+	if l.tail == i {
+		l.tail = i.Prev
+	} else {
+		i.Next.Prev = i.Prev
+	}
+	i.Prev.Next = i.Next
+
+	i.Prev = nil
+	i.Next = l.head
+
+	l.head.Prev = i
+
+	l.head = i
 }
