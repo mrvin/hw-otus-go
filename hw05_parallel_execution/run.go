@@ -15,8 +15,8 @@ var (
 
 type Task func() error
 
-func Run(tasks []Task, N int, M int) error {
 // Run starts tasks in N goroutines and stops its work when receiving M errors from tasks.
+func Run(tasks []Task, N int, M int) error { //nolint:gocritic
 	taskCh := make(chan Task)
 	var errCnt int32
 
