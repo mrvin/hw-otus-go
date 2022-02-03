@@ -1,4 +1,4 @@
-module github.com/mrvin/hw-otus-go/hw05_parallel_execution
+module github.com/mrvin/hw-otus-go/hw05parallelexecution
 
 go 1.14
 
