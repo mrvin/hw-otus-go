@@ -1,6 +1,7 @@
 // A function that takes text as input and returns a slice with the 10 most
 // common words in the text.
-package hw03_frequency_analysis //nolint:golint,stylecheck
+package hw03frequencyanalysis
+
 import (
 	"regexp"
 	"sort"
