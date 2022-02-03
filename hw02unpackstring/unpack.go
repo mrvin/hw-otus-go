@@ -2,7 +2,7 @@
 // for example:
 //		"a4bc2d5e" => "aaaabccddddde"
 
-package hw02_unpack_string //nolint:golint,stylecheck
+package hw02unpackstring
 
 import (
 	"errors"
