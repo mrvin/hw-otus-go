@@ -1,4 +1,4 @@
-package hw04_lru_cache //nolint:golint,stylecheck
+package hw04lrucache
 
 type List interface {
 	Len() int
@@ -25,7 +25,7 @@ type list struct {
 }
 
 // NewList creates an empty list.
-func NewList() List {
+func NewList() List { //nolint:ireturn
 	return &list{len: 0, head: nil, tail: nil}
 }
 

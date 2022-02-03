@@ -1,4 +1,5 @@
-package hw04_lru_cache //nolint:golint,stylecheck
+package hw04lrucache
+
 import (
 	"sync"
 )
@@ -23,8 +24,8 @@ type cacheItem struct {
 	value interface{}
 }
 
-func NewCache(capacity int) Cache {
-	return &lruCache{capacity: capacity, queue: NewList(), items: make(map[Key]*listItem, capacity)}
+func NewCache(capacity int) Cache { //nolint:ireturn
+	return &lruCache{capacity: capacity, queue: NewList(), items: make(map[Key]*listItem, capacity)} //nolint:exhaustivestruct
 }
 
 // Set is adds a value to the cache.
