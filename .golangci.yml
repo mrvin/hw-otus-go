@@ -15,3 +15,5 @@ linters:
     - nakedret
     - nlreturn
     - wsl
+    - forbidigo
+    - varnamelen

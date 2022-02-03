@@ -8,7 +8,7 @@ type (
 
 type Stage func(in In) (out Out)
 
-func ExecutePipeline(in In, done In, stages ...Stage) Out { //nolint:varnamelen
+func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	outs := make([]Out, len(stages))
 	out := make(Bi)
 	finish := make(chan struct{})
