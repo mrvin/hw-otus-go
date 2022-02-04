@@ -1,10 +1,6 @@
 package hw02unpackstring
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/require"
-)
+import "testing"
 
 type test struct {
 	input    string
@@ -13,7 +9,7 @@ type test struct {
 }
 
 func TestUnpack(t *testing.T) {
-	for _, tst := range [...]test{
+	var tests = []test{
 		{
 			input:    "a4bc2d5e",
 			expected: "aaaabccddddde",
@@ -53,17 +49,18 @@ func TestUnpack(t *testing.T) {
 			input:    "При3вет!",
 			expected: "Прииивет!",
 		},
-	} {
+	}
+
+	for _, tst := range tests {
 		result, err := Unpack(tst.input)
-		require.Equal(t, tst.err, err)
-		require.Equal(t, tst.expected, result)
+		if tst.err != err || tst.expected != result {
+			t.Errorf("Unpack(%q) = %q, %v; want: %q, %v", tst.input, result, err, tst.expected, tst.err)
+		}
 	}
 }
 
 func TestUnpackWithEscape(t *testing.T) {
-	//t.Skip() // Remove if task with asterisk completed
-
-	for _, tst := range [...]test{
+	var tests = []test{
 		{
 			input:    `qwe\4\5`,
 			expected: `qwe45`,
@@ -103,9 +100,12 @@ func TestUnpackWithEscape(t *testing.T) {
 			expected: ``,
 			err:      ErrInvalidString,
 		},
-	} {
+	}
+
+	for _, tst := range tests {
 		result, err := Unpack(tst.input)
-		require.Equal(t, tst.err, err)
-		require.Equal(t, tst.expected, result)
+		if tst.err != err || tst.expected != result {
+			t.Errorf("Unpack(%q) = %q, %v; want: %q, %v", tst.input, result, err, tst.expected, tst.err)
+		}
 	}
 }
