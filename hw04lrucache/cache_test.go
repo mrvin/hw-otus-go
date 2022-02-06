@@ -5,132 +5,121 @@ import (
 	"strconv"
 	"sync"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
+
+type sTest struct {
+	keyInput Key
+	valInput int
+	want     bool
+}
+
+type gTest struct {
+	keyInput Key
+	wantVal  interface{}
+	want     bool
+}
+
+func testGet(t *testing.T, test gTest, c Cache) {
+	val, ok := c.Get(test.keyInput)
+	if val != test.wantVal || ok != test.want {
+		t.Errorf("cache.Get(%q) = %v, %t; want: %v, %t", test.keyInput, val, ok, test.wantVal, test.want)
+	}
+}
+
+func testSet(t *testing.T, test sTest, c Cache) {
+	ok := c.Set(test.keyInput, test.valInput)
+	if ok != test.want {
+		t.Errorf("cache.Set(%q, %v) = %t; want: %t", test.keyInput, test.valInput, ok, test.want)
+	}
+}
 
 func TestCache(t *testing.T) {
 	t.Run("empty cache", func(t *testing.T) {
 		c := NewCache(10)
+		tests := []gTest{
+			{"aaa", nil, false},
+			{"bbb", nil, false},
+		}
 
-		_, ok := c.Get("aaa")
-		require.False(t, ok)
-
-		_, ok = c.Get("bbb")
-		require.False(t, ok)
+		for _, test := range tests {
+			testGet(t, test, c)
+		}
 	})
 
 	t.Run("simple", func(t *testing.T) {
 		c := NewCache(5)
 
-		wasInCache := c.Set("aaa", 100)
-		require.False(t, wasInCache)
+		testSet(t, sTest{"aaa", 100, false}, c)
+		testSet(t, sTest{"bbb", 200, false}, c)
 
-		wasInCache = c.Set("bbb", 200)
-		require.False(t, wasInCache)
+		testGet(t, gTest{"aaa", 100, true}, c)
+		testGet(t, gTest{"bbb", 200, true}, c)
 
-		val, ok := c.Get("aaa")
-		require.True(t, ok)
-		require.Equal(t, 100, val)
+		testSet(t, sTest{"aaa", 300, true}, c)
 
-		val, ok = c.Get("bbb")
-		require.True(t, ok)
-		require.Equal(t, 200, val)
+		testGet(t, gTest{"aaa", 300, true}, c)
+		testGet(t, gTest{"ccc", nil, false}, c)
 
-		wasInCache = c.Set("aaa", 300)
-		require.True(t, wasInCache)
-
-		val, ok = c.Get("aaa")
-		require.True(t, ok)
-		require.Equal(t, 300, val)
-
-		val, ok = c.Get("ccc")
-		require.False(t, ok)
-		require.Nil(t, val)
 	})
 
 	t.Run("purge logic (capacity)", func(t *testing.T) {
 		c := NewCache(3)
+		tests := []sTest{
+			{"aaa", 100, false},
+			{"bbb", 200, false},
+			{"ccc", 300, false},
+			{"ddd", 200, false},
+		}
 
-		wasInCache := c.Set("aaa", 100)
-		require.False(t, wasInCache)
+		for _, test := range tests {
+			testSet(t, test, c)
+		}
 
-		wasInCache = c.Set("bbb", 200)
-		require.False(t, wasInCache)
-
-		wasInCache = c.Set("ccc", 300)
-		require.False(t, wasInCache)
-
-		wasInCache = c.Set("ddd", 200)
-		require.False(t, wasInCache)
-
-		val, ok := c.Get("aaa")
-		require.False(t, ok)
-		require.Nil(t, val)
+		testGet(t, gTest{"aaa", nil, false}, c)
 	})
 
 	t.Run("purge logic (rarely used)", func(t *testing.T) {
 		c := NewCache(3)
 
-		wasInCache := c.Set("aaa", 100)
-		require.False(t, wasInCache)
+		testSet(t, sTest{"aaa", 100, false}, c)
+		testSet(t, sTest{"bbb", 200, false}, c)
+		testSet(t, sTest{"ccc", 300, false}, c)
 
-		wasInCache = c.Set("bbb", 200)
-		require.False(t, wasInCache)
+		testGet(t, gTest{"aaa", 100, true}, c)
+		testGet(t, gTest{"bbb", 200, true}, c)
 
-		wasInCache = c.Set("ccc", 300)
-		require.False(t, wasInCache)
+		testSet(t, sTest{"aaa", 400, true}, c)
+		testSet(t, sTest{"ddd", 500, false}, c)
 
-		val, ok := c.Get("aaa")
-		require.True(t, ok)
-		require.Equal(t, 100, val)
-
-		val, ok = c.Get("bbb")
-		require.True(t, ok)
-		require.Equal(t, 200, val)
-
-		wasInCache = c.Set("aaa", 400)
-		require.True(t, wasInCache)
-
-		wasInCache = c.Set("ddd", 500)
-		require.False(t, wasInCache)
-
-		val, ok = c.Get("ccc")
-		require.False(t, ok)
-		require.Nil(t, val)
+		testGet(t, gTest{"ccc", nil, false}, c)
 	})
 
 	t.Run("Clear", func(t *testing.T) {
 		c := NewCache(3)
+		testsSet := []sTest{
+			{"aaa", 100, false},
+			{"bbb", 200, false},
+			{"ccc", 300, false},
+		}
+		testsGet := []gTest{
+			{"aaa", nil, false},
+			{"bbb", nil, false},
+			{"ccc", nil, false},
+		}
 
-		wasInCache := c.Set("aaa", 100)
-		require.False(t, wasInCache)
-
-		wasInCache = c.Set("bbb", 200)
-		require.False(t, wasInCache)
-
-		wasInCache = c.Set("ccc", 300)
-		require.False(t, wasInCache)
+		for _, test := range testsSet {
+			testSet(t, test, c)
+		}
 
 		c.Clear()
 
-		val, ok := c.Get("aaa")
-		require.False(t, ok)
-		require.Nil(t, val)
-
-		val, ok = c.Get("bbb")
-		require.False(t, ok)
-		require.Nil(t, val)
-
-		val, ok = c.Get("ccc")
-		require.False(t, ok)
-		require.Nil(t, val)
+		for _, test := range testsGet {
+			testGet(t, test, c)
+		}
 	})
 }
 
 func TestCacheMultithreading(t *testing.T) {
-	//t.Skip() // Remove if task with asterisk completed
-
 	c := NewCache(10)
 	wg := &sync.WaitGroup{}
 	wg.Add(2)

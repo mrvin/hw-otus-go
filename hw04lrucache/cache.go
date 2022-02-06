@@ -25,7 +25,10 @@ type cacheItem struct {
 }
 
 func NewCache(capacity int) Cache { //nolint:ireturn
-	return &lruCache{capacity: capacity, queue: NewList(), items: make(map[Key]*listItem, capacity)} //nolint:exhaustivestruct
+	return &lruCache{capacity: capacity,
+		queue: NewList(),
+		items: make(map[Key]*listItem, capacity),
+		mu:    sync.Mutex{}}
 }
 
 // Set is adds a value to the cache.
