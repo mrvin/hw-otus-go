@@ -1,9 +1,9 @@
 package hw03frequencyanalysis
 
 import (
+	"reflect"
+	"sort"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 // Change to true if needed
@@ -43,18 +43,47 @@ var text = `Как видите, он  спускается  по  лестни�
 	посидеть у огня и послушать какую-нибудь интересную сказку.
 		В этот вечер...`
 
+func testTop10Subset(t *testing.T, text string, want []string) {
+	got := Top10(text)
+
+	if numTOP < len(want) {
+		for _, word := range got {
+			for i, wordWant := range want {
+				if word == wordWant {
+					break
+				}
+				if i == len(want)-1 {
+					t.Errorf("got: %v; want: %v", got, want)
+				}
+			}
+		}
+	} else {
+		t.Errorf("%d < %d numTop >= len(want)", numTOP, len(want))
+	}
+}
+
+func testTop10Match(t *testing.T, text string, want []string) {
+	got := Top10(text)
+
+	sort.Strings(got)
+	sort.Strings(want)
+	if reflect.DeepEqual(got, want) {
+		t.Errorf("got: %v(after sorting); want: %v(after sorting)", got, want)
+	}
+}
+
 func TestTop10(t *testing.T) {
 	t.Run("no words in empty string", func(t *testing.T) {
-		require.Len(t, Top10(""), 0)
+		testTop10Match(t, "", []string{})
 	})
 
 	t.Run("positive test", func(t *testing.T) {
 		if taskWithAsteriskIsCompleted {
 			expected := []string{"он", "а", "и", "что", "ты", "не", "если", "то", "его", "кристофер", "робин", "в"}
-			require.Subset(t, expected, Top10(text))
+			testTop10Subset(t, text, expected)
 		} else {
 			expected := []string{"он", "и", "а", "что", "ты", "не", "если", "-", "то", "Кристофер"}
-			require.ElementsMatch(t, expected, Top10(text))
+			testTop10Match(t, text, expected)
 		}
 	})
 
@@ -64,7 +93,8 @@ func TestTop10(t *testing.T) {
 					All work and no play makes Jack a dull boy.
 					All work and no play makes Jack a dull boy.`
 			expected := []string{"all", "work", "and", "no", "play", "makes", "jack", "a", "dull", "boy"}
-			require.ElementsMatch(t, expected, Top10(text))
+
+			testTop10Match(t, text, expected)
 		}
 	})
 
@@ -72,7 +102,8 @@ func TestTop10(t *testing.T) {
 		if taskWithAsteriskIsCompleted {
 			text := `All.`
 			expected := []string{"all"}
-			require.Equal(t, expected, Top10(text))
+
+			testTop10Match(t, text, expected)
 		}
 	})
 
@@ -80,7 +111,8 @@ func TestTop10(t *testing.T) {
 		if taskWithAsteriskIsCompleted {
 			text := `Нога нога нога! 'нога' (нога) -нога- "нога"`
 			expected := []string{"нога"}
-			require.Equal(t, expected, Top10(text))
+
+			testTop10Match(t, text, expected)
 		}
 	})
 
@@ -88,7 +120,8 @@ func TestTop10(t *testing.T) {
 		if taskWithAsteriskIsCompleted {
 			text := `Но увы -сосредоточиться-то`
 			expected := []string{"но", "увы", "сосредоточиться-то"}
-			require.ElementsMatch(t, expected, Top10(text))
+
+			testTop10Match(t, text, expected)
 		}
 	})
 
@@ -96,7 +129,8 @@ func TestTop10(t *testing.T) {
 		if taskWithAsteriskIsCompleted {
 			text := `Но увы- сосредоточиться-то`
 			expected := []string{"но", "увы", "сосредоточиться-то"}
-			require.ElementsMatch(t, expected, Top10(text))
+
+			testTop10Match(t, text, expected)
 		}
 	})
 
