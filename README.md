@@ -7,7 +7,7 @@
 6) [«Пайплайн»](./hw06pipelineexecution)
 7) [«Утилита для копирования файлов»](./hw07filecopying)
 8) [«Утилита envdir»](./hw08envdirtool)
-9) [«Генератор валидаторов»](./hw09_generator_of_validators)
+9) [«Генератор валидаторов»](./hw09generatorofvalidators)
 10) [«Оптимизация программы»](./hw10_program_optimization)
 11) [«Клиент TELNET»](./hw11_telnet_client)
 12) [«Заготовка сервиса Календарь»](./hw12_13_14_15_calendar/docs/12_README.md)
