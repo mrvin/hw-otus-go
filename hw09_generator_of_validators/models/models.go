@@ -1,6 +1,8 @@
+//go:generate go-validate $GOFILE
+
 package models
 
-type UserRole string
+//type UserRole string
 
 // NOTE: Several struct specs in one type declaration are allowed.
 
@@ -10,7 +12,7 @@ type (
 		Name   string
 		Age    int      `validate:"min:18|max:50"`
 		Email  string   `validate:"regexp:^\\w+@\\w+\\.\\w+$"`
-		Role   UserRole `validate:"in:admin,stuff"`
+		Role   string   `validate:"in:admin,stuff"`
 		Phones []string `validate:"len:11"`
 	}
 
