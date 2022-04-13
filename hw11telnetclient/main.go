@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/mrvin/hw-otus-go/hw11_telnet_client/telnet"
+	"github.com/mrvin/hw-otus-go/hw11telnetclient/telnet"
 )
 
 func usage() {
