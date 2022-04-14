@@ -4,62 +4,73 @@ import (
 	"bytes"
 	"io/ioutil"
 	"net"
-	"sync"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestTelnetClient(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
 		l, err := net.Listen("tcp", "127.0.0.1:")
-		require.NoError(t, err)
-		defer func() { require.NoError(t, l.Close()) }()
+		if err != nil {
+			t.Fatalf("can't listen: %v", err)
+		}
+		defer l.Close()
 
-		var wg sync.WaitGroup
-		wg.Add(2)
-
+		done := make(chan struct{})
+		sendMsg := "hello\n"
+		recvMsg := "world\n"
 		go func() {
-			defer wg.Done()
-
 			in := &bytes.Buffer{}
 			out := &bytes.Buffer{}
 
 			timeout, err := time.ParseDuration("10s")
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatalf("can't parse timeout: %v", err)
+			}
 
-			client := NewTelnetClient(l.Addr().String(), timeout, ioutil.NopCloser(in), out)
-			require.NoError(t, client.Connect())
-			defer func() { require.NoError(t, client.Close()) }()
+			client := NewClient(l.Addr().String(), timeout, ioutil.NopCloser(in), out)
+			if err := client.Connect(); err != nil {
+				t.Fatalf("can't connect to host: %v", err)
+			}
+			defer client.Close()
 
-			in.WriteString("hello\n")
-			err = client.Send()
-			require.NoError(t, err)
+			in.WriteString(sendMsg)
+			if err = client.Send(); err != nil {
+				t.Errorf("can't send: %v", err)
+			}
 
-			err = client.Receive()
-			require.NoError(t, err)
-			require.Equal(t, "world\n", out.String())
+			if err := client.Receive(); err != nil {
+				t.Errorf("can't receive: %v", err)
+			}
+			if recvMsg != out.String() {
+				t.Errorf("received message was not recorded to out")
+			}
+
+			done <- struct{}{}
 		}()
 
-		go func() {
-			defer wg.Done()
+		conn, err := l.Accept()
+		if err != nil {
+			t.Fatalf("can't accept connect: %v", err)
+		}
 
-			conn, err := l.Accept()
-			require.NoError(t, err)
-			require.NotNil(t, conn)
-			defer func() { require.NoError(t, conn.Close()) }()
+		request := make([]byte, 1024)
+		n, err := conn.Read(request)
+		if err != nil {
+			t.Errorf("can't read sent message: %v", err)
+		}
+		readMsg := string(request)[:n]
+		if sendMsg != readMsg {
+			t.Errorf("send message \"%s\" not equal read message \"%s\"", sendMsg, readMsg)
+		}
 
-			request := make([]byte, 1024)
-			n, err := conn.Read(request)
-			require.NoError(t, err)
-			require.Equal(t, "hello\n", string(request)[:n])
+		_, err = conn.Write([]byte(recvMsg))
+		if err != nil {
+			t.Errorf("can't write received message: %v", err)
+		}
 
-			n, err = conn.Write([]byte("world\n"))
-			require.NoError(t, err)
-			require.NotEqual(t, 0, n)
-		}()
+		conn.Close()
 
-		wg.Wait()
+		<-done
 	})
 }
