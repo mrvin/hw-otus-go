@@ -16,7 +16,7 @@ type lruCache struct {
 	capacity int
 	queue    List
 	items    map[Key]*listItem
-	mu       sync.Mutex
+	sync.Mutex
 }
 
 type cacheItem struct {
@@ -25,16 +25,13 @@ type cacheItem struct {
 }
 
 func NewCache(capacity int) Cache { //nolint:ireturn
-	return &lruCache{capacity: capacity,
-		queue: NewList(),
-		items: make(map[Key]*listItem, capacity),
-		mu:    sync.Mutex{}}
+	return &lruCache{capacity, NewList(), make(map[Key]*listItem, capacity), sync.Mutex{}}
 }
 
 // Set is adds a value to the cache.
 func (cache *lruCache) Set(key Key, value interface{}) bool {
-	cache.mu.Lock()
-	defer cache.mu.Unlock()
+	cache.Lock()
+	defer cache.Unlock()
 
 	itemList, isNotCacheMiss := cache.items[key]
 	if isNotCacheMiss {
@@ -58,8 +55,8 @@ func (cache *lruCache) Set(key Key, value interface{}) bool {
 
 // Get is gets a value from the cache.
 func (cache *lruCache) Get(key Key) (interface{}, bool) {
-	cache.mu.Lock()
-	defer cache.mu.Unlock()
+	cache.Lock()
+	defer cache.Unlock()
 
 	itemList, isNotCacheMiss := cache.items[key]
 	if isNotCacheMiss {
@@ -74,8 +71,8 @@ func (cache *lruCache) Get(key Key) (interface{}, bool) {
 
 // Clear is clears the cache.
 func (cache *lruCache) Clear() {
-	cache.mu.Lock()
-	defer cache.mu.Unlock()
+	cache.Lock()
+	defer cache.Unlock()
 
 	for key := range cache.items {
 		cache.queue.Remove(cache.items[key])

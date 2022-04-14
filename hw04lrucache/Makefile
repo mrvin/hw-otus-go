@@ -1,6 +1,7 @@
 test:
 	go test .
 lint:
-	 golangci-lint run .
+	golangci-lint run .
 cover:
 	go test . -cover
+
