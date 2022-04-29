@@ -3,7 +3,7 @@ package app
 import (
 	"context"
 
-	"github.com/mrvin/hw-otus-go/hw12_13_14_15_calendar/internal/storage"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
 
 type Storage interface {

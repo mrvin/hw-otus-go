@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mrvin/hw-otus-go/hw12_13_14_15_calendar/internal/config"
-	"github.com/mrvin/hw-otus-go/hw12_13_14_15_calendar/internal/storage"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
 
 func TestStorageSQL(t *testing.T) {

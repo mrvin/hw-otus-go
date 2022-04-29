@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/mrvin/hw-otus-go/hw12_13_14_15_calendar/internal/app"
-	"github.com/mrvin/hw-otus-go/hw12_13_14_15_calendar/internal/config"
-	"github.com/mrvin/hw-otus-go/hw12_13_14_15_calendar/internal/logger"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/app"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/logger"
 )
 
 type Server struct {

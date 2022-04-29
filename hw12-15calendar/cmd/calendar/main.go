@@ -6,12 +6,12 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/mrvin/hw-otus-go/hw12_13_14_15_calendar/internal/app"
-	"github.com/mrvin/hw-otus-go/hw12_13_14_15_calendar/internal/config"
-	"github.com/mrvin/hw-otus-go/hw12_13_14_15_calendar/internal/logger"
-	httpserver "github.com/mrvin/hw-otus-go/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/mrvin/hw-otus-go/hw12_13_14_15_calendar/internal/storage/memory"
-	sqlstorage "github.com/mrvin/hw-otus-go/hw12_13_14_15_calendar/internal/storage/sql"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/app"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/logger"
+	httpserver "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/server/http"
+	memorystorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/memory"
+	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
 )
 
 func main() {

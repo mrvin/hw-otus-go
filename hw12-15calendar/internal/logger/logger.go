@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/mrvin/hw-otus-go/hw12_13_14_15_calendar/internal/config"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
 )
 
 type Logger struct {
