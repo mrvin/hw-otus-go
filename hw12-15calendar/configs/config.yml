@@ -1,0 +1,23 @@
+# GRPC settings
+grpc:
+    host: localhost
+    port: 55555
+
+# HTTP setting
+http:
+    host: 127.0.0.1
+    port: 8080
+
+inmemory: true
+
+# database settings
+db:
+    host: 127.0.0.1
+    port: 5432
+    user: event-db
+    password: event-db
+    name: event-db
+# logging settings
+logger:
+    filepath:
+    level: debug
