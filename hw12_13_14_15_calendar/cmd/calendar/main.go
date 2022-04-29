@@ -2,44 +2,65 @@ package main
 
 import (
 	"flag"
+	"log"
 	"os"
 	"os/signal"
 
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/app"
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/mrvin/hw-otus-go/hw12_13_14_15_calendar/internal/app"
+	"github.com/mrvin/hw-otus-go/hw12_13_14_15_calendar/internal/config"
+	"github.com/mrvin/hw-otus-go/hw12_13_14_15_calendar/internal/logger"
+	httpserver "github.com/mrvin/hw-otus-go/hw12_13_14_15_calendar/internal/server/http"
+	memorystorage "github.com/mrvin/hw-otus-go/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/mrvin/hw-otus-go/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
-var configFile string
-
-func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
-}
-
 func main() {
-	config := NewConfig()
-	logg := logger.New(config.Logger.Level)
+	configFile := flag.String("config", "/etc/calendar/config.yml", "path to configuration file")
+	flag.Parse()
 
-	storage := memorystorage.New()
-	calendar := app.New(logg, storage)
+	config, err := config.Parse(*configFile)
+	if err != nil {
+		log.Fatalf("can't parse config: %v", err)
+	}
 
-	server := internalhttp.NewServer(calendar)
+	logg, err := logger.Create(&config.Logger)
+	if err != nil {
+		log.Fatalf("can't create logger: %v", err)
+	}
+	logg.Println("Start service calendar")
 
-	go func() {
-		signals := make(chan os.Signal, 1)
-		signal.Notify(signals)
-
-		<-signals
-		signal.Stop(signals)
-
-		if err := server.Stop(); err != nil {
-			logger.Error("failed to stop http server: " + err.String())
+	var storage app.Storage
+	if config.InMem {
+		storage = memorystorage.New()
+	} else {
+		var storageSQL sqlstorage.Storage
+		if err := storageSQL.Connect(nil, &config.DB); err != nil {
+			logg.Fatalf("can't connection db: %v", err)
 		}
-	}()
+		storage = &storageSQL
+	}
+
+	server := httpserver.New(&config.HTTP, logg, storage)
+
+	signals := make(chan os.Signal)
+	signal.Notify(signals, os.Interrupt, os.Kill)
+	go listenForShutdown(signals, logg, server)
 
 	if err := server.Start(); err != nil {
-		logger.Error("failed to start http server: " + err.String())
-		os.Exit(1)
+		logg.Fatalf("failed to start http server: %v", err)
 	}
+
+	logg.Println("Stop service calendar")
+}
+
+func listenForShutdown(signals chan os.Signal, logg *logger.Logger, server *httpserver.Server) {
+	<-signals
+	signal.Stop(signals)
+
+	if err := server.Stop(); err != nil {
+		logg.Fatalf("failed to stop http server: %v", err)
+	}
+	//storage.Close()
+	logg.Println("Stop service calendar")
+	logg.Close()
 }
