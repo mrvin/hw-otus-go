@@ -3,27 +3,20 @@ package app
 import (
 	"context"
 
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage"
+	"github.com/mrvin/hw-otus-go/hw12_13_14_15_calendar/internal/storage"
 )
 
-type App struct {
-	// TODO
-}
-
-type Logger interface {
-	// TODO
-}
-
 type Storage interface {
-	// TODO
-}
+	CreateEvent(ctx context.Context, event *storage.Event) error
+	GetEvent(ctx context.Context, id int) (*storage.Event, error)
+	GetEventsForUser(ctx context.Context, id int) ([]*storage.Event, error)
+	GetListEvents(ctx context.Context) ([]*storage.Event, error)
+	UpdateEvent(ctx context.Context, event *storage.Event) error
+	DeleteEvent(ctx context.Context, id int) error
 
-func New(logger Logger, storage Storage) *App {
-	return &App{}
+	CreateUser(ctx context.Context, user *storage.User) error
+	GetUser(ctx context.Context, id int) (*storage.User, error)
+	GetListUsers(ctx context.Context) ([]*storage.User, error)
+	UpdateUser(ctx context.Context, user *storage.User) error
+	DeleteUser(ctx context.Context, id int) error
 }
-
-func (a *App) CreateEvent(ctx context.Context, id string, title string) error {
-	return a.storage.CreateEvent(storage.Event{ID: id, Title: title})
-}
-
-// TODO
