@@ -2,60 +2,49 @@ package sqlstorage
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
 
-func (s *Storage) CreateUser(ctx context.Context, user *storage.User) error {
-	statement := "insert into users (name) values ($1) returning id"
-	stmt, err := s.db.Prepare(statement)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
+var ErrNoUser = errors.New("no user")
 
-	return stmt.QueryRow(user.Name).Scan(&user.ID)
+func (s *Storage) CreateUser(ctx context.Context, user *storage.User) error {
+	return s.insertUser.QueryRowContext(ctx, user.Name, user.Email).Scan(&user.ID)
 }
 
 func (s *Storage) GetUser(ctx context.Context, id int) (*storage.User, error) {
 	var user storage.User
 
-	querySQLGetUser := "select id, name from users where id = $1"
-	stmt, err := s.db.Prepare(querySQLGetUser)
-	if err != nil {
-		return nil, err
-	}
-	defer stmt.Close()
-
-	// TODO: sql: no rows in result set
-	if err := stmt.QueryRow(id).Scan(&user.ID, &user.Name); err != nil {
-		return nil, fmt.Errorf("can't scan user(id, name): %v", err)
+	if err := s.getUser.QueryRowContext(ctx, id).Scan(&user.ID, &user.Name, &user.Email); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("user id: %d: %w", id, ErrNoUser)
+		}
+		return nil, fmt.Errorf("can't scan user with id: %d: %w", id, err)
 	}
 
+	var err error
 	user.Events, err = s.GetEventsForUser(ctx, user.ID)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return &user, nil
+		}
+		return nil, fmt.Errorf("can't scan events for user with id: %d: %w", id, err)
 	}
 
 	return &user, nil
 }
 
-//////////////////
-func (s *Storage) GetListUsers(ctx context.Context) ([]*storage.User, error) {
-	return nil, nil
-}
-
-//////////////////
-
 func (s *Storage) UpdateUser(ctx context.Context, user *storage.User) error {
-	_, err := s.db.Exec("update users set name = $2 where id = $1", user.ID, user.Name)
+	_, err := s.db.ExecContext(ctx, "update users set name = $2, email = $3 where id = $1", user.ID, user.Name, user.Email)
 
 	return err
 }
 
 func (s *Storage) DeleteUser(ctx context.Context, id int) error {
-	_, err := s.db.Exec("delete from users where id = $1", id)
+	_, err := s.db.ExecContext(ctx, "delete from users where id = $1", id)
 
 	return err
 }

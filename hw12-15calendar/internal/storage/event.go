@@ -16,7 +16,8 @@ type Event struct {
 }
 
 type User struct {
-	ID     int
-	Name   string
-	Events []*Event
+	ID     int     `json:"id"`
+	Name   string  `json:"name"`
+	Email  string  `json:"email"`
+	Events []Event `json:"events"`
 }
