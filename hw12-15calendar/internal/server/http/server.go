@@ -1,9 +1,12 @@
 package internalhttp
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"path"
+	"strings"
+	"time"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/app"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
@@ -24,7 +27,10 @@ func New(conf *config.HTTPConf, logg *logger.Logger, stor app.Storage) *Server {
 	server.stor = stor
 	server.pr = newPathResolver()
 
-	server.pr.Add("GET /hello", hello)
+	server.pr.Add("POST /users", handleCreateUser)
+	server.pr.Add("GET /users", handleGetUser)
+	server.pr.Add("PUT /users", handleUpdateUser)
+	server.pr.Add("DELETE /users", handleDeleteUser)
 
 	server.serv = http.Server{
 		Addr:    fmt.Sprintf("%s:%d", conf.Host, conf.Port),
@@ -42,10 +48,12 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+	defer logReq(req, s.logg)()
 	check := req.Method + " " + req.URL.Path
 	for pattern, handlerFunc := range s.pr.handlers {
 		if ok, err := path.Match(pattern, check); ok && err == nil {
 			handlerFunc(res, req, s)
+
 			return
 		} else if err != nil {
 			fmt.Fprint(res, err)
@@ -55,9 +63,18 @@ func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	http.NotFound(res, req)
 }
 
-func (s *Server) Stop() error {
-	if err := s.serv.Shutdown(nil); err != nil {
+func logReq(req *http.Request, logg *logger.Logger) func() {
+	start := time.Now()
+
+	return func() {
+		logg.Printf("%s [%s] %s %s %s %s", strings.Split(req.RemoteAddr, ":")[0], start.Format(time.ANSIC), req.Method, req.URL.Path, req.Proto, time.Since(start) /*, req.Header["User-Agent"]*/)
+	}
+}
+
+func (s *Server) Stop(ctx context.Context) error {
+	if err := s.serv.Shutdown(ctx); err != nil {
 		return err
 	}
+
 	return nil
 }
