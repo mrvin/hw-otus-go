@@ -12,7 +12,7 @@ inmemory: false
 
 # database settings
 db:
-    host: 127.0.0.1
+    host: postgres
     port: 5432
     user: event-db
     password: event-db
