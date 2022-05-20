@@ -1,0 +1,26 @@
+FROM golang:1.18-bullseye
+
+MAINTAINER mrvin <v.v.vinogradovv@gmail.com>
+
+RUN groupadd -r calendar-group && useradd -r -g calendar-group calendar-user
+
+WORKDIR /calendar/app
+
+COPY cmd/calendar cmd/calendar
+COPY go.mod .
+COPY go.sum .
+COPY Makefile .
+COPY internal internal
+COPY configs configs
+
+# Download necessary Go modules
+RUN go mod download
+
+RUN make build
+
+EXPOSE 8080
+
+USER calendar-user
+
+CMD ["bin/calendar", "-config", "configs/config.yml"]
+
