@@ -3,16 +3,15 @@ package sqlstorage
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
 
-var ErrNoUser = errors.New("no user")
-
 func (s *Storage) CreateUser(ctx context.Context, user *storage.User) error {
-	return s.insertUser.QueryRowContext(ctx, user.Name, user.Email).Scan(&user.ID)
+	err := s.insertUser.QueryRowContext(ctx, user.Name, user.Email).Scan(&user.ID)
+
+	return fmt.Errorf("create user: %w", err)
 }
 
 func (s *Storage) GetUser(ctx context.Context, id int) (*storage.User, error) {
@@ -20,15 +19,16 @@ func (s *Storage) GetUser(ctx context.Context, id int) (*storage.User, error) {
 
 	if err := s.getUser.QueryRowContext(ctx, id).Scan(&user.ID, &user.Name, &user.Email); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("user id: %d: %w", id, ErrNoUser)
+			return nil, fmt.Errorf("%w: %d", storage.ErrNoUser, id)
 		}
 		return nil, fmt.Errorf("can't scan user with id: %d: %w", id, err)
 	}
 
+	// TRANSACTION SQL
 	var err error
 	user.Events, err = s.GetEventsForUser(ctx, user.ID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == sql.ErrNoRows { //nolint:errorlint
 			return &user, nil
 		}
 		return nil, fmt.Errorf("can't scan events for user with id: %d: %w", id, err)
@@ -40,11 +40,11 @@ func (s *Storage) GetUser(ctx context.Context, id int) (*storage.User, error) {
 func (s *Storage) UpdateUser(ctx context.Context, user *storage.User) error {
 	_, err := s.db.ExecContext(ctx, "update users set name = $2, email = $3 where id = $1", user.ID, user.Name, user.Email)
 
-	return err
+	return fmt.Errorf("update user: %w", err)
 }
 
 func (s *Storage) DeleteUser(ctx context.Context, id int) error {
 	_, err := s.db.ExecContext(ctx, "delete from users where id = $1", id)
 
-	return err
+	return fmt.Errorf("delete user: %w", err)
 }

@@ -3,16 +3,15 @@ package sqlstorage
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
 
-var ErrNoEvent = errors.New("no event")
-
 func (s *Storage) CreateEvent(ctx context.Context, event *storage.Event) error {
-	return s.insertEvent.QueryRowContext(ctx, event.Title, event.Description, event.StartTime, event.StopTime, event.UserID).Scan(&event.ID)
+	err := s.insertEvent.QueryRowContext(ctx, event.Title, event.Description, event.StartTime, event.StopTime, event.UserID).Scan(&event.ID)
+
+	return fmt.Errorf("create event: %w", err)
 }
 
 func (s *Storage) GetEvent(ctx context.Context, id int) (*storage.Event, error) {
@@ -20,7 +19,7 @@ func (s *Storage) GetEvent(ctx context.Context, id int) (*storage.Event, error) 
 
 	if err := s.getEvent.QueryRowContext(ctx, id).Scan(&event.ID, &event.Title, &event.Description, &event.StartTime, &event.StopTime, &event.UserID); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("event id: %d: %w", id, ErrNoEvent)
+			return nil, fmt.Errorf("%w: %d", storage.ErrNoEvent, id)
 		}
 		return nil, fmt.Errorf("can't get event with id: %d: %w", id, err)
 	}
@@ -32,13 +31,13 @@ func (s *Storage) UpdateEvent(ctx context.Context, event *storage.Event) error {
 	_, err := s.db.ExecContext(ctx, "update events set title = $2, description = $3, start_time = $4, stop_time = $5, user_id = $6 where id = $1",
 		event.ID, event.Title, event.Description, event.StartTime, event.StopTime, event.UserID)
 
-	return err
+	return fmt.Errorf("update event: %w", err)
 }
 
 func (s *Storage) DeleteEvent(ctx context.Context, id int) error {
 	_, err := s.db.ExecContext(ctx, "delete from events where id = $1", id)
 
-	return err
+	return fmt.Errorf("delete event: %w", err)
 }
 
 func (s *Storage) GetEventsForUser(ctx context.Context, userID int) ([]storage.Event, error) {
@@ -46,7 +45,7 @@ func (s *Storage) GetEventsForUser(ctx context.Context, userID int) ([]storage.E
 
 	rows, err := s.getEventsForUser.QueryContext(ctx, userID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == sql.ErrNoRows { //nolint:errorlint
 			return events, nil
 		}
 		return nil, fmt.Errorf("can't get events for user with id: %d: %w", userID, err)

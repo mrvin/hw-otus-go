@@ -1,8 +1,12 @@
 package storage
 
 import (
+	"errors"
 	"time"
 )
+
+var ErrNoUser = errors.New("no user with id")
+var ErrNoEvent = errors.New("no event with id")
 
 type Event struct {
 	ID          int
