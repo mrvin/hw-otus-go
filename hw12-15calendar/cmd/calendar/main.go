@@ -42,6 +42,10 @@ func main() {
 		if err := storageSQL.Connect(ctx, &config.DB); err != nil {
 			logg.Fatalf("can't connection db: %v", err)
 		}
+		// if such a tables exists then ignore the error.
+		if err := storageSQL.CreateSchemaDB(ctx); err != nil {
+			logg.Fatalf("can't create schema db: %v", err)
+		}
 		if err := storageSQL.PrepareQuery(ctx); err != nil {
 			logg.Fatalf("can't prepare query: %v", err)
 		}
@@ -67,7 +71,6 @@ func main() {
 	if storageSQL, ok := storage.(*sqlstorage.Storage); ok {
 		logg.Println("Close sql storage")
 		storageSQL.Close(nil)
-
 	}
 
 	logg.Println("Stop service calendar")
