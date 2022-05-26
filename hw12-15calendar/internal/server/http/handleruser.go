@@ -3,6 +3,9 @@ package internalhttp
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -11,88 +14,139 @@ import (
 
 var ctx = context.Background()
 
+var ErrIDEmpty = errors.New("id is empty")
+
 func handleCreateUser(res http.ResponseWriter, req *http.Request, server *Server) {
 	user, err := unmarshalUser(req)
 	if err != nil {
-		server.logg.Print(err)
+		server.logg.Printf("Create user: %v", err)
+		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	if user.Name == "" || user.Email == "" {
+		server.logg.Printf("Create user: empty name or email: %v", err)
 		res.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	if err := server.stor.CreateUser(ctx, user); err != nil {
-		server.logg.Print(err)
+		server.logg.Printf("Create user: saving user info: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	res.WriteHeader(200)
+	res.WriteHeader(http.StatusCreated)
 }
 
 func handleGetUser(res http.ResponseWriter, req *http.Request, server *Server) {
+	// Return an error in JSON
 	id, err := getID(req)
 	if err != nil {
-		server.logg.Print(err)
-		res.WriteHeader(http.StatusBadRequest)
+		server.logg.Printf("Get user: get id: %v", err)
+		if err == ErrIDEmpty { //nolint:errorlint
+			res.WriteHeader(http.StatusBadRequest)
+		} else {
+			res.WriteHeader(http.StatusInternalServerError)
+		}
 		return
 	}
+
 	user, err := server.stor.GetUser(ctx, id)
 	if err != nil {
-		server.logg.Print(err)
+		server.logg.Printf("Get user: get from storage: %v", err)
+		if errors.Is(err, storage.ErrNoUser) {
+			res.WriteHeader(http.StatusBadRequest)
+		} else {
+			res.WriteHeader(http.StatusInternalServerError)
+		}
 		return
 	}
 
 	jsonUser, err := json.Marshal(user)
 	if err != nil {
-		server.logg.Printf("can't marshaling json: %v", err)
+		server.logg.Printf("Get user: marshaling json: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	res.Header().Set("Content-Type", "application/json")
-	res.Write(jsonUser)
+	if _, err := res.Write(jsonUser); err != nil {
+		server.logg.Printf("Get user: write res: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
 
 func handleUpdateUser(res http.ResponseWriter, req *http.Request, server *Server) {
+	// Update only required fields
 	user, err := unmarshalUser(req)
 	if err != nil {
-		server.logg.Print(err)
+		server.logg.Printf("Update user: %v", err)
+		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	if user.ID == 0 {
+		server.logg.Print("Update user: user id not set")
 		res.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	if err := server.stor.UpdateUser(ctx, user); err != nil {
-		server.logg.Print(err)
+		server.logg.Printf("Update user: update in storage: %v", err)
+		if errors.Is(err, storage.ErrNoUser) {
+			res.WriteHeader(http.StatusBadRequest)
+		} else {
+			res.WriteHeader(http.StatusInternalServerError)
+		}
+		return
 	}
 }
 
 func handleDeleteUser(res http.ResponseWriter, req *http.Request, server *Server) {
-	id, _ := getID(req)
-
-	if err := server.stor.DeleteUser(ctx, id); err != nil {
-		server.logg.Print(err)
-	}
-}
-
-func getID(req *http.Request) (id int, err error) {
-	idStr := req.URL.Query().Get("id")
-	id, err = strconv.Atoi(idStr)
+	id, err := getID(req)
 	if err != nil {
+		server.logg.Printf("Delete user: get id: %v", err)
+		if err == ErrIDEmpty { //nolint:errorlint
+			res.WriteHeader(http.StatusBadRequest)
+		} else {
+			res.WriteHeader(http.StatusInternalServerError)
+		}
 		return
 	}
 
-	return
+	if err := server.stor.DeleteUser(ctx, id); err != nil {
+		server.logg.Printf("Delete user: delete in storage: %v", err)
+		if errors.Is(err, storage.ErrNoUser) {
+			res.WriteHeader(http.StatusBadRequest)
+		} else {
+			res.WriteHeader(http.StatusInternalServerError)
+		}
+		return
+	}
+}
+
+func getID(req *http.Request) (int, error) {
+	idStr := req.URL.Query().Get("id")
+	if idStr == "" {
+		return 0, ErrIDEmpty
+	}
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return 0, fmt.Errorf("convert id: %w", err)
+	}
+
+	return id, nil
 }
 
 func unmarshalUser(req *http.Request) (*storage.User, error) {
 	var user storage.User
 
-	lenReq := req.ContentLength
-	body := make([]byte, lenReq)
-	req.Body.Read(body)
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read body req: %w", err)
+	}
 
 	if err := json.Unmarshal(body, &user); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unmarshal body req: %w", err)
 	}
 
 	return &user, nil
