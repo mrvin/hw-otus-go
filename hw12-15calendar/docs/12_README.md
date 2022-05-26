@@ -159,3 +159,10 @@
 - Присутствуют юнит-тесты - 1 балл
 
 #### Зачёт от 7 баллов
+
+### Заметки
+Запуск контейнера postgres и подключение
+```bash
+$ docker run --rm --name postgres-event-db -e POSTGRES_PASSWORD=event-db -e POSTGRES_USER=event-db -e POSTGRES_DB=event-db -d -p 5432:5432 postgres
+$ psql -h 127.0.0.1 -U event-db -d event-db
+```
