@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"log"
 	"net/http"
@@ -59,7 +60,7 @@ func main() {
 	go listenForShutdown(signals, server, done)
 
 	if err := server.Start(); err != nil {
-		if err != http.ErrServerClosed {
+		if errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("HTTP server: failed to start: %v", err)
 		}
 	}

@@ -3,6 +3,7 @@ package sqlstorage
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
@@ -45,7 +46,7 @@ func (s *Storage) GetEventsForUser(ctx context.Context, userID int) ([]storage.E
 
 	rows, err := s.getEventsForUser.QueryContext(ctx, userID)
 	if err != nil {
-		if err == sql.ErrNoRows { //nolint:errorlint
+		if errors.Is(err, sql.ErrNoRows) {
 			return events, nil
 		}
 		return nil, fmt.Errorf("can't get events for user with id: %d: %w", userID, err)

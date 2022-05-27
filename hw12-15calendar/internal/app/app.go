@@ -13,12 +13,9 @@ type Storage interface {
 	DeleteEvent(ctx context.Context, id int) error
 
 	GetEventsForUser(ctx context.Context, id int) ([]storage.Event, error)
-	//GetListEvents(ctx context.Context) ([]storage.Event, error)
 
 	CreateUser(ctx context.Context, user *storage.User) error
 	GetUser(ctx context.Context, id int) (*storage.User, error)
 	UpdateUser(ctx context.Context, user *storage.User) error
 	DeleteUser(ctx context.Context, id int) error
-
-	//GetListUsers(ctx context.Context) ([]*storage.User, error)
 }

@@ -44,7 +44,7 @@ func handleGetUser(res http.ResponseWriter, req *http.Request, server *Server) {
 	id, err := getID(req)
 	if err != nil {
 		log.Printf("Get user: get id: %v", err)
-		if err == ErrIDEmpty { //nolint:errorlint
+		if errors.Is(err, ErrIDEmpty) {
 			res.WriteHeader(http.StatusBadRequest)
 		} else {
 			res.WriteHeader(http.StatusInternalServerError)
@@ -106,7 +106,7 @@ func handleDeleteUser(res http.ResponseWriter, req *http.Request, server *Server
 	id, err := getID(req)
 	if err != nil {
 		log.Printf("Delete user: get id: %v", err)
-		if err == ErrIDEmpty { //nolint:errorlint
+		if errors.Is(err, ErrIDEmpty) {
 			res.WriteHeader(http.StatusBadRequest)
 		} else {
 			res.WriteHeader(http.StatusInternalServerError)

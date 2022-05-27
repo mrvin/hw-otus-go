@@ -9,12 +9,12 @@ var ErrNoUser = errors.New("no user with id")
 var ErrNoEvent = errors.New("no event with id")
 
 type Event struct {
-	ID          int
-	Title       string
-	Description string
-	StartTime   time.Time
-	StopTime    time.Time
-	UserID      int
+	ID          int       `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	StartTime   time.Time `json:"startTime"`
+	StopTime    time.Time `json:"stopTime"`
+	UserID      int       `json:"userID"` //nolint:tagliatelle
 	//	CreatedAt   time.Time
 	//	UpdatedAt   time.Time
 }

@@ -3,6 +3,7 @@ package sqlstorage
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
@@ -18,7 +19,7 @@ func (s *Storage) GetUser(ctx context.Context, id int) (*storage.User, error) {
 	var user storage.User
 
 	if err := s.getUser.QueryRowContext(ctx, id).Scan(&user.ID, &user.Name, &user.Email); err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("%w: %d", storage.ErrNoUser, id)
 		}
 		return nil, fmt.Errorf("can't scan user with id: %d: %w", id, err)
@@ -28,7 +29,7 @@ func (s *Storage) GetUser(ctx context.Context, id int) (*storage.User, error) {
 	var err error
 	user.Events, err = s.GetEventsForUser(ctx, user.ID)
 	if err != nil {
-		if err == sql.ErrNoRows { //nolint:errorlint
+		if errors.Is(err, sql.ErrNoRows) {
 			return &user, nil
 		}
 		return nil, fmt.Errorf("can't scan events for user with id: %d: %w", id, err)
