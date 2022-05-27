@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -19,18 +20,18 @@ var ErrIDEmpty = errors.New("id is empty")
 func handleCreateUser(res http.ResponseWriter, req *http.Request, server *Server) {
 	user, err := unmarshalUser(req)
 	if err != nil {
-		server.logg.Printf("Create user: %v", err)
+		log.Printf("Create user: %v", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	if user.Name == "" || user.Email == "" {
-		server.logg.Printf("Create user: empty name or email: %v", err)
+		log.Printf("Create user: empty name or email: %v", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if err := server.stor.CreateUser(ctx, user); err != nil {
-		server.logg.Printf("Create user: saving user info: %v", err)
+		log.Printf("Create user: saving user info: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -42,7 +43,7 @@ func handleGetUser(res http.ResponseWriter, req *http.Request, server *Server) {
 	// Return an error in JSON
 	id, err := getID(req)
 	if err != nil {
-		server.logg.Printf("Get user: get id: %v", err)
+		log.Printf("Get user: get id: %v", err)
 		if err == ErrIDEmpty { //nolint:errorlint
 			res.WriteHeader(http.StatusBadRequest)
 		} else {
@@ -53,7 +54,7 @@ func handleGetUser(res http.ResponseWriter, req *http.Request, server *Server) {
 
 	user, err := server.stor.GetUser(ctx, id)
 	if err != nil {
-		server.logg.Printf("Get user: get from storage: %v", err)
+		log.Printf("Get user: get from storage: %v", err)
 		if errors.Is(err, storage.ErrNoUser) {
 			res.WriteHeader(http.StatusBadRequest)
 		} else {
@@ -64,13 +65,13 @@ func handleGetUser(res http.ResponseWriter, req *http.Request, server *Server) {
 
 	jsonUser, err := json.Marshal(user)
 	if err != nil {
-		server.logg.Printf("Get user: marshaling json: %v", err)
+		log.Printf("Get user: marshaling json: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	res.Header().Set("Content-Type", "application/json")
 	if _, err := res.Write(jsonUser); err != nil {
-		server.logg.Printf("Get user: write res: %v", err)
+		log.Printf("Get user: write res: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -80,18 +81,18 @@ func handleUpdateUser(res http.ResponseWriter, req *http.Request, server *Server
 	// Update only required fields
 	user, err := unmarshalUser(req)
 	if err != nil {
-		server.logg.Printf("Update user: %v", err)
+		log.Printf("Update user: %v", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	if user.ID == 0 {
-		server.logg.Print("Update user: user id not set")
+		log.Print("Update user: user id not set")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if err := server.stor.UpdateUser(ctx, user); err != nil {
-		server.logg.Printf("Update user: update in storage: %v", err)
+		log.Printf("Update user: update in storage: %v", err)
 		if errors.Is(err, storage.ErrNoUser) {
 			res.WriteHeader(http.StatusBadRequest)
 		} else {
@@ -104,7 +105,7 @@ func handleUpdateUser(res http.ResponseWriter, req *http.Request, server *Server
 func handleDeleteUser(res http.ResponseWriter, req *http.Request, server *Server) {
 	id, err := getID(req)
 	if err != nil {
-		server.logg.Printf("Delete user: get id: %v", err)
+		log.Printf("Delete user: get id: %v", err)
 		if err == ErrIDEmpty { //nolint:errorlint
 			res.WriteHeader(http.StatusBadRequest)
 		} else {
@@ -114,7 +115,7 @@ func handleDeleteUser(res http.ResponseWriter, req *http.Request, server *Server
 	}
 
 	if err := server.stor.DeleteUser(ctx, id); err != nil {
-		server.logg.Printf("Delete user: delete in storage: %v", err)
+		log.Printf("Delete user: delete in storage: %v", err)
 		if errors.Is(err, storage.ErrNoUser) {
 			res.WriteHeader(http.StatusBadRequest)
 		} else {

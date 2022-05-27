@@ -98,7 +98,7 @@ func (s *Storage) PrepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (s *Storage) Close(ctx context.Context) error {
+func (s *Storage) Close() error {
 	s.insertEvent.Close()
 	s.getEvent.Close()
 	s.getEventsForUser.Close()

@@ -3,6 +3,7 @@ package internalhttp
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"path"
 	"strings"
@@ -10,20 +11,17 @@ import (
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/app"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/logger"
 )
 
 type Server struct {
 	serv http.Server
-	logg *logger.Logger
 	stor app.Storage
 	pr   *pathResolver
 }
 
-func New(conf *config.HTTPConf, logg *logger.Logger, stor app.Storage) *Server {
+func New(conf *config.HTTPConf, stor app.Storage) *Server {
 	var server Server
 
-	server.logg = logg
 	server.stor = stor
 	server.pr = newPathResolver()
 
@@ -42,13 +40,13 @@ func New(conf *config.HTTPConf, logg *logger.Logger, stor app.Storage) *Server {
 
 func (s *Server) Start() error {
 	if err := s.serv.ListenAndServe(); err != nil {
-		return err
+		return fmt.Errorf("start http server: %w", err)
 	}
 	return nil
 }
 
 func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
-	defer logReq(req, s.logg)()
+	defer logReq(req)()
 	check := req.Method + " " + req.URL.Path
 	for pattern, handlerFunc := range s.pr.handlers {
 		if ok, err := path.Match(pattern, check); ok && err == nil {
@@ -63,17 +61,18 @@ func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	http.NotFound(res, req)
 }
 
-func logReq(req *http.Request, logg *logger.Logger) func() {
+func logReq(req *http.Request) func() {
 	start := time.Now()
 
 	return func() {
-		logg.Printf("%s [%s] %s %s %s %s", strings.Split(req.RemoteAddr, ":")[0], start.Format(time.ANSIC), req.Method, req.URL.Path, req.Proto, time.Since(start) /*, req.Header["User-Agent"]*/)
+		log.Printf("%s [%s] %s %s %s %s", strings.Split(req.RemoteAddr, ":")[0], start.Format(time.ANSIC),
+			req.Method, req.URL.Path, req.Proto, time.Since(start) /*, req.Header["User-Agent"]*/)
 	}
 }
 
 func (s *Server) Stop(ctx context.Context) error {
 	if err := s.serv.Shutdown(ctx); err != nil {
-		return err
+		return fmt.Errorf("stop http server: %w", err)
 	}
 
 	return nil
