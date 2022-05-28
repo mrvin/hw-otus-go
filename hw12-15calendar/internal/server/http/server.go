@@ -30,6 +30,11 @@ func New(conf *config.HTTPConf, stor app.Storage) *Server {
 	server.pr.Add("PUT /users", handleUpdateUser)
 	server.pr.Add("DELETE /users", handleDeleteUser)
 
+	server.pr.Add("POST /events", handleCreateEvent)
+	server.pr.Add("GET /events", handleGetEvent)
+	server.pr.Add("PUT /events", handleUpdateEvent)
+	server.pr.Add("DELETE /events", handleDeleteEvent)
+
 	server.serv = http.Server{
 		Addr:    fmt.Sprintf("%s:%d", conf.Host, conf.Port),
 		Handler: &server,

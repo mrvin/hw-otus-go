@@ -18,6 +18,7 @@ var ctx = context.Background()
 var ErrIDEmpty = errors.New("id is empty")
 
 func handleCreateUser(res http.ResponseWriter, req *http.Request, server *Server) {
+	// Return id created user
 	user, err := unmarshalUser(req)
 	if err != nil {
 		log.Printf("Create user: %v", err)
@@ -25,7 +26,7 @@ func handleCreateUser(res http.ResponseWriter, req *http.Request, server *Server
 		return
 	}
 	if user.Name == "" || user.Email == "" {
-		log.Printf("Create user: empty name or email: %v", err)
+		log.Print("Create user: empty name or email")
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -69,6 +70,7 @@ func handleGetUser(res http.ResponseWriter, req *http.Request, server *Server) {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
 	res.Header().Set("Content-Type", "application/json")
 	if _, err := res.Write(jsonUser); err != nil {
 		log.Printf("Get user: write res: %v", err)
