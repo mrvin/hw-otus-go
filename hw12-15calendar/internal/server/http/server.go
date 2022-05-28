@@ -9,17 +9,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/app"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
 
 type Server struct {
 	serv http.Server
-	stor app.Storage
+	stor storage.Storage
 	pr   *pathResolver
 }
 
-func New(conf *config.HTTPConf, stor app.Storage) *Server {
+func New(conf *config.HTTPConf, stor storage.Storage) *Server {
 	var server Server
 
 	server.stor = stor

@@ -31,7 +31,6 @@ func handleCreateEvent(res http.ResponseWriter, req *http.Request, server *Serve
 	}
 
 	res.WriteHeader(http.StatusCreated)
-
 }
 
 func handleGetEvent(res http.ResponseWriter, req *http.Request, server *Server) {

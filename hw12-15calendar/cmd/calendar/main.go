@@ -9,9 +9,9 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/app"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
 	httpserver "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/server/http"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	memorystorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/memory"
 	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
 )
@@ -30,7 +30,7 @@ func main() {
 	logFile := logInit(&config.Logger)
 	log.Println("Start service calendar")
 
-	var storage app.Storage
+	var storage storage.Storage
 	if config.InMem {
 		log.Println("Storage in memory")
 		storage = memorystorage.New()
