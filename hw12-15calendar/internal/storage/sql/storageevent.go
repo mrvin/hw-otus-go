@@ -10,9 +10,11 @@ import (
 )
 
 func (s *Storage) CreateEvent(ctx context.Context, event *storage.Event) error {
-	err := s.insertEvent.QueryRowContext(ctx, event.Title, event.Description, event.StartTime, event.StopTime, event.UserID).Scan(&event.ID)
+	if err := s.insertEvent.QueryRowContext(ctx, event.Title, event.Description, event.StartTime, event.StopTime, event.UserID).Scan(&event.ID); err != nil {
+		return fmt.Errorf("create event: %w", err)
+	}
 
-	return fmt.Errorf("create event: %w", err)
+	return nil
 }
 
 func (s *Storage) GetEvent(ctx context.Context, id int) (*storage.Event, error) {
@@ -29,16 +31,38 @@ func (s *Storage) GetEvent(ctx context.Context, id int) (*storage.Event, error) 
 }
 
 func (s *Storage) UpdateEvent(ctx context.Context, event *storage.Event) error {
-	_, err := s.db.ExecContext(ctx, "update events set title = $2, description = $3, start_time = $4, stop_time = $5, user_id = $6 where id = $1",
+	res, err := s.db.ExecContext(ctx, "update events set title = $2, description = $3, start_time = $4, stop_time = $5, user_id = $6 where id = $1",
 		event.ID, event.Title, event.Description, event.StartTime, event.StopTime, event.UserID)
+	if err != nil {
+		return fmt.Errorf("update event: %w", err)
+	}
 
-	return fmt.Errorf("update event: %w", err)
+	count, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("update event: %w", err)
+	}
+	if count != 1 {
+		return fmt.Errorf("%w: %d", storage.ErrNoEvent, event.ID)
+	}
+
+	return nil
 }
 
 func (s *Storage) DeleteEvent(ctx context.Context, id int) error {
-	_, err := s.db.ExecContext(ctx, "delete from events where id = $1", id)
+	res, err := s.db.ExecContext(ctx, "delete from events where id = $1", id)
+	if err != nil {
+		return fmt.Errorf("delete event: %w", err)
+	}
 
-	return fmt.Errorf("delete event: %w", err)
+	count, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("delete event: %w", err)
+	}
+	if count != 1 {
+		return fmt.Errorf("%w: %d", storage.ErrNoEvent, id)
+	}
+
+	return nil
 }
 
 func (s *Storage) GetEventsForUser(ctx context.Context, userID int) ([]storage.Event, error) {

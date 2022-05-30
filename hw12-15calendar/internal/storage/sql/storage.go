@@ -28,9 +28,11 @@ func (s *Storage) Connect(ctx context.Context, conf *config.DBConf) error {
 		return fmt.Errorf("open db: %w", err)
 	}
 
-	err = s.db.PingContext(ctx)
+	if err := s.db.PingContext(ctx); err != nil {
+		return fmt.Errorf("connection db: %w", err)
+	}
 
-	return fmt.Errorf("connection db: %w", err)
+	return nil
 }
 
 func (s *Storage) CreateSchemaDB(ctx context.Context) error {
@@ -41,7 +43,8 @@ func (s *Storage) CreateSchemaDB(ctx context.Context) error {
 		email text
 	)`
 	_, err := s.db.ExecContext(ctx, sqlCreateTableUsers)
-	// if such a table exists then ignore the error.
+	// if such a table exists then ignore the error. *pq.Error
+	// pq: relation "users" already exists
 	if err != nil {
 		return fmt.Errorf("create table users: %w", err)
 	}

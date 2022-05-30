@@ -10,9 +10,11 @@ import (
 )
 
 func (s *Storage) CreateUser(ctx context.Context, user *storage.User) error {
-	err := s.insertUser.QueryRowContext(ctx, user.Name, user.Email).Scan(&user.ID)
+	if err := s.insertUser.QueryRowContext(ctx, user.Name, user.Email).Scan(&user.ID); err != nil {
+		return fmt.Errorf("create user: %w", err)
+	}
 
-	return fmt.Errorf("create user: %w", err)
+	return nil
 }
 
 func (s *Storage) GetUser(ctx context.Context, id int) (*storage.User, error) {
@@ -39,13 +41,33 @@ func (s *Storage) GetUser(ctx context.Context, id int) (*storage.User, error) {
 }
 
 func (s *Storage) UpdateUser(ctx context.Context, user *storage.User) error {
-	_, err := s.db.ExecContext(ctx, "update users set name = $2, email = $3 where id = $1", user.ID, user.Name, user.Email)
+	res, err := s.db.ExecContext(ctx, "update users set name = $2, email = $3 where id = $1", user.ID, user.Name, user.Email)
+	if err != nil {
+		return fmt.Errorf("update user: %w", err)
+	}
+	count, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("update user: %w", err)
+	}
+	if count != 1 {
+		return fmt.Errorf("%w: %d", storage.ErrNoUser, user.ID)
+	}
 
-	return fmt.Errorf("update user: %w", err)
+	return nil
 }
 
 func (s *Storage) DeleteUser(ctx context.Context, id int) error {
-	_, err := s.db.ExecContext(ctx, "delete from users where id = $1", id)
+	res, err := s.db.ExecContext(ctx, "delete from users where id = $1", id)
+	if err != nil {
+		return fmt.Errorf("delete user: %w", err)
+	}
+	count, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("delete user: %w", err)
+	}
+	if count != 1 {
+		return fmt.Errorf("%w: %d", storage.ErrNoUser, id)
+	}
 
-	return fmt.Errorf("delete user: %w", err)
+	return nil
 }
