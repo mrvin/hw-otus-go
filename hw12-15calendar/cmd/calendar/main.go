@@ -9,7 +9,7 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/config"
 	httpserver "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/server/http"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	memorystorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/memory"

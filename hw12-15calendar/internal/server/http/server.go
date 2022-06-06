@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/config"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
 

@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	_ "github.com/lib/pq"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/config"
 )
 
 type Storage struct {
