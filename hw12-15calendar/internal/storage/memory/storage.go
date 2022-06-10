@@ -75,7 +75,7 @@ func (s *Storage) DeleteUser(_ context.Context, id int) error {
 	s.muEvents.Lock()
 	for _, event := range s.mEvents {
 		if event.UserID == id {
-			delete(s.mEvents, id)
+			delete(s.mEvents, event.ID)
 		}
 	}
 	s.muEvents.Unlock()
