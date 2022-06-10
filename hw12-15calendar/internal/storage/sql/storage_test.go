@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/lib/pq"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/config"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
 
@@ -16,7 +16,7 @@ func initDB(st *Storage, t *testing.T) {
 	conf := config.DBConf{"localhost", 5432, "event-db", "event-db", "event-db"}
 
 	if err := st.Connect(ctx, &conf); err != nil {
-		t.Errorf("Connect: %v", err)
+		t.Fatalf("Connect: %v", err)
 	}
 	if err := st.CreateSchemaDB(ctx); err != nil {
 		var pgerr *pq.Error
