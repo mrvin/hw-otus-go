@@ -179,13 +179,13 @@ func TestEventCRUD(ctx context.Context, t *testing.T, st Storage) {
 
 func cmpUsers(t *testing.T, u1, u2 *User) {
 	if u1.ID != u2.ID {
-		t.Errorf("mismatchr id user: %d, %d", u1.ID, u2.ID)
+		t.Errorf("mismatch id user: %d, %d", u1.ID, u2.ID)
 	}
 	if u1.Name != u2.Name {
-		t.Errorf("mismatchr name user: %s, %s", u1.Name, u2.Name)
+		t.Errorf("mismatch name user: %s, %s", u1.Name, u2.Name)
 	}
 	if u1.Email != u2.Email {
-		t.Errorf("mismatchr email user: %s, %s", u1.Email, u2.Email)
+		t.Errorf("mismatch email user: %s, %s", u1.Email, u2.Email)
 	}
 
 	for i := range u1.Events {
@@ -195,21 +195,21 @@ func cmpUsers(t *testing.T, u1, u2 *User) {
 
 func cmpEvent(t *testing.T, e1, e2 *Event) {
 	if e1.ID != e2.ID {
-		t.Errorf("mismatchr id event: %d, %d", e1.ID, e2.ID)
+		t.Errorf("mismatch id event: %d, %d", e1.ID, e2.ID)
 	}
 	if e1.Title != e2.Title {
-		t.Errorf("mismatchr title event: %s, %s", e1.Title, e2.Title)
+		t.Errorf("mismatch title event: %s, %s", e1.Title, e2.Title)
 	}
 	if e1.Description != e2.Description {
-		t.Errorf("mismatchr description event: %s, %s", e1.Description, e2.Description)
+		t.Errorf("mismatch description event: %s, %s", e1.Description, e2.Description)
 	}
 	if !e1.StartTime.Equal(e2.StartTime) {
-		t.Errorf("mismatchr start time event: %v, %v", e1.StartTime, e2.StartTime)
+		t.Errorf("mismatch start time event: %v, %v", e1.StartTime, e2.StartTime)
 	}
 	if !e1.StopTime.Equal(e2.StopTime) {
-		t.Errorf("mismatchr stop time event: %v, %v", e1.StopTime, e2.StopTime)
+		t.Errorf("mismatch stop time event: %v, %v", e1.StopTime, e2.StopTime)
 	}
 	if e1.UserID != e2.UserID {
-		t.Errorf("mismatchr user id for event: %d, %d", e1.UserID, e2.UserID)
+		t.Errorf("mismatch user id for event: %d, %d", e1.UserID, e2.UserID)
 	}
 }
