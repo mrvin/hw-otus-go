@@ -6,6 +6,8 @@ services:
          dockerfile: deployments/Dockerfile.calendar
         ports:
          - "8080:8080"
+        environment:
+         ENV: PROD
         links:
          - postgres
     postgres:
@@ -14,4 +16,5 @@ services:
          POSTGRES_PASSWORD: event-db
          POSTGRES_USER: event-db
          POSTGRES_DB: event-db
-
+#    rabbitmq:
+#        image: rabbitmq:latest

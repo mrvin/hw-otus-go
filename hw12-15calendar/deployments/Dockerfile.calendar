@@ -4,15 +4,21 @@ MAINTAINER mrvin <v.v.vinogradovv@gmail.com>
 
 RUN groupadd -r calendar-group && useradd -r -g calendar-group calendar-user
 
+# Create a folder to cache command 'go run' and 'go test' results
+RUN mkdir -p /home/calendar-user/.cache/go-build
+RUN chown calendar-user /home/calendar-user/.cache/go-build
+
 WORKDIR /calendar/app
 
 COPY cmd/calendar cmd/calendar
-COPY go.mod .
-COPY go.sum .
 COPY Makefile .
 COPY internal internal
 COPY configs configs
 
+COPY deployments/start.sh /
+
+COPY go.mod .
+COPY go.sum .
 # Download necessary Go modules
 RUN go mod download
 
@@ -22,5 +28,5 @@ EXPOSE 8080
 
 USER calendar-user
 
-CMD ["bin/calendar", "-config", "configs/config.yml"]
+CMD ["/start.sh"]
 
