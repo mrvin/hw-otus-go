@@ -19,6 +19,8 @@ import (
 const urlUsers = "http://localhost:8080/users"
 const urlEvents = "http://localhost:8080/events"
 
+var confDBTest = config.DBConf{"postgres", 5432, "event-db", "event-db", "event-db"}
+
 func initServerHTTP(st storage.Storage) *Server {
 	conf := config.HTTPConf{"localhost", 8080}
 	server := New(&conf, st)
@@ -39,34 +41,28 @@ func TestHandleEventMemory(t *testing.T) {
 }
 
 func TestHandleUserSQL(t *testing.T) {
-	conf := config.DBConf{"localhost", 5432, "event-db", "event-db", "event-db"}
-	st, err := sqlstorage.New(ctx, &conf)
+	st, err := sqlstorage.New(ctx, &confDBTest)
 	if err != nil {
 		t.Fatalf("db: %v", err)
 	}
+	defer st.DropSchemaDB(ctx)
 
 	server := initServerHTTP(st)
 	testHandleUser(t, server)
 
-	if err := st.DropSchemaDB(ctx); err != nil {
-		t.Fatalf("DropSchemaDB: %v", err)
-	}
 	st.Close()
 }
 
 func TestHandleEventSQL(t *testing.T) {
-	conf := config.DBConf{"localhost", 5432, "event-db", "event-db", "event-db"}
-	st, err := sqlstorage.New(ctx, &conf)
+	st, err := sqlstorage.New(ctx, &confDBTest)
 	if err != nil {
 		t.Fatalf("db: %v", err)
 	}
+	defer st.DropSchemaDB(ctx)
 
 	server := initServerHTTP(st)
 	testHandleEvent(t, server)
 
-	if err := st.DropSchemaDB(ctx); err != nil {
-		t.Fatalf("DropSchemaDB: %v", err)
-	}
 	st.Close()
 }
 

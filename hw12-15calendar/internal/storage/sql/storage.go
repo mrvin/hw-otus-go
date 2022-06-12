@@ -80,12 +80,12 @@ func (s *Storage) createSchemaDB(ctx context.Context) error {
 }
 
 func (s *Storage) DropSchemaDB(ctx context.Context) error {
-	sqlDropTableEvents := `DROP TABLE events `
+	sqlDropTableEvents := `DROP TABLE IF NOT EXISTS events`
 	if _, err := s.db.ExecContext(ctx, sqlDropTableEvents); err != nil {
 		return fmt.Errorf("drop table events: %w", err)
 	}
 
-	sqlDropTableUsers := `DROP TABLE users`
+	sqlDropTableUsers := `DROP TABLE IF NOT EXISTS users`
 	if _, err := s.db.ExecContext(ctx, sqlDropTableUsers); err != nil {
 		return fmt.Errorf("drop table users: %w", err)
 	}

@@ -10,32 +10,28 @@ import (
 
 var ctx = context.Background()
 
+var confDBTest = config.DBConf{"postgres", 5432, "event-db", "event-db", "event-db"}
+
 func TestUserCRUD(t *testing.T) {
-	conf := config.DBConf{"localhost", 5432, "event-db", "event-db", "event-db"}
-	st, err := New(ctx, &conf)
+	st, err := New(ctx, &confDBTest)
 	if err != nil {
 		t.Fatalf("db: %v", err)
 	}
+	defer st.DropSchemaDB(ctx)
 
 	storage.TestUserCRUD(ctx, t, st)
 
-	if err := st.DropSchemaDB(ctx); err != nil {
-		t.Fatalf("DropSchemaDB: %v", err)
-	}
 	st.Close()
 }
 
 func TestEventCRUD(t *testing.T) {
-	conf := config.DBConf{"localhost", 5432, "event-db", "event-db", "event-db"}
-	st, err := New(ctx, &conf)
+	st, err := New(ctx, &confDBTest)
 	if err != nil {
 		t.Fatalf("db: %v", err)
 	}
+	defer st.DropSchemaDB(ctx)
 
 	storage.TestEventCRUD(ctx, t, st)
 
-	if err := st.DropSchemaDB(ctx); err != nil {
-		t.Fatalf("DropSchemaDB: %v", err)
-	}
 	st.Close()
 }
