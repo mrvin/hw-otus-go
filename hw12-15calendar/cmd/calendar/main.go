@@ -24,11 +24,10 @@ func main() {
 
 	config, err := config.Parse(*configFile)
 	if err != nil {
-		log.Fatalf("can't parse config: %v", err)
+		log.Fatalf("Parse config: %v", err)
 	}
 
 	logFile := logInit(&config.Logger)
-	log.Println("Start service calendar")
 
 	var storage storage.Storage
 	if config.InMem {
@@ -36,20 +35,11 @@ func main() {
 		storage = memorystorage.New()
 	} else {
 		log.Println("Storage in sql")
-		var storageSQL sqlstorage.Storage
-		if err := storageSQL.Connect(ctx, &config.DB); err != nil {
-			log.Fatalf("can't connection db: %v", err)
+		storage, err = sqlstorage.New(ctx, &config.DB)
+		if err != nil {
+			log.Fatalf("db: %v", err)
 		}
 		log.Println("Connect db")
-		// if such a tables exists then ignore the error.
-		if err := storageSQL.CreateSchemaDB(ctx); err != nil {
-			log.Fatalf("can't create schema db: %v", err)
-		}
-		if err := storageSQL.PrepareQuery(ctx); err != nil {
-			log.Fatalf("can't prepare query: %v", err)
-		}
-
-		storage = &storageSQL
 	}
 
 	server := httpserver.New(&config.HTTP, storage)

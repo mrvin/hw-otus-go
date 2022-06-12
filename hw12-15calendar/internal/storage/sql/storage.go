@@ -20,37 +20,51 @@ type Storage struct {
 	getUser    *sql.Stmt
 }
 
-func (s *Storage) Connect(ctx context.Context, conf *config.DBConf) error {
+func New(ctx context.Context, conf *config.DBConf) (*Storage, error) {
+	var s Storage
+
+	if err := s.connect(ctx, conf); err != nil {
+		return nil, fmt.Errorf("connection db: %w", err)
+	}
+	if err := s.createSchemaDB(ctx); err != nil {
+		return nil, fmt.Errorf("create schema db: %w", err)
+	}
+	if err := s.prepareQuery(ctx); err != nil {
+		return nil, fmt.Errorf("prepare query: %w", err)
+	}
+
+	return &s, nil
+}
+
+func (s *Storage) connect(ctx context.Context, conf *config.DBConf) error {
 	var err error
-	dbConfStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", conf.Host, conf.Port, conf.User, conf.Password, conf.Name)
+	dbConfStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		conf.Host, conf.Port, conf.User, conf.Password, conf.Name)
 	s.db, err = sql.Open("postgres", dbConfStr)
 	if err != nil {
 		return fmt.Errorf("open db: %w", err)
 	}
 
 	if err := s.db.PingContext(ctx); err != nil {
-		return fmt.Errorf("connection db: %w", err)
+		return fmt.Errorf("ping db: %w", err)
 	}
 
 	return nil
 }
 
-func (s *Storage) CreateSchemaDB(ctx context.Context) error {
+func (s *Storage) createSchemaDB(ctx context.Context) error {
 	sqlCreateTableUsers := `
-	CREATE TABLE users (
+	CREATE TABLE IF NOT EXISTS users (
 		id serial primary key,
 		name text,
 		email text
 	)`
-	_, err := s.db.ExecContext(ctx, sqlCreateTableUsers)
-	// if such a table exists then ignore the error. *pq.Error
-	// pq: relation "users" already exists
-	if err != nil {
+	if _, err := s.db.ExecContext(ctx, sqlCreateTableUsers); err != nil {
 		return fmt.Errorf("create table users: %w", err)
 	}
 
 	sqlCreateTableEvents := `
-	CREATE TABLE events (
+	CREATE TABLE IF NOT EXISTS events (
 		id serial primary key,
 		title text,
 		description text,
@@ -58,15 +72,28 @@ func (s *Storage) CreateSchemaDB(ctx context.Context) error {
 		stop_time timestamptz,
 		user_id integer references users(id) on delete cascade
 	)`
-	_, err = s.db.ExecContext(ctx, sqlCreateTableEvents)
-	if err != nil {
+	if _, err := s.db.ExecContext(ctx, sqlCreateTableEvents); err != nil {
 		return fmt.Errorf("create table events: %w", err)
 	}
 
 	return nil
 }
 
-func (s *Storage) PrepareQuery(ctx context.Context) error {
+func (s *Storage) DropSchemaDB(ctx context.Context) error {
+	sqlDropTableEvents := `DROP TABLE events `
+	if _, err := s.db.ExecContext(ctx, sqlDropTableEvents); err != nil {
+		return fmt.Errorf("drop table events: %w", err)
+	}
+
+	sqlDropTableUsers := `DROP TABLE users`
+	if _, err := s.db.ExecContext(ctx, sqlDropTableUsers); err != nil {
+		return fmt.Errorf("drop table users: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Storage) prepareQuery(ctx context.Context) error {
 	var err error
 	fmtStrErr := "prepare \"%s\" query: %w"
 	// Event query prepare

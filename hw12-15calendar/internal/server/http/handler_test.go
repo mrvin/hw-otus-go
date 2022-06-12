@@ -13,6 +13,7 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/config"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	memorystorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/memory"
+	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
 )
 
 const urlUsers = "http://localhost:8080/users"
@@ -24,27 +25,6 @@ func initServerHTTP(st storage.Storage) *Server {
 
 	return server
 }
-
-/*
-func initDB(t *testing.T, st *sqlstorage.Storage) {
-	conf := config.DBConf{"localhost", 5432, "event-db", "event-db", "event-db"}
-
-	if err := st.Connect(ctx, &conf); err != nil {
-		t.Fatalf("Connect: %v", err)
-	}
-	if err := st.CreateSchemaDB(ctx); err != nil {
-		var pgerr *pq.Error
-		if errors.As(err, &pgerr) {
-			if pgerr.Code != "42P07" {
-				t.Errorf("CreateSchemaDB: %v", err)
-			}
-		}
-	}
-
-	if err := st.PrepareQuery(ctx); err != nil {
-		t.Errorf("PrepareQuery: %v", err)
-	}
-}*/
 
 func TestHandleUserMemory(t *testing.T) {
 	st := memorystorage.New()
@@ -58,25 +38,38 @@ func TestHandleEventMemory(t *testing.T) {
 	testHandleEvent(t, server)
 }
 
-/*
 func TestHandleUserSQL(t *testing.T) {
-	var st sqlstorage.Storage
+	conf := config.DBConf{"localhost", 5432, "event-db", "event-db", "event-db"}
+	st, err := sqlstorage.New(ctx, &conf)
+	if err != nil {
+		t.Fatalf("db: %v", err)
+	}
 
-	initDB(t, &st)
-
-	server := initServerHTTP(&st)
+	server := initServerHTTP(st)
 	testHandleUser(t, server)
+
+	if err := st.DropSchemaDB(ctx); err != nil {
+		t.Fatalf("DropSchemaDB: %v", err)
+	}
+	st.Close()
 }
 
 func TestHandleEventSQL(t *testing.T) {
-	var st sqlstorage.Storage
+	conf := config.DBConf{"localhost", 5432, "event-db", "event-db", "event-db"}
+	st, err := sqlstorage.New(ctx, &conf)
+	if err != nil {
+		t.Fatalf("db: %v", err)
+	}
 
-	initDB(t, &st)
-
-	server := initServerHTTP(&st)
+	server := initServerHTTP(st)
 	testHandleEvent(t, server)
+
+	if err := st.DropSchemaDB(ctx); err != nil {
+		t.Fatalf("DropSchemaDB: %v", err)
+	}
+	st.Close()
 }
-*/
+
 func testHandleUser(t *testing.T, server *Server) {
 
 	users := []storage.User{
