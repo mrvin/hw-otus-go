@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/config"
 	httpserver "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/server/http"
@@ -45,7 +46,7 @@ func main() {
 	server := httpserver.New(&config.HTTP, storage)
 
 	signals := make(chan os.Signal)
-	signal.Notify(signals, os.Interrupt, os.Kill)
+	signal.Notify(signals, syscall.SIGINT /*(Control-C)*/, syscall.SIGTERM)
 	done := make(chan struct{})
 	go listenForShutdown(signals, server, done)
 
