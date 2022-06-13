@@ -45,12 +45,11 @@ func TestHandleUserSQL(t *testing.T) {
 	if err != nil {
 		t.Fatalf("db: %v", err)
 	}
+	defer st.Close()
 	defer st.DropSchemaDB(ctx)
 
 	server := initServerHTTP(st)
 	testHandleUser(t, server)
-
-	st.Close()
 }
 
 func TestHandleEventSQL(t *testing.T) {
@@ -58,12 +57,11 @@ func TestHandleEventSQL(t *testing.T) {
 	if err != nil {
 		t.Fatalf("db: %v", err)
 	}
+	defer st.Close()
 	defer st.DropSchemaDB(ctx)
 
 	server := initServerHTTP(st)
 	testHandleEvent(t, server)
-
-	st.Close()
 }
 
 func testHandleUser(t *testing.T, server *Server) {

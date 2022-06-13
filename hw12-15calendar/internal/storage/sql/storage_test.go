@@ -17,11 +17,10 @@ func TestUserCRUD(t *testing.T) {
 	if err != nil {
 		t.Fatalf("db: %v", err)
 	}
+	defer st.Close()
 	defer st.DropSchemaDB(ctx)
 
 	storage.TestUserCRUD(ctx, t, st)
-
-	st.Close()
 }
 
 func TestEventCRUD(t *testing.T) {
@@ -29,9 +28,8 @@ func TestEventCRUD(t *testing.T) {
 	if err != nil {
 		t.Fatalf("db: %v", err)
 	}
+	defer st.Close()
 	defer st.DropSchemaDB(ctx)
 
 	storage.TestEventCRUD(ctx, t, st)
-
-	st.Close()
 }
