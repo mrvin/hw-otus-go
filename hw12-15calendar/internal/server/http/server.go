@@ -44,6 +44,7 @@ func New(conf *config.HTTPConf, stor storage.Storage) *Server {
 }
 
 func (s *Server) Start() error {
+	log.Print("Start http server")
 	if err := s.serv.ListenAndServe(); err != nil {
 		return fmt.Errorf("start http server: %w", err)
 	}
@@ -76,6 +77,7 @@ func logReq(req *http.Request) func() {
 }
 
 func (s *Server) Stop(ctx context.Context) error {
+	log.Print("Stop http server")
 	if err := s.serv.Shutdown(ctx); err != nil {
 		return fmt.Errorf("stop http server: %w", err)
 	}

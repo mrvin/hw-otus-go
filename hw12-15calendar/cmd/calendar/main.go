@@ -1,3 +1,5 @@
+//go:generate protoc -I=../../api/ --go_out=../../api/ --go-grpc_out=../../api/ ../../api/eventservice.proto
+
 package main
 
 import (
@@ -8,9 +10,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/config"
+	grpcserver "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/server/grpc"
 	httpserver "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/server/http"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	memorystorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/memory"
@@ -43,20 +47,35 @@ func main() {
 		log.Println("Connect db")
 	}
 
-	server := httpserver.New(&config.HTTP, storage)
+	serverHTTP := httpserver.New(&config.HTTP, storage)
+	serverGRPC, err := grpcserver.New(&config.GRPC, storage)
+	if err != nil {
+		log.Fatalf("GRPC: %v", err)
+	}
 
 	signals := make(chan os.Signal)
 	signal.Notify(signals, syscall.SIGINT /*(Control-C)*/, syscall.SIGTERM)
-	done := make(chan struct{})
-	go listenForShutdown(signals, server, done)
+	go listenForShutdown(signals, serverHTTP, serverGRPC)
 
-	if err := server.Start(); err != nil {
-		if errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("HTTP server: failed to start: %v", err)
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		if err := serverHTTP.Start(); err != nil {
+			if !errors.Is(err, http.ErrServerClosed) {
+				log.Fatalf("HTTP server: failed to start: %v", err)
+			}
 		}
-	}
+	}()
 
-	<-done
+	go func() {
+		defer wg.Done()
+		if err := serverGRPC.Start(); err != nil {
+			log.Fatalf("GRPC server: failed to start: %v", err)
+		}
+	}()
+
+	wg.Wait()
 
 	if storageSQL, ok := storage.(*sqlstorage.Storage); ok {
 		log.Println("Close sql storage")
@@ -69,15 +88,16 @@ func main() {
 	}
 }
 
-func listenForShutdown(signals chan os.Signal, server *httpserver.Server, done chan<- struct{}) {
+func listenForShutdown(signals chan os.Signal, serverHTTP *httpserver.Server, serverGRPC *grpcserver.Server) {
 	<-signals
 	signal.Stop(signals)
 
-	if err := server.Stop(ctx); err != nil {
+	if err := serverHTTP.Stop(ctx); err != nil {
 		log.Fatalf("HTTP server: failed to stop: %v", err)
 	}
 
-	done <- struct{}{}
+	serverGRPC.Stop()
+
 }
 
 func logInit(config *config.LoggerConf) *os.File {

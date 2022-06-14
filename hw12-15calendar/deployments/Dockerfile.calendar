@@ -13,6 +13,7 @@ WORKDIR /calendar/app
 COPY cmd/calendar cmd/calendar
 COPY Makefile .
 COPY internal internal
+COPY api api
 COPY configs configs
 
 COPY deployments/start.sh /

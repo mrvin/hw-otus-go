@@ -15,3 +15,6 @@ up:
 lint:
 	golangci-lint run ./...
 
+codegen:
+	go generate ./...
+

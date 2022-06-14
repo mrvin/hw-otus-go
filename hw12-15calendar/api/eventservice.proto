@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package event;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = ".;apipb";
+
+message User {
+	int64 id = 1;
+	string name = 2;
+	string email = 3;
+}
+
+message UserRequest {
+	int64 id = 1;
+}
+
+message UserResponse {
+	int64 id = 1;
+}
+
+message Event {
+	int64 id = 1;
+	string title = 2;
+	string description = 3;
+	google.protobuf.Timestamp startTime = 4;
+	google.protobuf.Timestamp stopTime = 5;
+	int64 userID = 6;
+}
+
+message EventRequest {
+	int64 id = 1;
+}
+
+message EventResponse {
+	int64 id = 1;
+}
+
+message Null {};
+
+service Events {
+	rpc CreateUser (User) returns (UserResponse) {}
+	rpc GetUser (UserRequest) returns (User) {}
+	rpc UpdateUser (User) returns (Null) {}
+	rpc DeleteUser (UserRequest) returns (Null) {}
+
+	rpc CreateEvent (Event) returns (EventResponse) {}
+	rpc GetEvent (EventRequest) returns (Event) {}
+	rpc UpdateEvent (Event) returns (Null) {}
+	rpc DeleteEvent (EventRequest) returns (Null) {}
+}
+
