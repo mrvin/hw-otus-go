@@ -6,8 +6,15 @@ import (
 	"fmt"
 
 	_ "github.com/lib/pq"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/config"
 )
+
+type DBConf struct {
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
+	Name     string `yaml:"name"`
+}
 
 type Storage struct {
 	db *sql.DB
@@ -20,7 +27,7 @@ type Storage struct {
 	getUser    *sql.Stmt
 }
 
-func New(ctx context.Context, conf *config.DBConf) (*Storage, error) {
+func New(ctx context.Context, conf *DBConf) (*Storage, error) {
 	var s Storage
 
 	if err := s.connect(ctx, conf); err != nil {
@@ -36,7 +43,7 @@ func New(ctx context.Context, conf *config.DBConf) (*Storage, error) {
 	return &s, nil
 }
 
-func (s *Storage) connect(ctx context.Context, conf *config.DBConf) error {
+func (s *Storage) connect(ctx context.Context, conf *DBConf) error {
 	var err error
 	dbConfStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		conf.Host, conf.Port, conf.User, conf.Password, conf.Name)

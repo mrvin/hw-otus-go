@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
 	"gopkg.in/yaml.v2"
 )
 
@@ -17,25 +18,17 @@ type GRPCConf struct {
 	Port int    `yaml:"port"`
 }
 
-type DBConf struct {
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
-	Name     string `yaml:"name"`
-}
-
 type LoggerConf struct {
 	FilePath string `yaml:"filepath"`
 	Level    string `yaml:"level"`
 }
 
 type Config struct {
-	InMem  bool       `yaml:"inmemory"`
-	DB     DBConf     `yaml:"db"`
-	HTTP   HTTPConf   `yaml:"http"`
-	GRPC   GRPCConf   `yaml:"grpc"`
-	Logger LoggerConf `yaml:"logger"`
+	InMem  bool              `yaml:"inmemory"`
+	DB     sqlstorage.DBConf `yaml:"db"`
+	HTTP   HTTPConf          `yaml:"http"`
+	GRPC   GRPCConf          `yaml:"grpc"`
+	Logger LoggerConf        `yaml:"logger"`
 }
 
 func Parse(configPath string) (*Config, error) {

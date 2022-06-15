@@ -19,7 +19,7 @@ import (
 const urlUsers = "http://localhost:8080/users"
 const urlEvents = "http://localhost:8080/events"
 
-var confDBTest = config.DBConf{"postgres", 5432, "event-db", "event-db", "event-db"}
+var confDBTest = sqlstorage.DBConf{"postgres", 5432, "event-db", "event-db", "event-db"}
 
 func initServerHTTP(st storage.Storage) *Server {
 	conf := config.HTTPConf{"localhost", 8080}

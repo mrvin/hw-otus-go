@@ -27,28 +27,28 @@ func main() {
 	configFile := flag.String("config", "/etc/calendar/config.yml", "path to configuration file")
 	flag.Parse()
 
-	config, err := config.Parse(*configFile)
+	conf, err := config.Parse(*configFile)
 	if err != nil {
 		log.Fatalf("Parse config: %v", err)
 	}
 
-	logFile := logInit(&config.Logger)
+	logFile := logInit(&conf.Logger)
 
 	var storage storage.Storage
-	if config.InMem {
+	if conf.InMem {
 		log.Println("Storage in memory")
 		storage = memorystorage.New()
 	} else {
 		log.Println("Storage in sql")
-		storage, err = sqlstorage.New(ctx, &config.DB)
+		storage, err = sqlstorage.New(ctx, &conf.DB)
 		if err != nil {
 			log.Fatalf("db: %v", err)
 		}
 		log.Println("Connect db")
 	}
 
-	serverHTTP := httpserver.New(&config.HTTP, storage)
-	serverGRPC, err := grpcserver.New(&config.GRPC, storage)
+	serverHTTP := httpserver.New(&conf.HTTP, storage)
+	serverGRPC, err := grpcserver.New(&conf.GRPC, storage)
 	if err != nil {
 		log.Fatalf("GRPC: %v", err)
 	}
@@ -100,13 +100,13 @@ func listenForShutdown(signals chan os.Signal, serverHTTP *httpserver.Server, se
 
 }
 
-func logInit(config *config.LoggerConf) *os.File {
+func logInit(conf *config.LoggerConf) *os.File {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	if config.FilePath == "" {
+	if conf.FilePath == "" {
 		return nil
 	}
 
-	logFile, err := os.OpenFile(config.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	logFile, err := os.OpenFile(conf.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Printf("log init: %v", err)
 		return nil

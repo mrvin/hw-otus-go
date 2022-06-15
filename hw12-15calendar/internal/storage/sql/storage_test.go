@@ -4,13 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/config"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
 
 var ctx = context.Background()
 
-var confDBTest = config.DBConf{"postgres", 5432, "event-db", "event-db", "event-db"}
+var confDBTest = DBConf{"postgres", 5432, "event-db", "event-db", "event-db"}
 
 func TestUserCRUD(t *testing.T) {
 	st, err := New(ctx, &confDBTest)
