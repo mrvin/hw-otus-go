@@ -30,11 +30,11 @@ var events = []Event{
 		StopTime:  time.Date(2022, time.November, 7, 12, 0, 0, 0, time.UTC)},
 }
 
-type byID []Event
+type byIDEvent []Event
 
-func (x byID) Len() int           { return len(x) }
-func (x byID) Less(i, j int) bool { return x[i].ID < x[j].ID }
-func (x byID) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
+func (x byIDEvent) Len() int           { return len(x) }
+func (x byIDEvent) Less(i, j int) bool { return x[i].ID < x[j].ID }
+func (x byIDEvent) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
 
 func TestUserCRUD(ctx context.Context, t *testing.T, st Storage) {
 	// Create users
@@ -57,6 +57,11 @@ func TestUserCRUD(ctx context.Context, t *testing.T, st Storage) {
 		if !reflect.DeepEqual(*user, users[i]) {
 			t.Errorf("GetUser(id = %d):\n\thave: %v\n\twant: %v", users[i].ID, *user, users[i])
 		}
+	}
+
+	_, err := st.GetAllUsers(ctx)
+	if err != nil {
+		t.Errorf("GetAllUsers: %v", err)
 	}
 
 	// Update user name
@@ -130,7 +135,7 @@ func TestEventCRUD(ctx context.Context, t *testing.T, st Storage) {
 			t.Errorf("GetUser(id = %d): %v", users[i].ID, err)
 		}
 
-		sort.Sort(byID(user.Events))
+		sort.Sort(byIDEvent(user.Events))
 		cmpUsers(t, user, &users[i])
 	}
 
@@ -145,6 +150,11 @@ func TestEventCRUD(ctx context.Context, t *testing.T, st Storage) {
 		t.Errorf("GetEvent(id = %d): %v", events[0].ID, err)
 	}
 	cmpEvent(t, event, &events[0])
+
+	_, err = st.GetAllEvents(ctx)
+	if err != nil {
+		t.Errorf("GetAllEvents: %v", err)
+	}
 
 	// Delete all events
 	for _, user := range users {

@@ -51,6 +51,18 @@ func (s *Storage) GetUser(_ context.Context, id int) (*storage.User, error) {
 	return &user, nil
 }
 
+func (s *Storage) GetAllUsers(_ context.Context) ([]storage.User, error) {
+	users := make([]storage.User, 0)
+
+	s.muUsers.RLock()
+	for _, user := range s.mUsers {
+		users = append(users, user)
+	}
+	s.muUsers.RUnlock()
+
+	return users, nil
+}
+
 func (s *Storage) UpdateUser(_ context.Context, user *storage.User) error {
 	s.muUsers.Lock()
 	defer s.muUsers.Unlock()
@@ -104,6 +116,18 @@ func (s *Storage) GetEvent(_ context.Context, id int) (*storage.Event, error) {
 	}
 
 	return &user, nil
+}
+
+func (s *Storage) GetAllEvents(_ context.Context) ([]storage.Event, error) {
+	events := make([]storage.Event, 0)
+
+	s.muEvents.RLock()
+	for _, event := range s.mEvents {
+		events = append(events, event)
+	}
+	s.muEvents.RUnlock()
+
+	return events, nil
 }
 
 func (s *Storage) UpdateEvent(_ context.Context, event *storage.Event) error {

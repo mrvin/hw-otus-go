@@ -30,6 +30,30 @@ func (s *Storage) GetEvent(ctx context.Context, id int) (*storage.Event, error) 
 	return &event, nil
 }
 
+func (s *Storage) GetAllEvents(ctx context.Context) ([]storage.Event, error) {
+	events := make([]storage.Event, 0)
+
+	rows, err := s.getAllEvents.QueryContext(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return events, nil
+		}
+		return nil, fmt.Errorf("can't get all events: %w", err)
+	}
+
+	for rows.Next() {
+		var event storage.Event
+		err = rows.Scan(&event.ID, &event.Title, &event.Description, &event.StartTime, &event.StopTime, &event.UserID)
+		if err != nil {
+			return nil, fmt.Errorf("can't scan next row: %w", err)
+		}
+		events = append(events, event)
+	}
+	rows.Close()
+
+	return events, nil
+}
+
 func (s *Storage) UpdateEvent(ctx context.Context, event *storage.Event) error {
 	res, err := s.db.ExecContext(ctx, "update events set title = $2, description = $3, start_time = $4, stop_time = $5, user_id = $6 where id = $1",
 		event.ID, event.Title, event.Description, event.StartTime, event.StopTime, event.UserID)

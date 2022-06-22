@@ -21,10 +21,12 @@ type Storage struct {
 
 	insertEvent      *sql.Stmt
 	getEvent         *sql.Stmt
+	getAllEvents     *sql.Stmt
 	getEventsForUser *sql.Stmt
 
-	insertUser *sql.Stmt
-	getUser    *sql.Stmt
+	insertUser  *sql.Stmt
+	getUser     *sql.Stmt
+	getAllUsers *sql.Stmt
 }
 
 func New(ctx context.Context, conf *DBConf) (*Storage, error) {
@@ -114,6 +116,11 @@ func (s *Storage) prepareQuery(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf(fmtStrErr, "getEvent", err)
 	}
+	sqlGetAllEvent := "SELECT * FROM events"
+	s.getAllEvents, err = s.db.PrepareContext(ctx, sqlGetAllEvent)
+	if err != nil {
+		return fmt.Errorf(fmtStrErr, "getAllEvents", err)
+	}
 	sqlGetEventsForUser := "select id, title, description, start_time, stop_time, user_id from events where user_id = $1"
 	s.getEventsForUser, err = s.db.PrepareContext(ctx, sqlGetEventsForUser)
 	if err != nil {
@@ -130,6 +137,11 @@ func (s *Storage) prepareQuery(ctx context.Context) error {
 	s.getUser, err = s.db.PrepareContext(ctx, sqlGetUser)
 	if err != nil {
 		return fmt.Errorf(fmtStrErr, "getUser", err)
+	}
+	sqlGetAllUsers := "SELECT * FROM users"
+	s.getAllUsers, err = s.db.PrepareContext(ctx, sqlGetAllUsers)
+	if err != nil {
+		return fmt.Errorf(fmtStrErr, "getAllUsers", err)
 	}
 
 	return nil

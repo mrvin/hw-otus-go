@@ -40,6 +40,30 @@ func (s *Storage) GetUser(ctx context.Context, id int) (*storage.User, error) {
 	return &user, nil
 }
 
+func (s *Storage) GetAllUsers(ctx context.Context) ([]storage.User, error) {
+	users := make([]storage.User, 0)
+
+	rows, err := s.getAllUsers.QueryContext(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return users, nil
+		}
+		return nil, fmt.Errorf("can't get all users: %w", err)
+	}
+
+	for rows.Next() {
+		var user storage.User
+		err = rows.Scan(&user.ID, &user.Name, &user.Email)
+		if err != nil {
+			return nil, fmt.Errorf("can't scan next row: %w", err)
+		}
+		users = append(users, user)
+	}
+	rows.Close()
+
+	return users, nil
+}
+
 func (s *Storage) UpdateUser(ctx context.Context, user *storage.User) error {
 	res, err := s.db.ExecContext(ctx, "update users set name = $2, email = $3 where id = $1", user.ID, user.Name, user.Email)
 	if err != nil {
