@@ -34,6 +34,12 @@ func main() {
 
 	logFile := logInit(&conf.Logger)
 
+	defer func() {
+		if logFile != nil {
+			logFile.Close()
+		}
+	}()
+
 	var storage storage.Storage
 	if conf.InMem {
 		log.Println("Storage in memory")
@@ -83,9 +89,6 @@ func main() {
 	}
 
 	log.Println("Stop service calendar")
-	if logFile != nil {
-		logFile.Close()
-	}
 }
 
 func listenForShutdown(signals chan os.Signal, serverHTTP *httpserver.Server, serverGRPC *grpcserver.Server) {
