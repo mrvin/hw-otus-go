@@ -16,5 +16,3 @@ services:
          POSTGRES_PASSWORD: event-db
          POSTGRES_USER: event-db
          POSTGRES_DB: event-db
-#    rabbitmq:
-#        image: rabbitmq:latest
