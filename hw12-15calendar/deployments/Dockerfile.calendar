@@ -14,7 +14,7 @@ COPY cmd/calendar cmd/calendar
 COPY Makefile .
 COPY internal internal
 COPY api api
-COPY configs configs
+COPY configs/calendar.yml configs/
 
 COPY deployments/start.sh /
 
@@ -23,7 +23,7 @@ COPY go.sum .
 # Download necessary Go modules
 RUN go mod download
 
-RUN make build
+RUN cd cmd/calendar/ && make build
 
 EXPOSE 8080
 
