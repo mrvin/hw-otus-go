@@ -29,7 +29,8 @@ func main() {
 
 	conf, err := config.Parse(*configFile)
 	if err != nil {
-		log.Fatalf("Parse config: %v", err)
+		log.Printf("Parse config: %v", err)
+		return
 	}
 
 	logFile := logInit(&conf.Logger)
@@ -48,7 +49,8 @@ func main() {
 		log.Println("Storage in sql")
 		storage, err = sqlstorage.New(ctx, &conf.DB)
 		if err != nil {
-			log.Fatalf("db: %v", err)
+			log.Printf("db: %v", err)
+			return
 		}
 		log.Println("Connect db")
 	}
@@ -56,7 +58,8 @@ func main() {
 	serverHTTP := httpserver.New(&conf.HTTP, storage)
 	serverGRPC, err := grpcserver.New(&conf.GRPC, storage)
 	if err != nil {
-		log.Fatalf("GRPC: %v", err)
+		log.Printf("GRPC: %v", err)
+		return
 	}
 
 	signals := make(chan os.Signal)
@@ -69,7 +72,8 @@ func main() {
 		defer wg.Done()
 		if err := serverHTTP.Start(); err != nil {
 			if !errors.Is(err, http.ErrServerClosed) {
-				log.Fatalf("HTTP server: failed to start: %v", err)
+				log.Printf("HTTP server: failed to start: %v", err)
+				return
 			}
 		}
 	}()
@@ -77,7 +81,8 @@ func main() {
 	go func() {
 		defer wg.Done()
 		if err := serverGRPC.Start(); err != nil {
-			log.Fatalf("GRPC server: failed to start: %v", err)
+			log.Printf("GRPC server: failed to start: %v", err)
+			return
 		}
 	}()
 
@@ -96,11 +101,11 @@ func listenForShutdown(signals chan os.Signal, serverHTTP *httpserver.Server, se
 	signal.Stop(signals)
 
 	if err := serverHTTP.Stop(ctx); err != nil {
-		log.Fatalf("HTTP server: failed to stop: %v", err)
+		log.Printf("HTTP server: failed to stop: %v", err)
+		return
 	}
 
 	serverGRPC.Stop()
-
 }
 
 func logInit(conf *config.LoggerConf) *os.File {

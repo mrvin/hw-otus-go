@@ -35,7 +35,7 @@ func New(ctx context.Context, conf *DBConf) (*Storage, error) {
 	if err := s.connect(ctx, conf); err != nil {
 		return nil, fmt.Errorf("connection db: %w", err)
 	}
-	if err := s.createSchemaDB(ctx); err != nil {
+	if err := s.createSchema(ctx); err != nil {
 		return nil, fmt.Errorf("create schema db: %w", err)
 	}
 	if err := s.prepareQuery(ctx); err != nil {
@@ -61,7 +61,7 @@ func (s *Storage) connect(ctx context.Context, conf *DBConf) error {
 	return nil
 }
 
-func (s *Storage) createSchemaDB(ctx context.Context) error {
+func (s *Storage) createSchema(ctx context.Context) error {
 	sqlCreateTableUsers := `
 	CREATE TABLE IF NOT EXISTS users (
 		id serial primary key,
