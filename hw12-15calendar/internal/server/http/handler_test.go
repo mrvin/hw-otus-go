@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/config"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/config"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	memorystorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/memory"
 	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"

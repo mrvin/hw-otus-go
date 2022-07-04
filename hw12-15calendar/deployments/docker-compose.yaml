@@ -3,7 +3,7 @@ services:
     calendar:
         build:
          context: ../
-         dockerfile: cmd/calendar/Dockerfile
+         dockerfile: services/calendar/Dockerfile
         ports:
          - "8080:8080"
         environment:

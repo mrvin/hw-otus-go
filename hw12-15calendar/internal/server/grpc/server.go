@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc"
 
 	apipb "github.com/mrvin/hw-otus-go/hw12-15calendar/api"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/config"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/config"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
 
