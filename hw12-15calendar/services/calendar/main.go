@@ -13,7 +13,7 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/config"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/config"
 	grpcserver "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/server/grpc"
 	httpserver "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/server/http"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"

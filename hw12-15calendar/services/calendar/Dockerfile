@@ -10,7 +10,7 @@ RUN chown calendar-user /home/calendar-user/.cache/go-build
 
 WORKDIR /calendar/app
 
-COPY cmd/calendar cmd/calendar
+COPY services/calendar services/calendar
 COPY Makefile .
 COPY internal internal
 COPY api api
@@ -23,7 +23,7 @@ COPY go.sum .
 # Download necessary Go modules
 RUN go mod download
 
-RUN cd cmd/calendar/ && make build
+RUN cd services/calendar/ && make build
 
 EXPOSE 8080
 
