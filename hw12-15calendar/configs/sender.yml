@@ -1,0 +1,15 @@
+# database settings
+db:
+    host: localhost
+    port: 5432
+    user: event-db
+    password: event-db
+    name: event-db
+
+# email settings
+email:
+    senderEmail: myEmail@mail.com
+    password: myPass
+    host: smtp.example.com
+    port: 25
+
