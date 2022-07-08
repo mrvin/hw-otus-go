@@ -14,8 +14,8 @@ import (
 	"syscall"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/config"
-	grpcserver "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/server/grpc"
-	httpserver "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/server/http"
+	grpcserver "github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/server/grpc"
+	httpserver "github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/server/http"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	memorystorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/memory"
 	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"

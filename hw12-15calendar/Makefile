@@ -1,6 +1,5 @@
 test:
-	go test -race ./internal/storage/... -cover && \
-	go test -race ./internal/server/... -cover
+	go test -race ./internal/storage/... -cover
 
 build:
 	docker-compose -f deployments/docker-compose.yaml build
