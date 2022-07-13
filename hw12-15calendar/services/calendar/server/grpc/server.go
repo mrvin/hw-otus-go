@@ -9,9 +9,13 @@ import (
 	"google.golang.org/grpc"
 
 	apipb "github.com/mrvin/hw-otus-go/hw12-15calendar/api"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/config"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
+
+type Conf struct {
+	Host string `yaml:"host"`
+	Port int    `yaml:"port"`
+}
 
 type Server struct {
 	serv *grpc.Server
@@ -19,7 +23,7 @@ type Server struct {
 	stor storage.Storage
 }
 
-func New(conf *config.GRPCConf, stor storage.Storage) (*Server, error) {
+func New(conf *Conf, stor storage.Storage) (*Server, error) {
 	var server Server
 
 	server.stor = stor

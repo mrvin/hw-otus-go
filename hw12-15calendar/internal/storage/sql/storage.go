@@ -8,7 +8,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type DBConf struct {
+type Conf struct {
 	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`
 	User     string `yaml:"user"`
@@ -29,7 +29,7 @@ type Storage struct {
 	getAllUsers *sql.Stmt
 }
 
-func New(ctx context.Context, conf *DBConf) (*Storage, error) {
+func New(ctx context.Context, conf *Conf) (*Storage, error) {
 	var s Storage
 
 	if err := s.connect(ctx, conf); err != nil {
@@ -45,7 +45,7 @@ func New(ctx context.Context, conf *DBConf) (*Storage, error) {
 	return &s, nil
 }
 
-func (s *Storage) connect(ctx context.Context, conf *DBConf) error {
+func (s *Storage) connect(ctx context.Context, conf *Conf) error {
 	var err error
 	dbConfStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		conf.Host, conf.Port, conf.User, conf.Password, conf.Name)

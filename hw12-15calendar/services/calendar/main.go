@@ -13,12 +13,12 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/config"
-	grpcserver "github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/server/grpc"
-	httpserver "github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/server/http"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	memorystorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/memory"
 	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
+	grpcserver "github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/server/grpc"
+	httpserver "github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/server/http"
 )
 
 var ctx = context.Background()
@@ -27,8 +27,8 @@ func main() {
 	configFile := flag.String("config", "/etc/calendar/config.yml", "path to configuration file")
 	flag.Parse()
 
-	conf, err := config.Parse(*configFile)
-	if err != nil {
+	var conf Config
+	if err := config.Parse(*configFile, &conf); err != nil {
 		log.Printf("Parse config: %v", err)
 		return
 	}
@@ -46,6 +46,7 @@ func main() {
 		log.Println("Storage in memory")
 		storage = memorystorage.New()
 	} else {
+		var err error
 		log.Println("Storage in sql")
 		storage, err = sqlstorage.New(ctx, &conf.DB)
 		if err != nil {
@@ -108,7 +109,7 @@ func listenForShutdown(signals chan os.Signal, serverHTTP *httpserver.Server, se
 	serverGRPC.Stop()
 }
 
-func logInit(conf *config.LoggerConf) *os.File {
+func logInit(conf *LoggerConf) *os.File {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	if conf.FilePath == "" {
 		return nil

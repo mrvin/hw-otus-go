@@ -9,9 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/config"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
+
+type Conf struct {
+	Host string `yaml:"host"`
+	Port int    `yaml:"port"`
+}
 
 type Server struct {
 	serv http.Server
@@ -19,7 +23,7 @@ type Server struct {
 	pr   *pathResolver
 }
 
-func New(conf *config.HTTPConf, stor storage.Storage) *Server {
+func New(conf *Conf, stor storage.Storage) *Server {
 	var server Server
 
 	server.stor = stor
