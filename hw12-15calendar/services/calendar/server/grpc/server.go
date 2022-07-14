@@ -31,7 +31,7 @@ func New(conf *Conf, stor storage.Storage) (*Server, error) {
 	var err error
 	server.ln, err = net.Listen("tcp", fmt.Sprintf("%s:%d", conf.Host, conf.Port))
 	if err != nil {
-		return nil, fmt.Errorf("establish tcp connection: %v", err)
+		return nil, fmt.Errorf("establish tcp connection: %w", err)
 	}
 	server.serv = grpc.NewServer()
 	apipb.RegisterEventsServer(server.serv, &server)
@@ -42,7 +42,7 @@ func New(conf *Conf, stor storage.Storage) (*Server, error) {
 func (s *Server) Start() error {
 	log.Print("Start gRPC server")
 	if err := s.serv.Serve(s.ln); err != nil {
-		return fmt.Errorf("start grpc server: %v", err)
+		return fmt.Errorf("start grpc server: %w", err)
 	}
 
 	return nil

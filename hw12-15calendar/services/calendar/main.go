@@ -14,6 +14,7 @@ import (
 	"syscall"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/logger"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	memorystorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/memory"
 	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
@@ -33,7 +34,7 @@ func main() {
 		return
 	}
 
-	logFile := logInit(&conf.Logger)
+	logFile := logger.LogInit(&conf.Logger)
 
 	defer func() {
 		if logFile != nil {
@@ -107,20 +108,4 @@ func listenForShutdown(signals chan os.Signal, serverHTTP *httpserver.Server, se
 	}
 
 	serverGRPC.Stop()
-}
-
-func logInit(conf *LoggerConf) *os.File {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	if conf.FilePath == "" {
-		return nil
-	}
-
-	logFile, err := os.OpenFile(conf.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Printf("log init: %v", err)
-		return nil
-	}
-	log.SetOutput(logFile)
-
-	return logFile
 }
