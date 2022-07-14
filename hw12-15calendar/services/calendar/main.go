@@ -18,8 +18,8 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	memorystorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/memory"
 	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/httpserver"
 	grpcserver "github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/server/grpc"
-	httpserver "github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/server/http"
 )
 
 var ctx = context.Background()
