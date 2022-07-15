@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"path"
 	"strings"
 	"time"
 
@@ -48,7 +47,7 @@ func New(conf *Conf, stor storage.Storage) *Server {
 }
 
 func (s *Server) Start() error {
-	log.Print("Start http server")
+	log.Printf("Start http server: %s", s.serv.Addr)
 	if err := s.serv.ListenAndServe(); err != nil {
 		return fmt.Errorf("start http server: %w", err)
 	}
@@ -57,14 +56,16 @@ func (s *Server) Start() error {
 
 func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	defer logReq(req)()
-	check := req.Method + " " + req.URL.Path
-	for pattern, handlerFunc := range s.pr.handlers {
-		if ok, err := path.Match(pattern, check); ok && err == nil {
-			handlerFunc(res, req, s)
 
+	check := req.Method + " " + req.URL.Path
+	handlerFunc, err := s.pr.Get(check)
+	if err != nil {
+		log.Printf("%v", err)
+	} else {
+		if handlerFunc != nil {
+			//TODO: Add running in goroutines
+			handlerFunc(res, req, s)
 			return
-		} else if err != nil {
-			fmt.Fprint(res, err)
 		}
 	}
 
