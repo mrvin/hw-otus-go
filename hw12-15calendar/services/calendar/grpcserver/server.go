@@ -67,6 +67,22 @@ func (s *Server) GetUser(ctx context.Context, req *apipb.UserRequest) (*apipb.Us
 	return &apipb.User{Id: int64(user.ID), Name: user.Name, Email: user.Email}, err
 }
 
+func (s *Server) GetAllUsers(ctx context.Context, null *apipb.Null) (*apipb.Users, error) {
+	users, err := s.stor.GetAllUsers(ctx)
+	if err != nil {
+		err := fmt.Errorf("get all users: %w", err)
+		log.Print(err)
+		return nil, err
+	}
+
+	var pbUsers []*apipb.User
+	for _, user := range users {
+		pbUsers = append(pbUsers, &apipb.User{Id: int64(user.ID), Name: user.Name, Email: user.Email})
+	}
+
+	return &apipb.Users{Users: pbUsers}, err
+}
+
 func (s *Server) UpdateUser(ctx context.Context, userpb *apipb.User) (*apipb.Null, error) {
 	user := storage.User{ID: int(userpb.GetId()), Name: userpb.GetName(), Email: userpb.GetEmail()}
 	err := s.stor.UpdateUser(ctx, &user)
@@ -92,6 +108,23 @@ func (s *Server) GetEvent(ctx context.Context, req *apipb.EventRequest) (*apipb.
 	event, err := s.stor.GetEvent(ctx, int(req.GetId()))
 
 	return &apipb.Event{Id: int64(event.ID), Title: event.Title, Description: event.Description, UserID: int64(event.UserID)}, err
+}
+
+func (s *Server) GetEventsForUser(ctx context.Context, req *apipb.UserRequest) (*apipb.Events, error) {
+	events, err := s.stor.GetEventsForUser(ctx, int(req.GetId()))
+	if err != nil {
+		err := fmt.Errorf("get events for user: %w", err)
+		log.Print(err)
+		return nil, err
+	}
+
+	var pbEvents []*apipb.Event
+	for _, event := range events {
+		pbEvents = append(pbEvents, &apipb.Event{Id: int64(event.ID), Title: event.Title, Description: event.Description,
+			StartTime: timestamppb.New(event.StartTime), StopTime: timestamppb.New(event.StopTime)})
+	}
+
+	return &apipb.Events{Events: pbEvents}, err
 }
 
 func (s *Server) UpdateEvent(ctx context.Context, eventpb *apipb.Event) (*apipb.Null, error) {
