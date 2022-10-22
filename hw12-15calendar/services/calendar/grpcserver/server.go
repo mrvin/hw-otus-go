@@ -59,15 +59,24 @@ func (s *Server) Stop() {
 
 func (s *Server) CreateUser(ctx context.Context, userpb *apipb.User) (*apipb.UserResponse, error) {
 	user := storage.User{Name: userpb.GetName(), Email: userpb.GetEmail()}
-	err := s.stor.CreateUser(ctx, &user)
+	if err := s.stor.CreateUser(ctx, &user); err != nil {
+		err := fmt.Errorf("create userr: %w", err)
+		log.Print(err)
+		return nil, err
+	}
 
-	return &apipb.UserResponse{Id: int64(user.ID)}, err
+	return &apipb.UserResponse{Id: int64(user.ID)}, nil
 }
 
 func (s *Server) GetUser(ctx context.Context, req *apipb.UserRequest) (*apipb.User, error) {
 	user, err := s.stor.GetUser(ctx, int(req.GetId()))
+	if err != nil {
+		err := fmt.Errorf("get user: %w", err)
+		log.Print(err)
+		return nil, err
+	}
 
-	return &apipb.User{Id: int64(user.ID), Name: user.Name, Email: user.Email}, err
+	return &apipb.User{Id: int64(user.ID), Name: user.Name, Email: user.Email}, nil
 }
 
 func (s *Server) GetAllUsers(ctx context.Context, null *apipb.Null) (*apipb.Users, error) {
@@ -83,20 +92,28 @@ func (s *Server) GetAllUsers(ctx context.Context, null *apipb.Null) (*apipb.User
 		pbUsers = append(pbUsers, &apipb.User{Id: int64(user.ID), Name: user.Name, Email: user.Email})
 	}
 
-	return &apipb.Users{Users: pbUsers}, err
+	return &apipb.Users{Users: pbUsers}, nil
 }
 
 func (s *Server) UpdateUser(ctx context.Context, userpb *apipb.User) (*apipb.Null, error) {
 	user := storage.User{ID: int(userpb.GetId()), Name: userpb.GetName(), Email: userpb.GetEmail()}
-	err := s.stor.UpdateUser(ctx, &user)
+	if err := s.stor.UpdateUser(ctx, &user); err != nil {
+		err := fmt.Errorf("update user: %w", err)
+		log.Print(err)
+		return nil, err
+	}
 
-	return nil, err
+	return &apipb.Null{}, nil
 }
 
 func (s *Server) DeleteUser(ctx context.Context, req *apipb.UserRequest) (*apipb.Null, error) {
-	err := s.stor.DeleteUser(ctx, int(req.GetId()))
+	if err := s.stor.DeleteUser(ctx, int(req.GetId())); err != nil {
+		err := fmt.Errorf("delete user: %w", err)
+		log.Print(err)
+		return nil, err
+	}
 
-	return nil, err
+	return &apipb.Null{}, nil
 }
 
 func (s *Server) CreateEvent(ctx context.Context, pbEvent *apipb.Event) (*apipb.EventResponse, error) {
@@ -112,14 +129,19 @@ func (s *Server) CreateEvent(ctx context.Context, pbEvent *apipb.Event) (*apipb.
 		return nil, err
 	}
 
-	return &apipb.EventResponse{Id: int64(event.ID)}, err
+	return &apipb.EventResponse{Id: int64(event.ID)}, nil
 }
 
 func (s *Server) GetEvent(ctx context.Context, req *apipb.EventRequest) (*apipb.Event, error) {
 	event, err := s.stor.GetEvent(ctx, int(req.GetId()))
+	if err != nil {
+		err := fmt.Errorf("get event: %w", err)
+		log.Print(err)
+		return nil, err
+	}
 
 	return &apipb.Event{Id: int64(event.ID), Title: event.Title, Description: event.Description,
-		StartTime: timestamppb.New(event.StartTime), StopTime: timestamppb.New(event.StopTime), UserID: int64(event.UserID)}, err
+		StartTime: timestamppb.New(event.StartTime), StopTime: timestamppb.New(event.StopTime), UserID: int64(event.UserID)}, nil
 }
 
 func (s *Server) GetEventsForUser(ctx context.Context, req *apipb.UserRequest) (*apipb.Events, error) {
@@ -136,7 +158,7 @@ func (s *Server) GetEventsForUser(ctx context.Context, req *apipb.UserRequest) (
 			StartTime: timestamppb.New(event.StartTime), StopTime: timestamppb.New(event.StopTime)})
 	}
 
-	return &apipb.Events{Events: pbEvents}, err
+	return &apipb.Events{Events: pbEvents}, nil
 }
 
 func (s *Server) UpdateEvent(ctx context.Context, pbEvent *apipb.Event) (*apipb.Null, error) {
@@ -153,13 +175,17 @@ func (s *Server) UpdateEvent(ctx context.Context, pbEvent *apipb.Event) (*apipb.
 		return nil, err
 	}
 
-	return &apipb.Null{}, err
+	return &apipb.Null{}, nil
 }
 
 func (s *Server) DeleteEvent(ctx context.Context, req *apipb.EventRequest) (*apipb.Null, error) {
-	err := s.stor.DeleteEvent(ctx, int(req.GetId()))
+	if err := s.stor.DeleteEvent(ctx, int(req.GetId())); err != nil {
+		err := fmt.Errorf("delete event: %w", err)
+		log.Print(err)
+		return nil, err
+	}
 
-	return nil, err
+	return &apipb.Null{}, nil
 }
 
 func convertpbEventToEvent(pbEvent *apipb.Event) (*storage.Event, error) {
