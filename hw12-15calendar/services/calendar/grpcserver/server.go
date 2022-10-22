@@ -37,7 +37,7 @@ func New(conf *Conf, stor storage.Storage) (*Server, error) {
 		return nil, fmt.Errorf("establish tcp connection: %w", err)
 	}
 	server.serv = grpc.NewServer()
-	apipb.RegisterEventsServer(server.serv, &server)
+	apipb.RegisterEventServiceServer(server.serv, &server)
 
 	return &server, nil
 }
