@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 
@@ -123,7 +123,7 @@ func handleDeleteEvent(res http.ResponseWriter, req *http.Request, server *Serve
 func unmarshalEvent(req *http.Request) (*storage.Event, error) {
 	var event storage.Event
 
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		return nil, fmt.Errorf("read body req: %w", err)
 	}

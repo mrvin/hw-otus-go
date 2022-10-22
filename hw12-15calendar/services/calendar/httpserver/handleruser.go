@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -143,7 +143,7 @@ func getID(req *http.Request) (int, error) {
 func unmarshalUser(req *http.Request) (*storage.User, error) {
 	var user storage.User
 
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		return nil, fmt.Errorf("read body req: %w", err)
 	}
