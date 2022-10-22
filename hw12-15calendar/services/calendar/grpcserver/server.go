@@ -7,6 +7,7 @@ import (
 	"net"
 
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	apipb "github.com/mrvin/hw-otus-go/hw12-15calendar/api"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
@@ -96,10 +97,18 @@ func (s *Server) DeleteUser(ctx context.Context, req *apipb.UserRequest) (*apipb
 	return nil, err
 }
 
-func (s *Server) CreateEvent(ctx context.Context, eventpb *apipb.Event) (*apipb.EventResponse, error) {
-	event := storage.Event{Title: eventpb.GetTitle(), Description: eventpb.GetDescription(), /*, StartTime, StopTime*/
-		UserID: int(eventpb.GetUserID())}
-	err := s.stor.CreateEvent(ctx, &event)
+func (s *Server) CreateEvent(ctx context.Context, pbEvent *apipb.Event) (*apipb.EventResponse, error) {
+	event, err := convertpbEventToEvent(pbEvent)
+	if err != nil {
+		err := fmt.Errorf("create event: %w", err)
+		log.Print(err)
+		return nil, err
+	}
+	if err := s.stor.CreateEvent(ctx, event); err != nil {
+		err := fmt.Errorf("create event: %w", err)
+		log.Print(err)
+		return nil, err
+	}
 
 	return &apipb.EventResponse{Id: int64(event.ID)}, err
 }
@@ -107,7 +116,8 @@ func (s *Server) CreateEvent(ctx context.Context, eventpb *apipb.Event) (*apipb.
 func (s *Server) GetEvent(ctx context.Context, req *apipb.EventRequest) (*apipb.Event, error) {
 	event, err := s.stor.GetEvent(ctx, int(req.GetId()))
 
-	return &apipb.Event{Id: int64(event.ID), Title: event.Title, Description: event.Description, UserID: int64(event.UserID)}, err
+	return &apipb.Event{Id: int64(event.ID), Title: event.Title, Description: event.Description,
+		StartTime: timestamppb.New(event.StartTime), StopTime: timestamppb.New(event.StopTime), UserID: int64(event.UserID)}, err
 }
 
 func (s *Server) GetEventsForUser(ctx context.Context, req *apipb.UserRequest) (*apipb.Events, error) {
@@ -127,17 +137,42 @@ func (s *Server) GetEventsForUser(ctx context.Context, req *apipb.UserRequest) (
 	return &apipb.Events{Events: pbEvents}, err
 }
 
-func (s *Server) UpdateEvent(ctx context.Context, eventpb *apipb.Event) (*apipb.Null, error) {
-	event := storage.Event{ID: int(eventpb.GetId()), Title: eventpb.GetTitle(),
-		Description: eventpb.GetDescription(), /*, StartTime, StopTime*/
-		UserID:      int(eventpb.GetUserID())}
-	err := s.stor.UpdateEvent(ctx, &event)
+func (s *Server) UpdateEvent(ctx context.Context, pbEvent *apipb.Event) (*apipb.Null, error) {
+	event, err := convertpbEventToEvent(pbEvent)
+	if err != nil {
+		err := fmt.Errorf("update event: %w", err)
+		log.Print(err)
+		return nil, err
+	}
 
-	return nil, err
+	if err := s.stor.UpdateEvent(ctx, event); err != nil {
+		err := fmt.Errorf("update event: %w", err)
+		log.Print(err)
+		return nil, err
+	}
+
+	return &apipb.Null{}, err
 }
 
 func (s *Server) DeleteEvent(ctx context.Context, req *apipb.EventRequest) (*apipb.Null, error) {
 	err := s.stor.DeleteEvent(ctx, int(req.GetId()))
 
 	return nil, err
+}
+
+func convertpbEventToEvent(pbEvent *apipb.Event) (*storage.Event, error) {
+	if err := pbEvent.StartTime.CheckValid(); err != nil {
+		return nil, fmt.Errorf("incorrect value StartTime: %w", err)
+	}
+	if err := pbEvent.StopTime.CheckValid(); err != nil {
+		return nil, fmt.Errorf("incorrect value StopTime: %w", err)
+	}
+	startTime := pbEvent.StartTime.AsTime()
+	stopTime := pbEvent.StopTime.AsTime()
+
+	event := storage.Event{ID: int(pbEvent.GetId()), Title: pbEvent.GetTitle(),
+		Description: pbEvent.GetDescription(), StartTime: startTime, StopTime: stopTime,
+		UserID: int(pbEvent.GetUserID())}
+
+	return &event, nil
 }
