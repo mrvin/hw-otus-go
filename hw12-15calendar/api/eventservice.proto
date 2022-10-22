@@ -12,6 +12,10 @@ message User {
 	string email = 3;
 }
 
+message Users {
+	repeated User users = 1;
+}
+
 message UserRequest {
 	int64 id = 1;
 }
@@ -37,16 +41,22 @@ message EventResponse {
 	int64 id = 1;
 }
 
+message Events {
+	repeated Event events = 1;
+}
+
 message Null {};
 
-service Events {
+service EventService {
 	rpc CreateUser (User) returns (UserResponse) {}
 	rpc GetUser (UserRequest) returns (User) {}
+	rpc GetAllUsers (Null) returns (Users) {}
 	rpc UpdateUser (User) returns (Null) {}
 	rpc DeleteUser (UserRequest) returns (Null) {}
 
 	rpc CreateEvent (Event) returns (EventResponse) {}
 	rpc GetEvent (EventRequest) returns (Event) {}
+	rpc GetEventsForUser(UserRequest) returns (Events) {}
 	rpc UpdateEvent (Event) returns (Null) {}
 	rpc DeleteEvent (EventRequest) returns (Null) {}
 }
