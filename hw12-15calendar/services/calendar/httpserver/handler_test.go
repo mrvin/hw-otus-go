@@ -13,7 +13,6 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	memorystorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/memory"
 	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/config"
 )
 
 const urlUsers = "http://localhost:8080/users"
@@ -22,7 +21,7 @@ const urlEvents = "http://localhost:8080/events"
 var confDBTest = sqlstorage.Conf{"postgres", 5432, "event-db", "event-db", "event-db"}
 
 func initServerHTTP(st storage.Storage) *Server {
-	conf := config.HTTPConf{"localhost", 8080}
+	conf := Conf{"localhost", 8080}
 	server := New(&conf, st)
 
 	return server
