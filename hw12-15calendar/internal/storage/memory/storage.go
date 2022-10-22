@@ -96,6 +96,13 @@ func (s *Storage) DeleteUser(_ context.Context, id int) error {
 }
 
 func (s *Storage) CreateEvent(_ context.Context, event *storage.Event) error {
+	s.muUsers.Lock()
+	if _, ok := s.mUsers[event.UserID]; !ok {
+		s.muUsers.Unlock()
+		return fmt.Errorf("%w: %d", storage.ErrNoUser, event.UserID)
+	}
+	s.muUsers.Unlock()
+
 	s.muEvents.Lock()
 	defer s.muEvents.Unlock()
 
