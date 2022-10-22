@@ -22,6 +22,7 @@ type Server struct {
 	serv *grpc.Server
 	ln   net.Listener
 	stor storage.Storage
+	addr string
 }
 
 func New(conf *Conf, stor storage.Storage) (*Server, error) {
@@ -30,7 +31,8 @@ func New(conf *Conf, stor storage.Storage) (*Server, error) {
 	server.stor = stor
 
 	var err error
-	server.ln, err = net.Listen("tcp", fmt.Sprintf("%s:%d", conf.Host, conf.Port))
+	server.addr = fmt.Sprintf("%s:%d", conf.Host, conf.Port)
+	server.ln, err = net.Listen("tcp", server.addr)
 	if err != nil {
 		return nil, fmt.Errorf("establish tcp connection: %w", err)
 	}
@@ -41,7 +43,7 @@ func New(conf *Conf, stor storage.Storage) (*Server, error) {
 }
 
 func (s *Server) Start() error {
-	log.Print("Start gRPC server")
+	log.Printf("Start gRPC server: %s", s.addr)
 	if err := s.serv.Serve(s.ln); err != nil {
 		return fmt.Errorf("start grpc server: %w", err)
 	}
