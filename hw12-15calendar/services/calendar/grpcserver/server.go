@@ -58,7 +58,7 @@ func (s *Server) Stop() {
 }
 
 func (s *Server) CreateUser(ctx context.Context, userpb *apipb.User) (*apipb.UserResponse, error) {
-	user := storage.User{Name: userpb.GetName(), Email: userpb.GetEmail()}
+	user := storage.User{ID: 0, Name: userpb.GetName(), Email: userpb.GetEmail(), Events: nil}
 	if err := s.stor.CreateUser(ctx, &user); err != nil {
 		err := fmt.Errorf("create userr: %w", err)
 		log.Print(err)
@@ -87,16 +87,16 @@ func (s *Server) GetAllUsers(ctx context.Context, null *apipb.Null) (*apipb.User
 		return nil, err
 	}
 
-	var pbUsers []*apipb.User
-	for _, user := range users {
-		pbUsers = append(pbUsers, &apipb.User{Id: int64(user.ID), Name: user.Name, Email: user.Email})
+	pbUsers := make([]*apipb.User, len(users))
+	for i, user := range users {
+		pbUsers[i] = &apipb.User{Id: int64(user.ID), Name: user.Name, Email: user.Email}
 	}
 
 	return &apipb.Users{Users: pbUsers}, nil
 }
 
 func (s *Server) UpdateUser(ctx context.Context, userpb *apipb.User) (*apipb.Null, error) {
-	user := storage.User{ID: int(userpb.GetId()), Name: userpb.GetName(), Email: userpb.GetEmail()}
+	user := storage.User{ID: int(userpb.GetId()), Name: userpb.GetName(), Email: userpb.GetEmail(), Events: nil}
 	if err := s.stor.UpdateUser(ctx, &user); err != nil {
 		err := fmt.Errorf("update user: %w", err)
 		log.Print(err)
@@ -152,10 +152,10 @@ func (s *Server) GetEventsForUser(ctx context.Context, req *apipb.UserRequest) (
 		return nil, err
 	}
 
-	var pbEvents []*apipb.Event
-	for _, event := range events {
-		pbEvents = append(pbEvents, &apipb.Event{Id: int64(event.ID), Title: event.Title, Description: event.Description,
-			StartTime: timestamppb.New(event.StartTime), StopTime: timestamppb.New(event.StopTime)})
+	pbEvents := make([]*apipb.Event, len(events))
+	for i, event := range events {
+		pbEvents[i] = &apipb.Event{Id: int64(event.ID), Title: event.Title, Description: event.Description,
+			StartTime: timestamppb.New(event.StartTime), StopTime: timestamppb.New(event.StopTime), UserID: int64(event.UserID)}
 	}
 
 	return &apipb.Events{Events: pbEvents}, nil
