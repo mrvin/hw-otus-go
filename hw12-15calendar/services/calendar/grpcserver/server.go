@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -58,6 +59,7 @@ func (s *Server) Stop() {
 }
 
 func (s *Server) CreateUser(ctx context.Context, userpb *apipb.User) (*apipb.UserResponse, error) {
+	defer logGRPC("Create user", fmt.Sprintf("name - %s, email: - %s", userpb.GetName(), userpb.GetEmail()))()
 	user := storage.User{ID: 0, Name: userpb.GetName(), Email: userpb.GetEmail(), Events: nil}
 	if err := s.stor.CreateUser(ctx, &user); err != nil {
 		err := fmt.Errorf("create userr: %w", err)
@@ -69,6 +71,7 @@ func (s *Server) CreateUser(ctx context.Context, userpb *apipb.User) (*apipb.Use
 }
 
 func (s *Server) GetUser(ctx context.Context, req *apipb.UserRequest) (*apipb.User, error) {
+	defer logGRPC("Get user", fmt.Sprintf("id - %d", req.GetId()))()
 	user, err := s.stor.GetUser(ctx, int(req.GetId()))
 	if err != nil {
 		err := fmt.Errorf("get user: %w", err)
@@ -80,6 +83,7 @@ func (s *Server) GetUser(ctx context.Context, req *apipb.UserRequest) (*apipb.Us
 }
 
 func (s *Server) GetAllUsers(ctx context.Context, null *apipb.Null) (*apipb.Users, error) {
+	defer logGRPC("Get all user", "")()
 	users, err := s.stor.GetAllUsers(ctx)
 	if err != nil {
 		err := fmt.Errorf("get all users: %w", err)
@@ -96,6 +100,7 @@ func (s *Server) GetAllUsers(ctx context.Context, null *apipb.Null) (*apipb.User
 }
 
 func (s *Server) UpdateUser(ctx context.Context, userpb *apipb.User) (*apipb.Null, error) {
+	defer logGRPC("Update user", fmt.Sprintf("id - %d, name - %s, email: - %s", userpb.GetId(), userpb.GetName(), userpb.GetEmail()))()
 	user := storage.User{ID: int(userpb.GetId()), Name: userpb.GetName(), Email: userpb.GetEmail(), Events: nil}
 	if err := s.stor.UpdateUser(ctx, &user); err != nil {
 		err := fmt.Errorf("update user: %w", err)
@@ -107,6 +112,7 @@ func (s *Server) UpdateUser(ctx context.Context, userpb *apipb.User) (*apipb.Nul
 }
 
 func (s *Server) DeleteUser(ctx context.Context, req *apipb.UserRequest) (*apipb.Null, error) {
+	defer logGRPC("Delete user", fmt.Sprintf("id - %d", req.GetId()))()
 	if err := s.stor.DeleteUser(ctx, int(req.GetId())); err != nil {
 		err := fmt.Errorf("delete user: %w", err)
 		log.Print(err)
@@ -117,6 +123,8 @@ func (s *Server) DeleteUser(ctx context.Context, req *apipb.UserRequest) (*apipb
 }
 
 func (s *Server) CreateEvent(ctx context.Context, pbEvent *apipb.Event) (*apipb.EventResponse, error) {
+	defer logGRPC("Create event", fmt.Sprintf("title - %s, description - %s, start time - %v, stop time - %v, user id - %d",
+		pbEvent.GetTitle(), pbEvent.GetDescription(), pbEvent.StartTime, pbEvent.StopTime, pbEvent.UserID))()
 	event, err := convertpbEventToEvent(pbEvent)
 	if err != nil {
 		err := fmt.Errorf("create event: %w", err)
@@ -133,6 +141,7 @@ func (s *Server) CreateEvent(ctx context.Context, pbEvent *apipb.Event) (*apipb.
 }
 
 func (s *Server) GetEvent(ctx context.Context, req *apipb.EventRequest) (*apipb.Event, error) {
+	defer logGRPC("Get event", fmt.Sprintf("id - %d", req.GetId()))()
 	event, err := s.stor.GetEvent(ctx, int(req.GetId()))
 	if err != nil {
 		err := fmt.Errorf("get event: %w", err)
@@ -145,6 +154,7 @@ func (s *Server) GetEvent(ctx context.Context, req *apipb.EventRequest) (*apipb.
 }
 
 func (s *Server) GetEventsForUser(ctx context.Context, req *apipb.UserRequest) (*apipb.Events, error) {
+	defer logGRPC("Get events for user", fmt.Sprintf("id - %d", req.GetId()))()
 	events, err := s.stor.GetEventsForUser(ctx, int(req.GetId()))
 	if err != nil {
 		err := fmt.Errorf("get events for user: %w", err)
@@ -162,6 +172,8 @@ func (s *Server) GetEventsForUser(ctx context.Context, req *apipb.UserRequest) (
 }
 
 func (s *Server) UpdateEvent(ctx context.Context, pbEvent *apipb.Event) (*apipb.Null, error) {
+	defer logGRPC("Update event", fmt.Sprintf("id - %d, title - %s, description - %s, start time - %v, stop time - %v, user id - %d",
+		pbEvent.Id, pbEvent.GetTitle(), pbEvent.GetDescription(), pbEvent.StartTime, pbEvent.StopTime, pbEvent.UserID))()
 	event, err := convertpbEventToEvent(pbEvent)
 	if err != nil {
 		err := fmt.Errorf("update event: %w", err)
@@ -179,6 +191,7 @@ func (s *Server) UpdateEvent(ctx context.Context, pbEvent *apipb.Event) (*apipb.
 }
 
 func (s *Server) DeleteEvent(ctx context.Context, req *apipb.EventRequest) (*apipb.Null, error) {
+	defer logGRPC("Delete event", fmt.Sprintf("id - %d", req.GetId()))()
 	if err := s.stor.DeleteEvent(ctx, int(req.GetId())); err != nil {
 		err := fmt.Errorf("delete event: %w", err)
 		log.Print(err)
@@ -203,4 +216,12 @@ func convertpbEventToEvent(pbEvent *apipb.Event) (*storage.Event, error) {
 		UserID: int(pbEvent.GetUserID())}
 
 	return &event, nil
+}
+
+func logGRPC(nameCall string, param string) func() {
+	start := time.Now()
+
+	return func() {
+		log.Printf("%s: %s - %s", nameCall, param, time.Since(start))
+	}
 }
