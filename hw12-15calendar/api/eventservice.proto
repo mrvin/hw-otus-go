@@ -4,7 +4,7 @@ package event;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = ".;apipb";
+option go_package = ".;calendarapi";
 
 message User {
 	int64 id = 1;

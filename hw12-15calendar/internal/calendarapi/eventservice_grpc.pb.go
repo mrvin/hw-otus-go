@@ -4,7 +4,7 @@
 // - protoc             v3.12.4
 // source: eventservice.proto
 
-package apipb
+package calendarapi
 
 import (
 	context "context"
@@ -133,7 +133,7 @@ func (c *eventServiceClient) DeleteEvent(ctx context.Context, in *EventRequest, 
 }
 
 // EventServiceServer is the server API for EventService service.
-// All implementations must embed UnimplementedEventServiceServer
+// All implementations should embed UnimplementedEventServiceServer
 // for forward compatibility
 type EventServiceServer interface {
 	CreateUser(context.Context, *User) (*UserResponse, error)
@@ -148,7 +148,7 @@ type EventServiceServer interface {
 	DeleteEvent(context.Context, *EventRequest) (*Null, error)
 }
 
-// UnimplementedEventServiceServer must be embedded to have forward compatible implementations.
+// UnimplementedEventServiceServer should be embedded to have forward compatible implementations.
 type UnimplementedEventServiceServer struct {
 }
 
@@ -182,7 +182,6 @@ func (UnimplementedEventServiceServer) UpdateEvent(context.Context, *Event) (*Nu
 func (UnimplementedEventServiceServer) DeleteEvent(context.Context, *EventRequest) (*Null, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteEvent not implemented")
 }
-func (UnimplementedEventServiceServer) mustEmbedUnimplementedEventServiceServer() {}
 
 // UnsafeEventServiceServer may be embedded to opt out of forward compatibility for this service.
 // Use of this interface is not recommended, as added methods to EventServiceServer will
