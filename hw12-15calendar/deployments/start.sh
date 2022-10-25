@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 set -e
 
@@ -9,6 +9,7 @@ if [ "$ENV" = 'DEV' ]; then
 	exec make run
 elif [ "$ENV" = 'UNIT' ]; then
 	echo "Running Unit Tests"
+	make test
 	cd services/calendar/
 	exec make test
 else

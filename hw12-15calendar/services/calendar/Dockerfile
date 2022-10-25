@@ -1,12 +1,8 @@
-FROM golang:1.18-bullseye
+FROM golang:1.19.2-alpine
 
 MAINTAINER mrvin <v.v.vinogradovv@gmail.com>
 
-RUN groupadd -r calendar-group && useradd -r -g calendar-group calendar-user
-
-# Create a folder to cache command 'go run' and 'go test' results
-RUN mkdir -p /home/calendar-user/.cache/go-build
-RUN chown calendar-user /home/calendar-user/.cache/go-build
+RUN apk --update add build-base
 
 WORKDIR /calendar/app
 
@@ -26,8 +22,6 @@ RUN go mod download
 RUN cd services/calendar/ && make build
 
 EXPOSE 8080
-
-USER calendar-user
 
 CMD ["/start.sh"]
 
