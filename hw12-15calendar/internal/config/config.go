@@ -2,13 +2,13 @@ package config
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"gopkg.in/yaml.v2"
 )
 
 func Parse(configPath string, conf interface{}) error {
-	configYml, err := ioutil.ReadFile(configPath)
+	configYml, err := os.ReadFile(configPath)
 	if err != nil {
 		return fmt.Errorf("reading %s error: %w", configPath, err)
 	}

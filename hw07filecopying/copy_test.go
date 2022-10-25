@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"testing"
 )
@@ -61,12 +60,12 @@ func cmpFiles(filePath1, filePath2 string) (bool, error) {
 		return false, nil
 	}
 
-	file1, err := ioutil.ReadFile(filePath1)
+	file1, err := os.ReadFile(filePath1)
 	if err != nil {
 		return false, err
 	}
 
-	file2, err := ioutil.ReadFile(filePath2)
+	file2, err := os.ReadFile(filePath2)
 	if err != nil {
 		return false, err
 	}

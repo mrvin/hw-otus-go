@@ -2,7 +2,7 @@ package telnet
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net"
 	"testing"
 	"time"
@@ -28,7 +28,7 @@ func TestTelnetClient(t *testing.T) {
 				t.Fatalf("can't parse timeout: %v", err)
 			}
 
-			client := NewClient(l.Addr().String(), timeout, ioutil.NopCloser(in), out)
+			client := NewClient(l.Addr().String(), timeout, io.NopCloser(in), out)
 			if err := client.Connect(); err != nil {
 				t.Fatalf("can't connect to host: %v", err)
 			}

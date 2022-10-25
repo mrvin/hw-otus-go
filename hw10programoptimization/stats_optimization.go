@@ -3,14 +3,13 @@ package hw10programoptimization
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 
 	"github.com/mrvin/hw-otus-go/hw10programoptimization/user"
 	"github.com/ugorji/go/codec"
 )
 
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
-	content, err := ioutil.ReadAll(r)
+	content, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +40,7 @@ type result struct {
 }
 
 func GetDomainStatLongLivedGorout(r io.Reader, domain string) (DomainStat, error) {
-	content, err := ioutil.ReadAll(r)
+	content, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
