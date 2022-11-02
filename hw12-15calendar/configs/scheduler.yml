@@ -1,0 +1,15 @@
+# queue settings
+queue: 
+    host: localhost
+    port: 5672
+    user_name: guest
+    password: guest
+    name: event-queue
+
+# database settings
+db:
+    host: localhost
+    port: 5432
+    user: event-db
+    password: event-db
+    name: event-db
