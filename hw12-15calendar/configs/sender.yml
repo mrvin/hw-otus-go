@@ -1,9 +1,9 @@
-# database settings
-db:
+# queue settings
+queue:
     host: localhost
-    port: 5432
-    user: event-db
-    password: event-db
+    port: 5672
+    user_name: guest
+    password: guest
     name: event-db
 
 # email settings
