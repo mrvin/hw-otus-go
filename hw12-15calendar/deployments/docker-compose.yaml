@@ -10,9 +10,35 @@ services:
          ENV: PROD
         links:
          - postgres
+        restart: always
+
+    scheduler:
+       build:
+        context: ../
+        dockerfile: services/scheduler/Dockerfile
+       links:
+        - postgres
+        - rabbitmq
+       restart: always
+
+    sender:
+       build:
+        context: ../
+        dockerfile: services/sender/Dockerfile
+       links:
+        - rabbitmq
+       restart: always
+
+    # Create service with PostgreSQL.
     postgres:
-        image: postgres:latest
+        image: postgres:15.0-alpine
         environment:
          POSTGRES_PASSWORD: event-db
          POSTGRES_USER: event-db
          POSTGRES_DB: event-db
+
+    # Create service with RabbitMQ.
+    rabbitmq:
+        image: rabbitmq:3.11.2-management-alpine
+        ports:
+         - 15672:15672 # for serve RabbitMQ GUI
