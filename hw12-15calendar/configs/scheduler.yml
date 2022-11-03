@@ -1,6 +1,6 @@
 # queue settings
 queue: 
-    host: localhost
+    host: rabbitmq
     port: 5672
     user_name: guest
     password: guest
@@ -8,7 +8,7 @@ queue:
 
 # database settings
 db:
-    host: localhost
+    host: postgres
     port: 5432
     user: event-db
     password: event-db
