@@ -9,7 +9,7 @@ WORKDIR /calendar/app
 COPY services/calendar services/calendar
 COPY Makefile .
 COPY internal internal
-COPY api api
+
 COPY configs/calendar.yml configs/
 
 COPY deployments/start.sh /
