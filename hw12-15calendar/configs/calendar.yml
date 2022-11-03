@@ -1,9 +1,9 @@
-# GRPC settings
+# GRPC server settings
 grpc:
     host: localhost
     port: 55555
 
-# HTTP setting
+# HTTP server setting
 http:
     host: 127.0.0.1
     port: 8080
