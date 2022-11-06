@@ -13,3 +13,8 @@ email:
     host: smtp.example.com
     port: 25
 
+# logging settings
+logger:
+    filepath:
+    level: debug
+

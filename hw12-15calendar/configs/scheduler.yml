@@ -13,3 +13,8 @@ db:
     user: event-db
     password: event-db
     name: event-db
+
+# logging settings
+logger:
+    filepath:
+    level: debug

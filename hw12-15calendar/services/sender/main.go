@@ -8,14 +8,16 @@ import (
 	"log"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/logger"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/queue"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/queue/rabbitmq"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/sender/email"
 )
 
 type Config struct {
-	Queue queue.Conf `yaml:"queue"`
-	Email email.Conf `yaml:"email"`
+	Queue  queue.Conf  `yaml:"queue"`
+	Email  email.Conf  `yaml:"email"`
+	Logger logger.Conf `yaml:"logger"`
 }
 
 func main() {
@@ -28,6 +30,13 @@ func main() {
 		return
 	}
 
+	logFile := logger.LogInit(&conf.Logger)
+	defer func() {
+		if logFile != nil {
+			logFile.Close()
+		}
+	}()
+
 	var qm rabbitmq.Queue
 
 	url := rabbitmq.QueryBuildAMQP(&conf.Queue)
@@ -37,6 +46,7 @@ func main() {
 		return
 	}
 	defer qm.Close()
+	log.Println("Сonnected to queue")
 
 	chConsume, err := qm.GetConsumeChan()
 	if err != nil {
@@ -50,9 +60,9 @@ func main() {
 		dec := gob.NewDecoder(buffer)
 		if err := dec.Decode(&eventMsg); err != nil {
 			fmt.Println(err)
-			return
+			continue
 		}
-		log.Printf("Received a message: %v", eventMsg)
+		log.Printf("Take alert message from queue with id: %d\n", eventMsg.EventID)
 		msg := email.Message{To: []string{eventMsg.UserEmail}, Subject: eventMsg.Title, Description: eventMsg.Description}
 		sendEvent(&conf.Email, &msg)
 	}
@@ -61,6 +71,7 @@ func main() {
 func sendEvent(conf *email.Conf, msg *email.Message) {
 	if err := email.Alert(conf, msg); err != nil {
 		log.Print(err)
+		return
 	}
-	fmt.Printf("msg: %s\n", msg.Subject)
+	fmt.Printf("'%s' event notification sent to '%s'\n", msg.Subject, msg.To[0])
 }
