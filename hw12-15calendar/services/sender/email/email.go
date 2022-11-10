@@ -16,14 +16,14 @@ type Conf struct {
 
 type Message struct {
 	From        string
-	To          []string
+	To          string
 	Subject     string
 	Description string
 }
 
 const emailTemplate = `From: {{.From}}
 To: {{.To}}
-Subject {{.Subject}}
+Subject: {{.Subject}}
 
 {{.Description}}
 `
@@ -34,7 +34,7 @@ var Send = func(conf *Conf, msg *Message, body []byte) error {
 	auth := smtp.PlainAuth("", conf.SenderEmail, conf.Password, conf.Host)
 	confServer := fmt.Sprintf("%s:%d", conf.Host, conf.Port)
 
-	if err := smtp.SendMail(confServer, auth, msg.From, msg.To, body); err != nil {
+	if err := smtp.SendMail(confServer, auth, msg.From, []string{msg.To}, body); err != nil {
 		return fmt.Errorf("SendMail: %w", err)
 	}
 
