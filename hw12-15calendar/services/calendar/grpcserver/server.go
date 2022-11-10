@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendarapi"
@@ -82,7 +83,7 @@ func (s *Server) GetUser(ctx context.Context, req *calendarapi.UserRequest) (*ca
 	return &calendarapi.User{Id: int64(user.ID), Name: user.Name, Email: user.Email}, nil
 }
 
-func (s *Server) GetAllUsers(ctx context.Context, null *calendarapi.Null) (*calendarapi.Users, error) {
+func (s *Server) GetAllUsers(ctx context.Context, null *emptypb.Empty) (*calendarapi.Users, error) {
 	defer logGRPC("Get all user", "")()
 	users, err := s.stor.GetAllUsers(ctx)
 	if err != nil {
@@ -99,7 +100,7 @@ func (s *Server) GetAllUsers(ctx context.Context, null *calendarapi.Null) (*cale
 	return &calendarapi.Users{Users: pbUsers}, nil
 }
 
-func (s *Server) UpdateUser(ctx context.Context, userpb *calendarapi.User) (*calendarapi.Null, error) {
+func (s *Server) UpdateUser(ctx context.Context, userpb *calendarapi.User) (*emptypb.Empty, error) {
 	defer logGRPC("Update user", fmt.Sprintf("id - %d, name - %s, email: - %s", userpb.GetId(), userpb.GetName(), userpb.GetEmail()))()
 	user := storage.User{ID: int(userpb.GetId()), Name: userpb.GetName(), Email: userpb.GetEmail(), Events: nil}
 	if err := s.stor.UpdateUser(ctx, &user); err != nil {
@@ -108,10 +109,10 @@ func (s *Server) UpdateUser(ctx context.Context, userpb *calendarapi.User) (*cal
 		return nil, err
 	}
 
-	return &calendarapi.Null{}, nil
+	return &emptypb.Empty{}, nil
 }
 
-func (s *Server) DeleteUser(ctx context.Context, req *calendarapi.UserRequest) (*calendarapi.Null, error) {
+func (s *Server) DeleteUser(ctx context.Context, req *calendarapi.UserRequest) (*emptypb.Empty, error) {
 	defer logGRPC("Delete user", fmt.Sprintf("id - %d", req.GetId()))()
 	if err := s.stor.DeleteUser(ctx, int(req.GetId())); err != nil {
 		err := fmt.Errorf("delete user: %w", err)
@@ -119,7 +120,7 @@ func (s *Server) DeleteUser(ctx context.Context, req *calendarapi.UserRequest) (
 		return nil, err
 	}
 
-	return &calendarapi.Null{}, nil
+	return &emptypb.Empty{}, nil
 }
 
 func (s *Server) CreateEvent(ctx context.Context, pbEvent *calendarapi.Event) (*calendarapi.EventResponse, error) {
@@ -171,7 +172,7 @@ func (s *Server) GetEventsForUser(ctx context.Context, req *calendarapi.UserRequ
 	return &calendarapi.Events{Events: pbEvents}, nil
 }
 
-func (s *Server) UpdateEvent(ctx context.Context, pbEvent *calendarapi.Event) (*calendarapi.Null, error) {
+func (s *Server) UpdateEvent(ctx context.Context, pbEvent *calendarapi.Event) (*emptypb.Empty, error) {
 	defer logGRPC("Update event", fmt.Sprintf("id - %d, title - %s, description - %s, start time - %v, stop time - %v, user id - %d",
 		pbEvent.Id, pbEvent.GetTitle(), pbEvent.GetDescription(), pbEvent.StartTime, pbEvent.StopTime, pbEvent.UserID))()
 	event, err := convertpbEventToEvent(pbEvent)
@@ -187,10 +188,10 @@ func (s *Server) UpdateEvent(ctx context.Context, pbEvent *calendarapi.Event) (*
 		return nil, err
 	}
 
-	return &calendarapi.Null{}, nil
+	return &emptypb.Empty{}, nil
 }
 
-func (s *Server) DeleteEvent(ctx context.Context, req *calendarapi.EventRequest) (*calendarapi.Null, error) {
+func (s *Server) DeleteEvent(ctx context.Context, req *calendarapi.EventRequest) (*emptypb.Empty, error) {
 	defer logGRPC("Delete event", fmt.Sprintf("id - %d", req.GetId()))()
 	if err := s.stor.DeleteEvent(ctx, int(req.GetId())); err != nil {
 		err := fmt.Errorf("delete event: %w", err)
@@ -198,7 +199,7 @@ func (s *Server) DeleteEvent(ctx context.Context, req *calendarapi.EventRequest)
 		return nil, err
 	}
 
-	return &calendarapi.Null{}, nil
+	return &emptypb.Empty{}, nil
 }
 
 func convertpbEventToEvent(pbEvent *calendarapi.Event) (*storage.Event, error) {

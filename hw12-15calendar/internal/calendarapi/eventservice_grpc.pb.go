@@ -8,6 +8,7 @@ package calendarapi
 
 import (
 	context "context"
+	empty "github.com/golang/protobuf/ptypes/empty"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -24,14 +25,14 @@ const _ = grpc.SupportPackageIsVersion7
 type EventServiceClient interface {
 	CreateUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*UserResponse, error)
 	GetUser(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*User, error)
-	GetAllUsers(ctx context.Context, in *Null, opts ...grpc.CallOption) (*Users, error)
-	UpdateUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*Null, error)
-	DeleteUser(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*Null, error)
+	GetAllUsers(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*Users, error)
+	UpdateUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*empty.Empty, error)
+	DeleteUser(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	CreateEvent(ctx context.Context, in *Event, opts ...grpc.CallOption) (*EventResponse, error)
 	GetEvent(ctx context.Context, in *EventRequest, opts ...grpc.CallOption) (*Event, error)
 	GetEventsForUser(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*Events, error)
-	UpdateEvent(ctx context.Context, in *Event, opts ...grpc.CallOption) (*Null, error)
-	DeleteEvent(ctx context.Context, in *EventRequest, opts ...grpc.CallOption) (*Null, error)
+	UpdateEvent(ctx context.Context, in *Event, opts ...grpc.CallOption) (*empty.Empty, error)
+	DeleteEvent(ctx context.Context, in *EventRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 }
 
 type eventServiceClient struct {
@@ -60,7 +61,7 @@ func (c *eventServiceClient) GetUser(ctx context.Context, in *UserRequest, opts 
 	return out, nil
 }
 
-func (c *eventServiceClient) GetAllUsers(ctx context.Context, in *Null, opts ...grpc.CallOption) (*Users, error) {
+func (c *eventServiceClient) GetAllUsers(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*Users, error) {
 	out := new(Users)
 	err := c.cc.Invoke(ctx, "/event.EventService/GetAllUsers", in, out, opts...)
 	if err != nil {
@@ -69,8 +70,8 @@ func (c *eventServiceClient) GetAllUsers(ctx context.Context, in *Null, opts ...
 	return out, nil
 }
 
-func (c *eventServiceClient) UpdateUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*Null, error) {
-	out := new(Null)
+func (c *eventServiceClient) UpdateUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
 	err := c.cc.Invoke(ctx, "/event.EventService/UpdateUser", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -78,8 +79,8 @@ func (c *eventServiceClient) UpdateUser(ctx context.Context, in *User, opts ...g
 	return out, nil
 }
 
-func (c *eventServiceClient) DeleteUser(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*Null, error) {
-	out := new(Null)
+func (c *eventServiceClient) DeleteUser(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
 	err := c.cc.Invoke(ctx, "/event.EventService/DeleteUser", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -114,8 +115,8 @@ func (c *eventServiceClient) GetEventsForUser(ctx context.Context, in *UserReque
 	return out, nil
 }
 
-func (c *eventServiceClient) UpdateEvent(ctx context.Context, in *Event, opts ...grpc.CallOption) (*Null, error) {
-	out := new(Null)
+func (c *eventServiceClient) UpdateEvent(ctx context.Context, in *Event, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
 	err := c.cc.Invoke(ctx, "/event.EventService/UpdateEvent", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -123,8 +124,8 @@ func (c *eventServiceClient) UpdateEvent(ctx context.Context, in *Event, opts ..
 	return out, nil
 }
 
-func (c *eventServiceClient) DeleteEvent(ctx context.Context, in *EventRequest, opts ...grpc.CallOption) (*Null, error) {
-	out := new(Null)
+func (c *eventServiceClient) DeleteEvent(ctx context.Context, in *EventRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
 	err := c.cc.Invoke(ctx, "/event.EventService/DeleteEvent", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -138,14 +139,14 @@ func (c *eventServiceClient) DeleteEvent(ctx context.Context, in *EventRequest, 
 type EventServiceServer interface {
 	CreateUser(context.Context, *User) (*UserResponse, error)
 	GetUser(context.Context, *UserRequest) (*User, error)
-	GetAllUsers(context.Context, *Null) (*Users, error)
-	UpdateUser(context.Context, *User) (*Null, error)
-	DeleteUser(context.Context, *UserRequest) (*Null, error)
+	GetAllUsers(context.Context, *empty.Empty) (*Users, error)
+	UpdateUser(context.Context, *User) (*empty.Empty, error)
+	DeleteUser(context.Context, *UserRequest) (*empty.Empty, error)
 	CreateEvent(context.Context, *Event) (*EventResponse, error)
 	GetEvent(context.Context, *EventRequest) (*Event, error)
 	GetEventsForUser(context.Context, *UserRequest) (*Events, error)
-	UpdateEvent(context.Context, *Event) (*Null, error)
-	DeleteEvent(context.Context, *EventRequest) (*Null, error)
+	UpdateEvent(context.Context, *Event) (*empty.Empty, error)
+	DeleteEvent(context.Context, *EventRequest) (*empty.Empty, error)
 }
 
 // UnimplementedEventServiceServer should be embedded to have forward compatible implementations.
@@ -158,13 +159,13 @@ func (UnimplementedEventServiceServer) CreateUser(context.Context, *User) (*User
 func (UnimplementedEventServiceServer) GetUser(context.Context, *UserRequest) (*User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
 }
-func (UnimplementedEventServiceServer) GetAllUsers(context.Context, *Null) (*Users, error) {
+func (UnimplementedEventServiceServer) GetAllUsers(context.Context, *empty.Empty) (*Users, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAllUsers not implemented")
 }
-func (UnimplementedEventServiceServer) UpdateUser(context.Context, *User) (*Null, error) {
+func (UnimplementedEventServiceServer) UpdateUser(context.Context, *User) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
 }
-func (UnimplementedEventServiceServer) DeleteUser(context.Context, *UserRequest) (*Null, error) {
+func (UnimplementedEventServiceServer) DeleteUser(context.Context, *UserRequest) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
 }
 func (UnimplementedEventServiceServer) CreateEvent(context.Context, *Event) (*EventResponse, error) {
@@ -176,10 +177,10 @@ func (UnimplementedEventServiceServer) GetEvent(context.Context, *EventRequest) 
 func (UnimplementedEventServiceServer) GetEventsForUser(context.Context, *UserRequest) (*Events, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetEventsForUser not implemented")
 }
-func (UnimplementedEventServiceServer) UpdateEvent(context.Context, *Event) (*Null, error) {
+func (UnimplementedEventServiceServer) UpdateEvent(context.Context, *Event) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateEvent not implemented")
 }
-func (UnimplementedEventServiceServer) DeleteEvent(context.Context, *EventRequest) (*Null, error) {
+func (UnimplementedEventServiceServer) DeleteEvent(context.Context, *EventRequest) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteEvent not implemented")
 }
 
@@ -231,7 +232,7 @@ func _EventService_GetUser_Handler(srv interface{}, ctx context.Context, dec fun
 }
 
 func _EventService_GetAllUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Null)
+	in := new(empty.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -243,7 +244,7 @@ func _EventService_GetAllUsers_Handler(srv interface{}, ctx context.Context, dec
 		FullMethod: "/event.EventService/GetAllUsers",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EventServiceServer).GetAllUsers(ctx, req.(*Null))
+		return srv.(EventServiceServer).GetAllUsers(ctx, req.(*empty.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }

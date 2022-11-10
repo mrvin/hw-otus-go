@@ -3,6 +3,7 @@ syntax = "proto3";
 package event;
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
 option go_package = ".;calendarapi";
 
@@ -45,19 +46,17 @@ message Events {
 	repeated Event events = 1;
 }
 
-message Null {};
-
 service EventService {
 	rpc CreateUser (User) returns (UserResponse) {}
 	rpc GetUser (UserRequest) returns (User) {}
-	rpc GetAllUsers (Null) returns (Users) {}
-	rpc UpdateUser (User) returns (Null) {}
-	rpc DeleteUser (UserRequest) returns (Null) {}
+	rpc GetAllUsers (google.protobuf.Empty) returns (Users) {}
+	rpc UpdateUser (User) returns (google.protobuf.Empty) {}
+	rpc DeleteUser (UserRequest) returns (google.protobuf.Empty) {}
 
 	rpc CreateEvent (Event) returns (EventResponse) {}
 	rpc GetEvent (EventRequest) returns (Event) {}
 	rpc GetEventsForUser(UserRequest) returns (Events) {}
-	rpc UpdateEvent (Event) returns (Null) {}
-	rpc DeleteEvent (EventRequest) returns (Null) {}
+	rpc UpdateEvent (Event) returns (google.protobuf.Empty) {}
+	rpc DeleteEvent (EventRequest) returns (google.protobuf.Empty) {}
 }
 
