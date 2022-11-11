@@ -1,11 +1,11 @@
 package main
 
 import (
-	"bytes"
-	"encoding/gob"
+	"context"
 	"flag"
-	"fmt"
 	"log"
+	"os/signal"
+	"syscall"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/logger"
@@ -42,7 +42,7 @@ func main() {
 	url := rabbitmq.QueryBuildAMQP(&conf.Queue)
 
 	if err := qm.ConnectAndCreate(url, conf.Queue.Name); err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 	defer qm.Close()
@@ -50,21 +50,31 @@ func main() {
 
 	chConsume, err := qm.GetConsumeChan()
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 
-	for msg := range chConsume {
-		var eventMsg queue.AlertEvent
-		buffer := bytes.NewBuffer(msg.Body)
-		dec := gob.NewDecoder(buffer)
-		if err := dec.Decode(&eventMsg); err != nil {
-			fmt.Println(err)
-			continue
+	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT /*(Control-C)*/, syscall.SIGTERM, syscall.SIGQUIT)
+
+	for {
+		select {
+		case msg, ok := <-chConsume:
+			if !ok {
+				return
+			}
+			alertEvent, err := queue.DecodeAlertEvent(msg.Body)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+
+			log.Printf("Take alert message from queue with id: %d\n", alertEvent.EventID)
+			emailMsg := email.Message{To: alertEvent.UserEmail, Subject: alertEvent.Title, Description: alertEvent.Description}
+			sendEvent(&conf.Email, &emailMsg)
+		case <-ctx.Done():
+			log.Println("Stop sender")
+			return
 		}
-		log.Printf("Take alert message from queue with id: %d\n", eventMsg.EventID)
-		msg := email.Message{To: []string{eventMsg.UserEmail}, Subject: eventMsg.Title, Description: eventMsg.Description}
-		sendEvent(&conf.Email, &msg)
 	}
 }
 
@@ -73,5 +83,5 @@ func sendEvent(conf *email.Conf, msg *email.Message) {
 		log.Print(err)
 		return
 	}
-	fmt.Printf("'%s' event notification sent to '%s'\n", msg.Subject, msg.To[0])
+	log.Printf("'%s' event notification sent to '%s'\n", msg.Subject, msg.To)
 }

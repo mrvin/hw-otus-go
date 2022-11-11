@@ -1,12 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"encoding/gob"
 	"flag"
-	"fmt"
 	"log"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
@@ -17,12 +16,11 @@ import (
 )
 
 type Config struct {
-	Queue  queue.Conf      `yaml:"queue"`
-	DB     sqlstorage.Conf `yaml:"db"`
-	Logger logger.Conf     `yaml:"logger"`
+	Queue       queue.Conf      `yaml:"queue"`
+	DB          sqlstorage.Conf `yaml:"db"`
+	Logger      logger.Conf     `yaml:"logger"`
+	PeriodSched time.Duration   `yaml:"schedule_period"`
 }
-
-const periodSched = time.Minute * 2
 
 func main() {
 	configFile := flag.String("config", "/etc/calendar/scheduler.yaml", "path to configuration file")
@@ -55,46 +53,70 @@ func main() {
 	url := rabbitmq.QueryBuildAMQP(&conf.Queue)
 
 	if err := qm.ConnectAndCreate(url, conf.Queue.Name); err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 	defer qm.Close()
 	log.Println("Сonnected to queue")
 
+	ctx, _ = signal.NotifyContext(context.Background(), syscall.SIGINT /*(Control-C)*/, syscall.SIGTERM, syscall.SIGQUIT)
+	//FIXIT
+	if conf.PeriodSched == 0 {
+		conf.PeriodSched = 2
+	}
+	periodSched := conf.PeriodSched * time.Minute
+	ticker := time.Tick(periodSched)
 	for {
-		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+		ctxGetAllEvents, _ := context.WithTimeout(context.Background(), 5*time.Second)
 
-		events, err := st.GetAllEvents(ctx)
+		events, err := st.GetAllEvents(ctxGetAllEvents)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 		log.Println("Start send event...")
 		for _, event := range events {
+			if cancelled(ctx) {
+				break
+			}
 			nowTime := time.Now()
 			if event.StartTime.After(nowTime) && event.StartTime.Before(nowTime.Add(periodSched)) {
 				user, err := st.GetUser(ctx, event.UserID)
 				if err != nil {
-					fmt.Println(err)
+					log.Println(err)
 					continue
 				}
-				eventMsg := queue.AlertEvent{EventID: event.ID, Title: event.Title, Description: event.Description,
+				alertEvent := queue.AlertEvent{EventID: event.ID, Title: event.Title, Description: event.Description,
 					StartTime: event.StartTime, UserName: user.Name, UserEmail: user.Email}
 
-				buffer := new(bytes.Buffer)
-				encoder := gob.NewEncoder(buffer)
-				if err := encoder.Encode(eventMsg); err != nil {
-					fmt.Println(err)
+				byteAlertEvent, err := queue.EncodeAlertEvent(&alertEvent)
+				if err != nil {
+					log.Println(err)
 					continue
 				}
 
 				ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-				if err := qm.SendMsg(ctx, buffer.Bytes()); err != nil {
-					fmt.Println(err)
+				if err := qm.SendMsg(ctx, byteAlertEvent); err != nil {
+					log.Println(err)
 					continue
 				}
 				log.Printf("Put alert message in queue with id: %d\n", event.ID)
 			}
 		}
-		time.Sleep(periodSched)
+		select {
+		case <-ticker:
+		// do nothing.
+		case <-ctx.Done():
+			log.Println("Stop scheduler")
+			return
+		}
+	}
+}
+
+func cancelled(ctx context.Context) bool {
+	select {
+	case <-ctx.Done():
+		return true
+	default:
+		return false
 	}
 }
