@@ -28,7 +28,7 @@ func handleCreateUser(res http.ResponseWriter, req *http.Request, server *Server
 		return
 	}
 
-	if err := server.stor.CreateUser(req.Context(), user); err != nil {
+	if err := server.app.CreateUser(req.Context(), user); err != nil {
 		log.Printf("Create user: saving user info: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -50,7 +50,7 @@ func handleGetUser(res http.ResponseWriter, req *http.Request, server *Server) {
 		return
 	}
 
-	user, err := server.stor.GetUser(req.Context(), id)
+	user, err := server.app.GetUser(req.Context(), id)
 	if err != nil {
 		log.Printf("Get user: get from storage: %v", err)
 		if errors.Is(err, storage.ErrNoUser) {
@@ -90,7 +90,7 @@ func handleUpdateUser(res http.ResponseWriter, req *http.Request, server *Server
 		return
 	}
 
-	if err := server.stor.UpdateUser(req.Context(), user); err != nil {
+	if err := server.app.UpdateUser(req.Context(), user); err != nil {
 		log.Printf("Update user: update in storage: %v", err)
 		if errors.Is(err, storage.ErrNoUser) {
 			res.WriteHeader(http.StatusBadRequest)
@@ -113,7 +113,7 @@ func handleDeleteUser(res http.ResponseWriter, req *http.Request, server *Server
 		return
 	}
 
-	if err := server.stor.DeleteUser(req.Context(), id); err != nil {
+	if err := server.app.DeleteUser(req.Context(), id); err != nil {
 		log.Printf("Delete user: delete in storage: %v", err)
 		if errors.Is(err, storage.ErrNoUser) {
 			res.WriteHeader(http.StatusBadRequest)

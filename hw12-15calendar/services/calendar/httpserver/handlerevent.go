@@ -24,7 +24,7 @@ func handleCreateEvent(res http.ResponseWriter, req *http.Request, server *Serve
 		return
 	}
 
-	if err := server.stor.CreateEvent(req.Context(), event); err != nil {
+	if err := server.app.CreateEvent(req.Context(), event); err != nil {
 		log.Printf("Create event: saving event info: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -46,7 +46,7 @@ func handleGetEvent(res http.ResponseWriter, req *http.Request, server *Server) 
 		return
 	}
 
-	event, err := server.stor.GetEvent(req.Context(), id)
+	event, err := server.app.GetEvent(req.Context(), id)
 	if err != nil {
 		log.Printf("Get event: get from storage: %v", err)
 		if errors.Is(err, storage.ErrNoEvent) {
@@ -86,7 +86,7 @@ func handleUpdateEvent(res http.ResponseWriter, req *http.Request, server *Serve
 		return
 	}
 
-	if err := server.stor.UpdateEvent(req.Context(), event); err != nil {
+	if err := server.app.UpdateEvent(req.Context(), event); err != nil {
 		log.Printf("Update event: update in storage: %v", err)
 		if errors.Is(err, storage.ErrNoEvent) {
 			res.WriteHeader(http.StatusBadRequest)
@@ -109,7 +109,7 @@ func handleDeleteEvent(res http.ResponseWriter, req *http.Request, server *Serve
 		return
 	}
 
-	if err := server.stor.DeleteEvent(req.Context(), id); err != nil {
+	if err := server.app.DeleteEvent(req.Context(), id); err != nil {
 		log.Printf("Delete event: delete in storage: %v", err)
 		if errors.Is(err, storage.ErrNoEvent) {
 			res.WriteHeader(http.StatusBadRequest)

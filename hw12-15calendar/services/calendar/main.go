@@ -18,6 +18,7 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	memorystorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/memory"
 	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/app"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/grpcserver"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/httpserver"
 )
@@ -57,8 +58,9 @@ func main() {
 		log.Println("Connect db")
 	}
 
-	serverHTTP := httpserver.New(&conf.HTTP, storage)
-	serverGRPC, err := grpcserver.New(&conf.GRPC, storage)
+	app := app.New(storage)
+	serverHTTP := httpserver.New(&conf.HTTP, app)
+	serverGRPC, err := grpcserver.New(&conf.GRPC, app)
 	if err != nil {
 		log.Printf("GRPC: %v", err)
 		return

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/app"
 )
 
 type Conf struct {
@@ -18,14 +18,14 @@ type Conf struct {
 
 type Server struct {
 	serv http.Server
-	stor storage.Storage
+	app  *app.App
 	pr   *pathResolver
 }
 
-func New(conf *Conf, stor storage.Storage) *Server {
+func New(conf *Conf, app *app.App) *Server {
 	var server Server
 
-	server.stor = stor
+	server.app = app
 	server.pr = newPathResolver()
 
 	server.pr.Add("POST /users", handleCreateUser)
