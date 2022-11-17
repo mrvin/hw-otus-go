@@ -124,6 +124,7 @@ func unmarshalEvent(req *http.Request) (*storage.Event, error) {
 	var event storage.Event
 
 	body, err := io.ReadAll(req.Body)
+	defer req.Body.Close()
 	if err != nil {
 		return nil, fmt.Errorf("read body req: %w", err)
 	}

@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -13,16 +14,19 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	memorystorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/memory"
 	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/app"
 )
 
 const urlUsers = "http://localhost:8080/users"
 const urlEvents = "http://localhost:8080/events"
 
+const contextTimeoutDB = 2 * time.Second
+
 var confDBTest = sqlstorage.Conf{"postgres", 5432, "event-db", "event-db", "event-db"}
 
 func initServerHTTP(st storage.Storage) *Server {
 	conf := Conf{"localhost", 8080}
-	server := New(&conf, st)
+	server := New(&conf, app.New(st))
 
 	return server
 }
@@ -40,6 +44,7 @@ func TestHandleEventMemory(t *testing.T) {
 }
 
 func TestHandleUserSQL(t *testing.T) {
+	ctx, _ := context.WithTimeout(context.Background(), contextTimeoutDB)
 	st, err := sqlstorage.New(ctx, &confDBTest)
 	if err != nil {
 		t.Fatalf("db: %v", err)
@@ -52,6 +57,7 @@ func TestHandleUserSQL(t *testing.T) {
 }
 
 func TestHandleEventSQL(t *testing.T) {
+	ctx, _ := context.WithTimeout(context.Background(), contextTimeoutDB)
 	st, err := sqlstorage.New(ctx, &confDBTest)
 	if err != nil {
 		t.Fatalf("db: %v", err)

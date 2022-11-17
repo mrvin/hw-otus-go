@@ -141,6 +141,7 @@ func unmarshalUser(req *http.Request) (*storage.User, error) {
 	var user storage.User
 
 	body, err := io.ReadAll(req.Body)
+	defer req.Body.Close()
 	if err != nil {
 		return nil, fmt.Errorf("read body req: %w", err)
 	}
