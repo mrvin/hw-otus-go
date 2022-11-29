@@ -75,11 +75,16 @@ func main() {
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		if err := serverHTTP.Start(); err != nil {
-			if !errors.Is(err, http.ErrServerClosed) {
-				log.Errorf("HTTP server: failed to start: %v", err)
-				return
-			}
+
+		var err error
+		if conf.HTTP.IsHTTPS {
+			err = serverHTTP.StartTLS(&conf.HTTP.HTTPS)
+		} else {
+			err = serverHTTP.Start()
+		}
+		if !errors.Is(err, http.ErrServerClosed) {
+			log.Errorf("HTTP server failed to start: %v", err)
+			return
 		}
 	}()
 

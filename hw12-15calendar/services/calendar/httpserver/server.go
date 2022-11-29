@@ -12,9 +12,16 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/app"
 )
 
+type ConfHTTPS struct {
+	CertFile string `yaml:"cert_file"`
+	KeyFile  string `yaml:"key_file"`
+}
+
 type Conf struct {
-	Host string `yaml:"host"`
-	Port int    `yaml:"port"`
+	Host    string    `yaml:"host"`
+	Port    int       `yaml:"port"`
+	IsHTTPS bool      `yaml:"is_https"`
+	HTTPS   ConfHTTPS `yaml:"https"`
 }
 
 type Server struct {
@@ -52,6 +59,14 @@ func New(conf *Conf, app *app.App) *Server {
 func (s *Server) Start() error {
 	s.log.Infof("Start server: http://%s", s.serv.Addr)
 	if err := s.serv.ListenAndServe(); err != nil {
+		return fmt.Errorf("start http server: %w", err)
+	}
+	return nil
+}
+
+func (s *Server) StartTLS(conf *ConfHTTPS) error {
+	s.log.Infof("Start server: https://%s", s.serv.Addr)
+	if err := s.serv.ListenAndServeTLS(conf.CertFile, conf.KeyFile); err != nil {
 		return fmt.Errorf("start http server: %w", err)
 	}
 	return nil

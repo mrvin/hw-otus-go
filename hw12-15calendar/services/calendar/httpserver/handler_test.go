@@ -25,7 +25,7 @@ const contextTimeoutDB = 2 * time.Second
 var confDBTest = sqlstorage.Conf{"postgres", 5432, "event-db", "event-db", "event-db"}
 
 func initServerHTTP(st storage.Storage) *Server {
-	conf := Conf{"localhost", 8080}
+	conf := Conf{"localhost", 8080, false, ConfHTTPS{}}
 	server := New(&conf, app.New(st))
 
 	return server
@@ -44,7 +44,8 @@ func TestHandleEventMemory(t *testing.T) {
 }
 
 func TestHandleUserSQL(t *testing.T) {
-	ctx, _ := context.WithTimeout(context.Background(), contextTimeoutDB)
+	ctx, cancel := context.WithTimeout(context.Background(), contextTimeoutDB)
+	defer cancel()
 	st, err := sqlstorage.New(ctx, &confDBTest)
 	if err != nil {
 		t.Fatalf("db: %v", err)
@@ -57,7 +58,8 @@ func TestHandleUserSQL(t *testing.T) {
 }
 
 func TestHandleEventSQL(t *testing.T) {
-	ctx, _ := context.WithTimeout(context.Background(), contextTimeoutDB)
+	ctx, cancel := context.WithTimeout(context.Background(), contextTimeoutDB)
+	defer cancel()
 	st, err := sqlstorage.New(ctx, &confDBTest)
 	if err != nil {
 		t.Fatalf("db: %v", err)
