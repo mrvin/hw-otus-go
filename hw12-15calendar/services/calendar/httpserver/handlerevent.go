@@ -5,28 +5,29 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
 
+// TODO:add return id created event
 func handleCreateEvent(res http.ResponseWriter, req *http.Request, server *Server) {
 	event, err := unmarshalEvent(req)
 	if err != nil {
-		log.Printf("Create event: %v", err)
-		res.WriteHeader(http.StatusBadRequest)
+		server.log.Errorf("Get event from request body: %v", err)
+		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
 	if event.Title == "" || event.StartTime.IsZero() || event.UserID == 0 {
-		log.Print("Create event: empty title or start time or user id")
-		res.WriteHeader(http.StatusBadRequest)
+		errMsg := "Empty fields event: title, start time, user id"
+		server.log.Error(errMsg)
+		http.Error(res, errMsg, http.StatusBadRequest)
 		return
 	}
 
 	if err := server.app.CreateEvent(req.Context(), event); err != nil {
-		log.Printf("Create event: saving event info: %v", err)
-		res.WriteHeader(http.StatusInternalServerError)
+		server.log.Errorf("Saving event to storage: %v", err)
+		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -34,40 +35,39 @@ func handleCreateEvent(res http.ResponseWriter, req *http.Request, server *Serve
 }
 
 func handleGetEvent(res http.ResponseWriter, req *http.Request, server *Server) {
-	// Return an error in JSON
 	id, err := getID(req)
 	if err != nil {
-		log.Printf("Get event: get event id: %v", err)
+		server.log.Errorf("Get event id from request body: %v", err)
 		if errors.Is(err, ErrIDEmpty) {
-			res.WriteHeader(http.StatusBadRequest)
+			http.Error(res, err.Error(), http.StatusBadRequest)
 		} else {
-			res.WriteHeader(http.StatusInternalServerError)
+			http.Error(res, err.Error(), http.StatusInternalServerError)
 		}
 		return
 	}
 
 	event, err := server.app.GetEvent(req.Context(), id)
 	if err != nil {
-		log.Printf("Get event: get from storage: %v", err)
+		server.log.Errorf("Get event from storage: %v", err)
 		if errors.Is(err, storage.ErrNoEvent) {
-			res.WriteHeader(http.StatusBadRequest)
+			http.Error(res, err.Error(), http.StatusBadRequest)
 		} else {
-			res.WriteHeader(http.StatusInternalServerError)
+			http.Error(res, err.Error(), http.StatusInternalServerError)
 		}
 		return
 	}
 
 	jsonEvent, err := json.Marshal(event)
 	if err != nil {
-		log.Printf("Get event: marshaling json: %v", err)
-		res.WriteHeader(http.StatusInternalServerError)
+		server.log.Errorf("Marshaling event to json: %v", err)
+		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	res.Header().Set("Content-Type", "application/json")
 	if _, err := res.Write(jsonEvent); err != nil {
-		log.Printf("Get event: write res: %v", err)
-		res.WriteHeader(http.StatusInternalServerError)
+		server.log.Errorf("Write event to response: %v", err)
+		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
@@ -76,22 +76,23 @@ func handleUpdateEvent(res http.ResponseWriter, req *http.Request, server *Serve
 	// Update only required fields
 	event, err := unmarshalEvent(req)
 	if err != nil {
-		log.Printf("Update event: %v", err)
-		res.WriteHeader(http.StatusBadRequest)
+		server.log.Errorf("Get event from request body: %v", err)
+		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
 	if event.ID == 0 {
-		log.Print("Update event: event id not set")
-		res.WriteHeader(http.StatusBadRequest)
+		errMsg := "Event id not set"
+		server.log.Error(errMsg)
+		http.Error(res, errMsg, http.StatusBadRequest)
 		return
 	}
 
 	if err := server.app.UpdateEvent(req.Context(), event); err != nil {
-		log.Printf("Update event: update in storage: %v", err)
+		server.log.Errorf("Update event in storage: %v", err)
 		if errors.Is(err, storage.ErrNoEvent) {
-			res.WriteHeader(http.StatusBadRequest)
+			http.Error(res, err.Error(), http.StatusBadRequest)
 		} else {
-			res.WriteHeader(http.StatusInternalServerError)
+			http.Error(res, err.Error(), http.StatusInternalServerError)
 		}
 		return
 	}
@@ -100,21 +101,21 @@ func handleUpdateEvent(res http.ResponseWriter, req *http.Request, server *Serve
 func handleDeleteEvent(res http.ResponseWriter, req *http.Request, server *Server) {
 	id, err := getID(req)
 	if err != nil {
-		log.Printf("Delete event: get id: %v", err)
+		server.log.Errorf("Get event id from request body: %v", err)
 		if errors.Is(err, ErrIDEmpty) {
-			res.WriteHeader(http.StatusBadRequest)
+			http.Error(res, err.Error(), http.StatusBadRequest)
 		} else {
-			res.WriteHeader(http.StatusInternalServerError)
+			http.Error(res, err.Error(), http.StatusInternalServerError)
 		}
 		return
 	}
 
 	if err := server.app.DeleteEvent(req.Context(), id); err != nil {
-		log.Printf("Delete event: delete in storage: %v", err)
+		server.log.Errorf("Delete event in storage: %v", err)
 		if errors.Is(err, storage.ErrNoEvent) {
-			res.WriteHeader(http.StatusBadRequest)
+			http.Error(res, err.Error(), http.StatusBadRequest)
 		} else {
-			res.WriteHeader(http.StatusInternalServerError)
+			http.Error(res, err.Error(), http.StatusInternalServerError)
 		}
 		return
 	}

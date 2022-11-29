@@ -3,10 +3,11 @@ package httpserver
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/app"
 )
@@ -20,12 +21,14 @@ type Server struct {
 	serv http.Server
 	app  *app.App
 	pr   *pathResolver
+	log  *zap.SugaredLogger
 }
 
 func New(conf *Conf, app *app.App) *Server {
 	var server Server
 
 	server.app = app
+	server.log = zap.S()
 	server.pr = newPathResolver()
 
 	server.pr.Add("POST /users", handleCreateUser)
@@ -47,7 +50,7 @@ func New(conf *Conf, app *app.App) *Server {
 }
 
 func (s *Server) Start() error {
-	log.Printf("Start http server: %s", s.serv.Addr)
+	s.log.Infof("Start server: http://%s", s.serv.Addr)
 	if err := s.serv.ListenAndServe(); err != nil {
 		return fmt.Errorf("start http server: %w", err)
 	}
@@ -60,10 +63,9 @@ func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	check := req.Method + " " + req.URL.Path
 	handlerFunc, err := s.pr.Get(check)
 	if err != nil {
-		log.Printf("%v", err)
+		s.log.Error("Get handler function: %v", err)
 	} else {
 		if handlerFunc != nil {
-			//TODO: Add running in goroutines
 			handlerFunc(res, req, s)
 			return
 		}
@@ -74,15 +76,18 @@ func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 
 func logReq(req *http.Request) func() {
 	start := time.Now()
-
+	log := zap.S()
 	return func() {
-		log.Printf("%s [%s] %s %s %s %s", strings.Split(req.RemoteAddr, ":")[0], start.Format(time.ANSIC),
-			req.Method, req.URL.Path, req.Proto, time.Since(start) /*, req.Header["User-Agent"]*/)
+		log.Infow("", "ip", strings.Split(req.RemoteAddr, ":")[0],
+			"method", req.Method,
+			"path", req.URL.Path,
+			"proto", req.Proto,
+			"duration", time.Since(start) /*, req.Header["User-Agent"]*/)
 	}
 }
 
 func (s *Server) Stop(ctx context.Context) error {
-	log.Print("Stop http server")
+	s.log.Info("Stop http server")
 	if err := s.serv.Shutdown(ctx); err != nil {
 		return fmt.Errorf("stop http server: %w", err)
 	}

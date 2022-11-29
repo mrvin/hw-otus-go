@@ -1,8 +1,10 @@
 package logger
 
 import (
-	"log"
-	"os"
+	"fmt"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type Conf struct {
@@ -10,18 +12,36 @@ type Conf struct {
 	Level    string `yaml:"level"`
 }
 
-func LogInit(conf *Conf) *os.File {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	if conf.FilePath == "" {
-		return nil
-	}
-
-	logFile, err := os.OpenFile(conf.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+func LogInit(conf *Conf) error {
+	cfg := zap.NewDevelopmentConfig()
+	level, err := zap.ParseAtomicLevel(conf.Level)
 	if err != nil {
-		log.Printf("log init: %v", err)
-		return nil
+		return fmt.Errorf("parse level: %w", err)
 	}
-	log.SetOutput(logFile)
+	cfg.Level = level
+	cfg.Encoding = "json"
 
-	return logFile
+	outputPaths := []string{"stdout"}
+	if conf.FilePath != "" {
+		outputPaths = append(outputPaths, conf.FilePath)
+	}
+	cfg.OutputPaths = outputPaths
+
+	cfg.ErrorOutputPaths = []string{"stderr"}
+
+	cfg.EncoderConfig.LevelKey = "level"
+	cfg.EncoderConfig.TimeKey = "timestamp"
+	cfg.EncoderConfig.CallerKey = "caller"
+	cfg.EncoderConfig.MessageKey = "message"
+	cfg.EncoderConfig.StacktraceKey = "stacktrace"
+
+	cfg.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("Jan 02 15:04:05.000000000")
+
+	logger, err := cfg.Build()
+	if err != nil {
+		return fmt.Errorf("build  logger: %w", err)
+	}
+	zap.ReplaceGlobals(logger)
+
+	return nil
 }

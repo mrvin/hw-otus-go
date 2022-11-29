@@ -6,6 +6,7 @@ import (
 	"path"
 )
 
+// TODO:add thread safety
 type pathResolver struct {
 	handlers map[string]func(res http.ResponseWriter, req *http.Request, server *Server)
 }

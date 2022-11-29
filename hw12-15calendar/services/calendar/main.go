@@ -13,6 +13,8 @@ import (
 	"sync"
 	"syscall"
 
+	"go.uber.org/zap"
+
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/logger"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
@@ -35,34 +37,33 @@ func main() {
 		return
 	}
 
-	logFile := logger.LogInit(&conf.Logger)
-
-	defer func() {
-		if logFile != nil {
-			logFile.Close()
-		}
-	}()
+	if err := logger.LogInit(&conf.Logger); err != nil {
+		log.Printf("Init logger: %v", err)
+		return
+	}
+	log := zap.S()
+	defer log.Sync()
 
 	var storage storage.Storage
 	if conf.InMem {
-		log.Println("Storage in memory")
+		log.Info("Storage in memory")
 		storage = memorystorage.New()
 	} else {
 		var err error
-		log.Println("Storage in sql")
+		log.Info("Storage in sql database")
 		storage, err = sqlstorage.New(ctx, &conf.DB)
 		if err != nil {
-			log.Printf("db: %v", err)
+			log.Errorf("New database connection: %v", err)
 			return
 		}
-		log.Println("Connect db")
+		log.Info("Connected to database")
 	}
 
 	app := app.New(storage)
 	serverHTTP := httpserver.New(&conf.HTTP, app)
 	serverGRPC, err := grpcserver.New(&conf.GRPC, app)
 	if err != nil {
-		log.Printf("GRPC: %v", err)
+		log.Errorf("New gRPC server: %v", err)
 		return
 	}
 
@@ -76,7 +77,7 @@ func main() {
 		defer wg.Done()
 		if err := serverHTTP.Start(); err != nil {
 			if !errors.Is(err, http.ErrServerClosed) {
-				log.Printf("HTTP server: failed to start: %v", err)
+				log.Errorf("HTTP server: failed to start: %v", err)
 				return
 			}
 		}
@@ -85,7 +86,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 		if err := serverGRPC.Start(); err != nil {
-			log.Printf("GRPC server: failed to start: %v", err)
+			log.Errorf("gRPC server failed to start: %v", err)
 			return
 		}
 	}()
@@ -93,11 +94,14 @@ func main() {
 	wg.Wait()
 
 	if storageSQL, ok := storage.(*sqlstorage.Storage); ok {
-		log.Println("Close sql storage")
-		storageSQL.Close()
+		if err := storageSQL.Close(); err != nil {
+			log.Errorf("Closing the database connection: %v", err)
+		} else {
+			log.Info("Closing the database connection")
+		}
 	}
 
-	log.Println("Stop service calendar")
+	log.Info("Stop service calendar")
 }
 
 func listenForShutdown(signals chan os.Signal, serverHTTP *httpserver.Server, serverGRPC *grpcserver.Server) {
@@ -105,7 +109,7 @@ func listenForShutdown(signals chan os.Signal, serverHTTP *httpserver.Server, se
 	signal.Stop(signals)
 
 	if err := serverHTTP.Stop(ctx); err != nil {
-		log.Printf("HTTP server: failed to stop: %v", err)
+		zap.S().Errorf("HTTP server failed to stop: %v", err)
 		return
 	}
 
