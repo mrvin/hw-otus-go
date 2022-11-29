@@ -16,3 +16,7 @@ lint:
 codegen:
 	go generate ./...
 
+certgen:
+	openssl req -x509 -newkey rsa:4096 -nodes \
+		-keyout cert/key.pem -out cert/cert.pem \
+		-subj "/C=RU/L=Saint Petersburg/O=Calendar Corp./OU=Calendar/CN=calendar.com/emailAddress=v.v.vinogradovv@gmail.com"
