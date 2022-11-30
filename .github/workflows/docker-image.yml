@@ -2,9 +2,15 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ "master" ]
+    paths:
+     - 'hw12-15calendar/services/calendar/**'
+     - 'hw12-15calendar/internal/**'
+     - !'hw12-15calendar/internal/queue/**'
   pull_request:
-    branches: [ "master" ]
+     paths:
+     - 'hw12-15calendar/services/calendar/**'
+     - 'hw12-15calendar/internal/**'
+     - !'hw12-15calendar/internal/queue/**'
 
 jobs:
 
