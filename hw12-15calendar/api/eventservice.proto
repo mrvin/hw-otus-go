@@ -20,6 +20,15 @@ message Users {
 message UserRequest {
 	int64 id = 1;
 }
+message DaysAheadRequest {
+	int32 days = 1;
+	google.protobuf.Timestamp date = 2;
+}
+
+message GetEventsForUserRequest {
+	UserRequest user = 1;
+	DaysAheadRequest daysAhead = 2;
+}
 
 message UserResponse {
 	int64 id = 1;
@@ -55,7 +64,7 @@ service EventService {
 
 	rpc CreateEvent (Event) returns (EventResponse) {}
 	rpc GetEvent (EventRequest) returns (Event) {}
-	rpc GetEventsForUser(UserRequest) returns (Events) {}
+	rpc GetEventsForUser (GetEventsForUserRequest) returns (Events) {}
 	rpc UpdateEvent (Event) returns (google.protobuf.Empty) {}
 	rpc DeleteEvent (EventRequest) returns (google.protobuf.Empty) {}
 }

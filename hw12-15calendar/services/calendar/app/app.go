@@ -2,9 +2,13 @@ package app
 
 import (
 	"context"
+	"errors"
+	"time"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
+
+var ErrStopTimeBeforeStartTime = errors.New("event ends before starts")
 
 type App struct {
 	storage storage.Storage
@@ -15,6 +19,10 @@ func New(storage storage.Storage) *App {
 }
 
 func (a *App) CreateEvent(ctx context.Context, event *storage.Event) error {
+	if event.StopTime.Before(event.StartTime) {
+		return ErrStopTimeBeforeStartTime
+	}
+
 	return a.storage.CreateEvent(ctx, event)
 }
 
@@ -28,7 +36,7 @@ func (a *App) GetAllEvents(ctx context.Context) ([]storage.Event, error) {
 }
 */
 
-func (a *App) GetEventsForUser(ctx context.Context, id int) ([]storage.Event, error) {
+func (a *App) GetEventsForUser(ctx context.Context, id int, date time.Time, days int) ([]storage.Event, error) {
 	return a.storage.GetEventsForUser(ctx, id)
 }
 
