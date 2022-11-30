@@ -12,11 +12,11 @@ type Conf struct {
 	Level    string `yaml:"level"`
 }
 
-func LogInit(conf *Conf) error {
+func LogInit(conf *Conf) (*zap.SugaredLogger, error) {
 	cfg := zap.NewDevelopmentConfig()
 	level, err := zap.ParseAtomicLevel(conf.Level)
 	if err != nil {
-		return fmt.Errorf("parse level: %w", err)
+		return nil, fmt.Errorf("parse level: %w", err)
 	}
 	cfg.Level = level
 	cfg.Encoding = "json"
@@ -39,9 +39,9 @@ func LogInit(conf *Conf) error {
 
 	logger, err := cfg.Build()
 	if err != nil {
-		return fmt.Errorf("build  logger: %w", err)
+		return nil, fmt.Errorf("build logger: %w", err)
 	}
 	zap.ReplaceGlobals(logger)
 
-	return nil
+	return zap.S(), nil
 }

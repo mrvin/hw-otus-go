@@ -3,7 +3,8 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
+	"fmt"
+	stdlog "log"
 	"os/signal"
 	"syscall"
 	"time"
@@ -19,7 +20,7 @@ type Config struct {
 	Queue       queue.Conf      `yaml:"queue"`
 	DB          sqlstorage.Conf `yaml:"db"`
 	Logger      logger.Conf     `yaml:"logger"`
-	PeriodSched time.Duration   `yaml:"schedule_period"`
+	SchedPeriod int             `yaml:"schedule_period"`
 }
 
 func main() {
@@ -28,61 +29,60 @@ func main() {
 
 	var conf Config
 	if err := config.Parse(*configFile, &conf); err != nil {
-		log.Printf("Parse config: %v", err)
+		stdlog.Printf("Parse config: %v", err)
 		return
 	}
 
-	logFile := logger.LogInit(&conf.Logger)
-	defer func() {
-		if logFile != nil {
-			logFile.Close()
-		}
-	}()
+	log, err := logger.LogInit(&conf.Logger)
+	if err != nil {
+		stdlog.Printf("Init logger: %v", err)
+		return
+	}
+	defer log.Sync()
 
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
 	st, err := sqlstorage.New(ctx, &conf.DB)
 	if err != nil {
-		log.Printf("db: %v", err)
+		log.Errorf("New database connection: %v", err)
 		return
 	}
 	defer st.Close()
-	log.Println("Сonnected to database")
+	log.Info("Connected to database")
 
 	var qm rabbitmq.Queue
 
 	url := rabbitmq.QueryBuildAMQP(&conf.Queue)
 
 	if err := qm.ConnectAndCreate(url, conf.Queue.Name); err != nil {
-		log.Println(err)
+		log.Errorf("New queue connection: %v", err)
 		return
 	}
 	defer qm.Close()
-	log.Println("Сonnected to queue")
+	log.Info("Connected to queue")
 
-	ctx, _ = signal.NotifyContext(context.Background(), syscall.SIGINT /*(Control-C)*/, syscall.SIGTERM, syscall.SIGQUIT)
-	//FIXIT
-	if conf.PeriodSched == 0 {
-		conf.PeriodSched = 2
-	}
-	periodSched := conf.PeriodSched * time.Minute
-	ticker := time.Tick(periodSched)
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT /*(Control-C)*/, syscall.SIGTERM, syscall.SIGQUIT)
+	defer stop()
+	fmt.Println(conf.SchedPeriod)
+	schedPeriod := time.Duration(conf.SchedPeriod) * time.Minute
+	ticker := time.Tick(schedPeriod)
 	for {
-		ctxGetAllEvents, _ := context.WithTimeout(context.Background(), 5*time.Second)
-
+		ctxGetAllEvents, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
 		events, err := st.GetAllEvents(ctxGetAllEvents)
 		if err != nil {
-			log.Println(err)
+			log.Errorf("List event: %v", err)
 		}
-		log.Println("Start send event...")
+		log.Info("Start send event...")
 		for _, event := range events {
 			if cancelled(ctx) {
 				break
 			}
 			nowTime := time.Now()
-			if event.StartTime.After(nowTime) && event.StartTime.Before(nowTime.Add(periodSched)) {
+			if event.StartTime.After(nowTime) && event.StartTime.Before(nowTime.Add(schedPeriod)) {
 				user, err := st.GetUser(ctx, event.UserID)
 				if err != nil {
-					log.Println(err)
+					log.Error(err)
 					continue
 				}
 				alertEvent := queue.AlertEvent{EventID: event.ID, Title: event.Title, Description: event.Description,
@@ -90,23 +90,24 @@ func main() {
 
 				byteAlertEvent, err := queue.EncodeAlertEvent(&alertEvent)
 				if err != nil {
-					log.Println(err)
+					log.Error(err)
 					continue
 				}
 
-				ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+				ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+				defer cancel()
 				if err := qm.SendMsg(ctx, byteAlertEvent); err != nil {
-					log.Println(err)
+					log.Error(err)
 					continue
 				}
-				log.Printf("Put alert message in queue with id: %d\n", event.ID)
+				log.Infof("Put alert message in queue with id: %d\n", event.ID)
 			}
 		}
 		select {
 		case <-ticker:
 		// do nothing.
 		case <-ctx.Done():
-			log.Println("Stop scheduler")
+			log.Info("Stop scheduler")
 			return
 		}
 	}

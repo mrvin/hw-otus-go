@@ -6,7 +6,7 @@ import (
 	"context"
 	"errors"
 	"flag"
-	"log"
+	stdlog "log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -33,15 +33,15 @@ func main() {
 
 	var conf Config
 	if err := config.Parse(*configFile, &conf); err != nil {
-		log.Printf("Parse config: %v", err)
+		stdlog.Printf("Parse config: %v", err)
 		return
 	}
 
-	if err := logger.LogInit(&conf.Logger); err != nil {
-		log.Printf("Init logger: %v", err)
+	log, err := logger.LogInit(&conf.Logger)
+	if err != nil {
+		stdlog.Printf("Init logger: %v", err)
 		return
 	}
-	log := zap.S()
 	defer log.Sync()
 
 	var storage storage.Storage
