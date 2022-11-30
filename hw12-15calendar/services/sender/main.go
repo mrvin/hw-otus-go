@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
+	stdlog "log"
 	"os/signal"
 	"syscall"
+
+	"go.uber.org/zap"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/logger"
@@ -26,36 +28,36 @@ func main() {
 
 	var conf Config
 	if err := config.Parse(*configFile, &conf); err != nil {
-		log.Printf("Parse config: %v", err)
+		stdlog.Printf("Parse config: %v", err)
 		return
 	}
 
-	logFile := logger.LogInit(&conf.Logger)
-	defer func() {
-		if logFile != nil {
-			logFile.Close()
-		}
-	}()
+	log, err := logger.LogInit(&conf.Logger)
+	if err != nil {
+		stdlog.Printf("Init logger: %v", err)
+		return
+	}
+	defer log.Sync()
 
 	var qm rabbitmq.Queue
 
 	url := rabbitmq.QueryBuildAMQP(&conf.Queue)
 
 	if err := qm.ConnectAndCreate(url, conf.Queue.Name); err != nil {
-		log.Println(err)
+		log.Errorf("New queue connection: %v", err)
 		return
 	}
 	defer qm.Close()
-	log.Println("Сonnected to queue")
+	log.Info("Сonnected to queue")
 
 	chConsume, err := qm.GetConsumeChan()
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 		return
 	}
 
-	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT /*(Control-C)*/, syscall.SIGTERM, syscall.SIGQUIT)
-
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT /*(Control-C)*/, syscall.SIGTERM, syscall.SIGQUIT)
+	defer stop()
 	for {
 		select {
 		case msg, ok := <-chConsume:
@@ -64,15 +66,15 @@ func main() {
 			}
 			alertEvent, err := queue.DecodeAlertEvent(msg.Body)
 			if err != nil {
-				log.Println(err)
+				log.Error(err)
 				continue
 			}
 
-			log.Printf("Take alert message from queue with id: %d\n", alertEvent.EventID)
+			log.Infof("Take alert message from queue with id: %d\n", alertEvent.EventID)
 			emailMsg := email.Message{To: alertEvent.UserEmail, Subject: alertEvent.Title, Description: alertEvent.Description}
 			sendEvent(&conf.Email, &emailMsg)
 		case <-ctx.Done():
-			log.Println("Stop sender")
+			log.Info("Stop sender")
 			return
 		}
 	}
@@ -80,8 +82,8 @@ func main() {
 
 func sendEvent(conf *email.Conf, msg *email.Message) {
 	if err := email.Alert(conf, msg); err != nil {
-		log.Print(err)
+		zap.S().Error(err)
 		return
 	}
-	log.Printf("'%s' event notification sent to '%s'\n", msg.Subject, msg.To)
+	zap.S().Infof("'%s' event notification sent to '%s'\n", msg.Subject, msg.To)
 }
