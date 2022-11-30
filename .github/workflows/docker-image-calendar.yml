@@ -5,12 +5,12 @@ on:
     paths:
      - 'hw12-15calendar/services/calendar/**'
      - 'hw12-15calendar/internal/**'
-     - !'hw12-15calendar/internal/queue/**'
+     - '!hw12-15calendar/internal/queue/**'
   pull_request:
      paths:
      - 'hw12-15calendar/services/calendar/**'
      - 'hw12-15calendar/internal/**'
-     - !'hw12-15calendar/internal/queue/**'
+     - '!hw12-15calendar/internal/queue/**'
 
 jobs:
 

@@ -5,14 +5,14 @@ on:
     paths:
      - 'hw12-15calendar/services/sender/**'
      - 'hw12-15calendar/internal/**'
-     - !'hw12-15calendar/internal/calendarapi/**'
-     - !'hw12-15calendar/internal/storage/**'
+     - '!hw12-15calendar/internal/calendarapi/**'
+     - '!hw12-15calendar/internal/storage/**'
   pull_request:
      paths:
      - 'hw12-15calendar/services/sender/**'
      - 'hw12-15calendar/internal/**'
-     - !'hw12-15calendar/internal/calendarapi/**'
-     - !'hw12-15calendar/internal/storage/**'
+     - '!hw12-15calendar/internal/calendarapi/**'
+     - '!hw12-15calendar/internal/storage/**'
 
 jobs:
 
