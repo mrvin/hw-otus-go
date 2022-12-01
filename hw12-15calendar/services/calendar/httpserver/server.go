@@ -81,11 +81,9 @@ func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	handlerFunc, err := s.pr.Get(check)
 	if err != nil {
 		s.log.Error("Get handler function: %v", err)
-	} else {
-		if handlerFunc != nil {
-			handlerFunc(res, req, s)
-			return
-		}
+	} else if handlerFunc != nil {
+		handlerFunc(res, req, s)
+		return
 	}
 
 	http.NotFound(res, req)
