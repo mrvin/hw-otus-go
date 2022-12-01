@@ -12,11 +12,13 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/app"
 )
 
+//nolint:tagliatelle
 type ConfHTTPS struct {
 	CertFile string `yaml:"cert_file"`
 	KeyFile  string `yaml:"key_file"`
 }
 
+//nolint:tagliatelle
 type Conf struct {
 	Host    string    `yaml:"host"`
 	Port    int       `yaml:"port"`
