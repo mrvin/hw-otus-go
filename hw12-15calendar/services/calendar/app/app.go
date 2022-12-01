@@ -36,8 +36,23 @@ func (a *App) GetAllEvents(ctx context.Context) ([]storage.Event, error) {
 }
 */
 
-func (a *App) GetEventsForUser(ctx context.Context, id int, date time.Time, days int) ([]storage.Event, error) {
-	return a.storage.GetEventsForUser(ctx, id)
+// TODO: implement at the database level
+func (a *App) GetEventsForUser(ctx context.Context, id int, StartPeriod time.Time, days int) ([]storage.Event, error) {
+	events, err := a.storage.GetEventsForUser(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	StopPeriod := StartPeriod.AddDate(0, 0, days)
+	var eventsFromInterval []storage.Event
+	for _, event := range events {
+		if event.StartTime.After(StartPeriod) && event.StartTime.Before(StopPeriod) ||
+			event.StopTime.After(StartPeriod) && event.StopTime.Before(StopPeriod) {
+			eventsFromInterval = append(eventsFromInterval, event)
+		}
+	}
+
+	return eventsFromInterval, nil
 }
 
 func (a *App) UpdateEvent(ctx context.Context, event *storage.Event) error {
