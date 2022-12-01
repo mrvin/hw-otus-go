@@ -10,7 +10,7 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
 
-// TODO:add return id created event
+// TODO:add return id created event.
 func handleCreateEvent(res http.ResponseWriter, req *http.Request, server *Server) {
 	event, err := unmarshalEvent(req)
 	if err != nil {

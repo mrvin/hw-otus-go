@@ -13,7 +13,7 @@ import (
 
 var ErrIDEmpty = errors.New("id is empty")
 
-// TODO:add return id created user
+// TODO:add return id created user.
 func handleCreateUser(res http.ResponseWriter, req *http.Request, server *Server) {
 	user, err := unmarshalUser(req)
 	if err != nil {
