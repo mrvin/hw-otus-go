@@ -46,7 +46,7 @@ func (s *Storage) GetUser(_ context.Context, id int) (*storage.User, error) {
 		return nil, fmt.Errorf("%w: %d", storage.ErrNoUser, id)
 	}
 
-	user.Events, _ = s.GetEventsForUser(nil, user.ID)
+	user.Events, _ = s.GetEventsForUser(context.TODO(), user.ID)
 
 	return &user, nil
 }
