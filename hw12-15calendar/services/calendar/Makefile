@@ -5,7 +5,7 @@ run:
 	go run -race main.go -config ../../configs/calendar.yml
 
 test:
-	go test -race ./... -cover
+	go test -v -race ./... -cover
 
 lint:
 	golangci-lint run ./...
