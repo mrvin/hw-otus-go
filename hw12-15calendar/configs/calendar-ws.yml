@@ -1,0 +1,14 @@
+# GRPC client settings
+grpc:
+    host: localhost
+    port: 55555
+
+# HTTP server setting
+http:
+    host: 127.0.0.1
+    port: 8088
+
+# logging settings
+logger:
+    filepath: log.json
+    level: debug # debug, info, warn, error

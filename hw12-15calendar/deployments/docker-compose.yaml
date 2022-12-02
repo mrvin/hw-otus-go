@@ -1,5 +1,15 @@
 version: "3"
 services:
+    calendar-ws:
+        build:
+         context: ../
+         dockerfile: services/calendar-ws/Dockerfile
+        ports:
+         - "8088:8088"
+        links:
+         - calendar
+        restart: always
+
     calendar:
         build:
          context: ../

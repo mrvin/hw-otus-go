@@ -1,0 +1,20 @@
+{{define "body"}}
+<h1>Events</h1>
+<table>
+	<tr style='text-align: left'>
+		<th>Id</th>
+		<th>Title</th>
+	</tr>
+	{{range .Events}}
+	<tr>
+		<td>{{.Id}}</td>
+		<td><a href='/event?id={{.Id}}'>{{.Title}}</a></td>
+	</tr>
+	{{end}}
+</table>
+<hr/>
+<form action="/form-event" method="GET">
+	<input type="hidden" name="id" value={{.UserID}} /> 
+	<button>add</button>
+</form>
+{{end}}

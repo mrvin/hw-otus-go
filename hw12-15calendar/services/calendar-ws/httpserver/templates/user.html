@@ -1,0 +1,12 @@
+{{define "body"}}
+<h1>User</h1>
+<label>ID: {{.User.Id}}</label><br>
+<label>Name: {{.User.Name}}</label><br>
+<label>Email: {{.User.Email}}</label><br>
+<hr/>
+<form action="/delete-user" method="GET">
+	<input type="hidden" name="id" value={{.User.Id}} /> 
+	<button>delete</button>
+</form><br>
+<a href='/list-events?id={{.User.Id}}'>List of events</a>
+{{end}}
