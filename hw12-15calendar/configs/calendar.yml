@@ -5,7 +5,7 @@ grpc:
 
 # HTTP server setting
 http:
-    host: 127.0.0.1
+    host: localhost
     port: 8088
     is_https: false # Enable HTTPS
     https:

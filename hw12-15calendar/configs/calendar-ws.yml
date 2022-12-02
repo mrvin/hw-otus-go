@@ -5,8 +5,8 @@ grpc:
 
 # HTTP server setting
 http:
-    host: 127.0.0.1
-    port: 8088
+    host: localhost
+    port: 8080
 
 # logging settings
 logger:

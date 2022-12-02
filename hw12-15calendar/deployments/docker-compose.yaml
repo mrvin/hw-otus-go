@@ -5,7 +5,7 @@ services:
          context: ../
          dockerfile: services/calendar-ws/Dockerfile
         ports:
-         - "8088:8088"
+         - "8080:8080"
         links:
          - calendar
         restart: always
@@ -15,7 +15,7 @@ services:
          context: ../
          dockerfile: services/calendar/Dockerfile
         ports:
-         - "8080:8080"
+         - "8088:8088"
         environment:
          ENV: PROD
         links:
