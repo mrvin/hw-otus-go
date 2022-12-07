@@ -34,3 +34,39 @@
 - Понятность и чистота кода - до 2 баллов
 
 #### Зачёт от 7 баллов
+
+### Заметки
+Клиент для http API
+```bash
+$ curl -i -X POST 'http://127.0.0.1:8088/users' -H "Content-Type: application/json" -d '{"name":"Bob","email":"bob@mail.com"}'
+$ curl -i -X GET 'http://127.0.0.1:8088/users?id=1'
+
+$ curl -i -X PUT 'http://127.0.0.1:8088/users' -H "Content-Type: application/json" -d '{"id":1, "name":"Alis","email":"bob@mail.com"}'
+$ curl -i -X GET 'http://127.0.0.1:8088/users?id=1'
+
+$ curl -i -X POST 'http://127.0.0.1:8088/events' -H "Content-Type: application/json" -d '{
+	"title":"Aliss Birthday",
+	"description":"Birthday April 12, 1996. House party",
+	"start_time":"2022-05-25T10:41:31Z",
+	"stop_time":"2022-05-25T14:41:31Z",
+	"user_id":1}'
+$ curl -i -X GET 'http://127.0.0.1:8088/events?userid=1&id=1'
+
+$ curl -i -X PUT 'http://127.0.0.1:8088/events' -H "Content-Type: application/json" -d '{
+	"id":1,
+	"title":"Bob Birthday",
+	"description":"Birthday April 17, 1996. House party",
+	"start_time":"2022-05-25T10:41:31Z",
+	"stop_time":"2022-05-25T14:41:31Z",
+	"user_id":1}'
+$ curl -i -X GET 'http://127.0.0.1:8088/events?userid=1&id=1'
+
+$ curl -i -X DELETE 'http://127.0.0.1:8088/events?id=1'
+$ curl -i -X GET 'http://127.0.0.1:8088/events?userid=1&id=1'
+
+$ curl -i -X DELETE 'http://127.0.0.1:8088/users?id=1'
+$ curl -i -X GET 'http://127.0.0.1:8088/users?id=1'
+```
+
+### Ссылки:
+- [Список кодов состояния HTTP](https://ru.wikipedia.org/wiki/Список_кодов_состояния_HTTP)

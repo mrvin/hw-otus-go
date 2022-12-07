@@ -163,6 +163,7 @@
 ### Заметки
 Запуск контейнера postgres
 ```bash
+$ docker pull postgres:15.0-alpine
 $ docker run -d --rm --name postgres-event-db -e POSTGRES_PASSWORD=event-db -e POSTGRES_USER=event-db \
 	-e POSTGRES_DB=event-db -p 5432:5432 postgres
 ```
