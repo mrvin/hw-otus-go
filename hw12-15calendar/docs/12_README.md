@@ -13,7 +13,7 @@
 На данный момент сервис будет состоять из следующих логически выделенных частей:
 
 ### 0) «Точка входа», запускающая сервис
-Обычно располагается в `cmd/`. В `main()` происходит инициализация компонентов сервиса
+Обычно располагается в `services/`. В `main()` происходит инициализация компонентов сервиса
 (клиент к хранилищу, логгер, конфигурация и пр.), конструирование главного объекта-сервиса на их
 основе и его запуск. Допускается использование https://github.com/spf13/cobra.
 
@@ -161,8 +161,15 @@
 #### Зачёт от 7 баллов
 
 ### Заметки
-Запуск контейнера postgres и подключение
+Запуск контейнера postgres
 ```bash
-$ docker run --rm --name postgres-event-db -e POSTGRES_PASSWORD=event-db -e POSTGRES_USER=event-db -e POSTGRES_DB=event-db -d -p 5432:5432 postgres
+$ docker run -d --rm --name postgres-event-db -e POSTGRES_PASSWORD=event-db -e POSTGRES_USER=event-db \
+	-e POSTGRES_DB=event-db -p 5432:5432 postgres
+```
+Подключение к postgres
+```bash
 $ psql -h 127.0.0.1 -U event-db -d event-db
 ```
+
+### Ссылки:
+- [Установка и настройка PostgreSQL в Docker](https://selectel.ru/blog/postgresql-docker-setup/)
