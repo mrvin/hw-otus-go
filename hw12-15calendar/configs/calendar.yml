@@ -1,11 +1,11 @@
 # GRPC server settings
 grpc:
-    host: localhost
+    host: calendar
     port: 55555
 
 # HTTP server setting
 http:
-    host: localhost
+    host: calendar
     port: 8088
     is_https: false # Enable HTTPS
     https:
