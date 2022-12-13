@@ -2,7 +2,7 @@ FROM golang:1.19.2-alpine
 
 MAINTAINER mrvin <v.v.vinogradovv@gmail.com>
 
-RUN apk --update add build-base
+RUN apk add --update make
 
 WORKDIR /calendar/app
 

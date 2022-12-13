@@ -3,6 +3,8 @@ FROM golang:1.19.2-alpine AS build
 
 MAINTAINER mrvin <v.v.vinogradovv@gmail.com>
 
+RUN apk add --update make
+
 WORKDIR  /app
 
 # Copy the code into the container.
@@ -13,14 +15,14 @@ COPY internal internal
 COPY go.mod go.sum ./
 RUN go mod download
 
-RUN cd services/sender/ && go build -o sender
+RUN cd services/sender/ && make build
 
 ## Deploy
-FROM alpine:3.16.2
+FROM scratch
 
 WORKDIR /
 
 COPY configs/sender.yml /configs/
-COPY --from=build ["/app/services/sender/sender", "/"]
+COPY --from=build ["/app/bin/sender", "/"]
 
 ENTRYPOINT ["/sender", "-config", "/configs/sender.yml"]

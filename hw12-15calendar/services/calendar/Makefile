@@ -1,5 +1,5 @@
 build:
-	go build -o ../../bin/calendar
+	CGO_ENABLE=0 go build -o ../../bin/calendar -ldflags '-w'
 
 run:
 	go run -race main.go -config ../../configs/calendar.yml
