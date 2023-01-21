@@ -29,7 +29,7 @@ func New(conf *Conf) (*Client, error) {
 	var err error
 	client.conn, err = grpc.DialContext(ctx, confHost, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		return nil, fmt.Errorf("new: %w", err)
+		return nil, fmt.Errorf("connect to %s: %w", confHost, err)
 	}
 
 	client.Cl = calendarapi.NewEventServiceClient(client.conn)

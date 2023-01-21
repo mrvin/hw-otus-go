@@ -78,10 +78,8 @@ func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	defer logReq(req)()
 
 	check := req.Method + " " + req.URL.Path
-	handlerFunc, err := s.pr.Get(check)
-	if err != nil {
-		s.log.Error("Get handler function: %v", err)
-	} else if handlerFunc != nil {
+	handlerFunc := s.pr.Get(check)
+	if handlerFunc != nil {
 		handlerFunc(res, req, s)
 		return
 	}

@@ -5,6 +5,7 @@ import (
 	"regexp"
 )
 
+// TODO:add thread safety.
 type regexResolver struct {
 	handlers map[string]func(res http.ResponseWriter, req *http.Request, server *Server)
 	cache    map[string]*regexp.Regexp

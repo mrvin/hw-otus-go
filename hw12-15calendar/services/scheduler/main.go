@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	stdlog "log"
 	"os/signal"
 	"syscall"
@@ -63,7 +62,7 @@ func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT /*(Control-C)*/, syscall.SIGTERM, syscall.SIGQUIT)
 	defer stop()
-	fmt.Println(conf.SchedPeriod)
+
 	schedPeriod := time.Duration(conf.SchedPeriod) * time.Minute
 	ticker := time.Tick(schedPeriod)
 	for {

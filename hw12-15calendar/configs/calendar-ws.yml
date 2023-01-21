@@ -1,11 +1,11 @@
 # GRPC client settings
 grpc:
-    host: localhost
+    host: calendar
     port: 55555
 
 # HTTP server setting
 http:
-    host: localhost
+    host: calendar-ws
     port: 8080
 
 # logging settings

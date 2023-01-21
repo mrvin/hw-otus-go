@@ -31,7 +31,7 @@ func main() {
 
 	clientGRPC, err := grpcclient.New(&conf.GRPC)
 	if err != nil {
-		log.Errorf("New gRPC client: %v", err)
+		log.Errorf("gRPC client: %v", err)
 		return
 	}
 	defer clientGRPC.Close()

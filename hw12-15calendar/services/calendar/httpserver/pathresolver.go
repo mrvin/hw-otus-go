@@ -1,9 +1,10 @@
 package httpserver
 
 import (
-	"fmt"
 	"net/http"
 	"path"
+
+	"go.uber.org/zap"
 )
 
 // TODO:add thread safety.
@@ -19,14 +20,14 @@ func (p *pathResolver) Add(path string, handler func(res http.ResponseWriter, re
 	p.handlers[path] = handler
 }
 
-func (p *pathResolver) Get(pathCheck string) (func(res http.ResponseWriter, req *http.Request, server *Server), error) {
+func (p *pathResolver) Get(pathCheck string) func(res http.ResponseWriter, req *http.Request, server *Server) {
 	for pattern, handlerFunc := range p.handlers {
 		if ok, err := path.Match(pattern, pathCheck); ok && err == nil {
-			return handlerFunc, nil
+			return handlerFunc
 		} else if err != nil {
-			return nil, fmt.Errorf("pathResolver: get: %w", err)
+			zap.S().Errorf("pathResolver: get: %v", err)
 		}
 	}
 
-	return nil, nil
+	return nil
 }

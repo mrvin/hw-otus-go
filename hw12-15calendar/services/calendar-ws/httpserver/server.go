@@ -68,7 +68,6 @@ func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	check := req.Method + " " + req.URL.Path + "?" + req.URL.RawQuery
 	handlerFunc := s.pr.Get(check)
 	if handlerFunc != nil {
-		//TODO: Add running in goroutines
 		handlerFunc(res, req, s)
 		return
 	}

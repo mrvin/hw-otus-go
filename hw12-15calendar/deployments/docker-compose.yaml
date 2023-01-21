@@ -16,11 +16,11 @@ services:
          dockerfile: services/calendar/Dockerfile
         ports:
          - "8088:8088"
+         - "55555:55555"
         environment:
          ENV: PROD
         links:
          - postgres
-        restart: always
 
     scheduler:
        build:
