@@ -4,8 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-
 	_ "github.com/lib/pq"
+	"go.uber.org/zap"
+	"time"
 )
 
 type Conf struct {
@@ -29,10 +30,37 @@ type Storage struct {
 	getAllUsers *sql.Stmt
 }
 
+type retryConnector func(ctx context.Context, conf *Conf) error
+
+// Retry returns a function matching the retryConnector type that
+// is trying to establish a connection with the database retries number
+// every delay time.
+func Retry(connector retryConnector, retries int) retryConnector {
+	return func(ctx context.Context, conf *Conf) error {
+		for r := 0; ; r++ {
+			err := connector(ctx, conf)
+			if err == nil || r >= retries {
+				return err
+			}
+
+			// Exponential increase in latency.
+			shouldRetryAt := time.Second * 2 << r
+			zap.S().Warnf("Attempt %d failed; retrying in %v", r+1, shouldRetryAt)
+
+			select {
+			case <-time.After(shouldRetryAt):
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		}
+	}
+}
+
 func New(ctx context.Context, conf *Conf) (*Storage, error) {
 	var s Storage
 
-	if err := s.connect(ctx, conf); err != nil {
+	retryConnect := Retry(s.connect, 5)
+	if err := retryConnect(ctx, conf); err != nil {
 		return nil, fmt.Errorf("connection db: %w", err)
 	}
 	if err := s.createSchema(ctx); err != nil {
