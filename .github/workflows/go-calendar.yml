@@ -32,6 +32,8 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        ports:
+          - 5432:5432
 
     steps:
     - uses: actions/checkout@v3
@@ -39,10 +41,10 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
-        go-version: 1.19
+        go-version: 1.20
 
     - name: Build
       run: cd hw12-15calendar/services/calendar && make build
 
     - name: Test
-      run: cd hw12-15calendar/services/calendar && make test
+      run: echo "127.0.0.1 postgres" >> /etc/hosts && cd hw12-15calendar/services/calendar && make test
