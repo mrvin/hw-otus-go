@@ -40,6 +40,7 @@ func (s *Storage) GetAllEvents(ctx context.Context) ([]storage.Event, error) {
 		}
 		return nil, fmt.Errorf("can't get all events: %w", err)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var event storage.Event
@@ -49,7 +50,9 @@ func (s *Storage) GetAllEvents(ctx context.Context) ([]storage.Event, error) {
 		}
 		events = append(events, event)
 	}
-	rows.Close()
+	if err := rows.Err(); err != nil {
+		return events, fmt.Errorf("rows error: %w", err)
+	}
 
 	return events, nil
 }
@@ -99,6 +102,7 @@ func (s *Storage) GetEventsForUser(ctx context.Context, userID int) ([]storage.E
 		}
 		return nil, fmt.Errorf("can't get events for user with id: %d: %w", userID, err)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var event storage.Event
@@ -108,7 +112,9 @@ func (s *Storage) GetEventsForUser(ctx context.Context, userID int) ([]storage.E
 		}
 		events = append(events, event)
 	}
-	rows.Close()
+	if err := rows.Err(); err != nil {
+		return events, fmt.Errorf("rows error: %w", err)
+	}
 
 	return events, nil
 }

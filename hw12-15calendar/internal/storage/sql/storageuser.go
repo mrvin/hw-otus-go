@@ -50,6 +50,7 @@ func (s *Storage) GetAllUsers(ctx context.Context) ([]storage.User, error) {
 		}
 		return nil, fmt.Errorf("can't get all users: %w", err)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var user storage.User
@@ -59,7 +60,9 @@ func (s *Storage) GetAllUsers(ctx context.Context) ([]storage.User, error) {
 		}
 		users = append(users, user)
 	}
-	rows.Close()
+	if err := rows.Err(); err != nil {
+		return users, fmt.Errorf("rows error: %w", err)
+	}
 
 	return users, nil
 }
