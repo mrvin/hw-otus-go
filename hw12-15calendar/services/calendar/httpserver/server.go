@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/app"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 //nolint:tagliatelle
@@ -52,7 +53,7 @@ func New(conf *Conf, app *app.App) *Server {
 
 	server.serv = http.Server{
 		Addr:    fmt.Sprintf("%s:%d", conf.Host, conf.Port),
-		Handler: &server,
+		Handler: otelhttp.NewHandler(http.Handler(&server), "http"),
 	}
 
 	return &server

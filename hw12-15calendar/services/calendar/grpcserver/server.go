@@ -16,6 +16,8 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendarapi"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/app"
+
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 )
 
 type Conf struct {
@@ -43,7 +45,9 @@ func New(conf *Conf, app *app.App) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("establish tcp connection: %w", err)
 	}
-	server.serv = grpc.NewServer()
+	server.serv = grpc.NewServer(
+		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
+	)
 	calendarapi.RegisterEventServiceServer(server.serv, &server)
 
 	return &server, nil

@@ -1,4 +1,4 @@
-version: "3"
+version: "3.5"
 services:
     calendar-ws:
         build:
@@ -9,6 +9,8 @@ services:
         links:
          - calendar
         restart: always
+        depends_on:
+         - calendar
 
     calendar:
         build:
@@ -21,6 +23,8 @@ services:
          ENV: PROD
         links:
          - postgres
+        depends_on:
+         - postgres
 
     scheduler:
        build:
@@ -30,6 +34,9 @@ services:
         - postgres
         - rabbitmq
        restart: always
+       depends_on:
+        - postgres
+        - rabbitmq
 
     sender:
        build:
@@ -38,6 +45,8 @@ services:
        links:
         - rabbitmq
        restart: always
+       depends_on:
+        - rabbitmq
 
     # Create service with PostgreSQL.
     postgres:
@@ -52,3 +61,7 @@ services:
         image: rabbitmq:3.11.2-management-alpine
         ports:
          - 15672:15672 # for serve RabbitMQ GUI
+    jaeger:
+        image: jaegertracing/all-in-one:1.42
+        ports:
+         - "16686:16686" # for serve Jaeger GUI

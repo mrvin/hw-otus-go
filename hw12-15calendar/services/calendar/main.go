@@ -20,10 +20,16 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	memorystorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/memory"
 	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/tracer"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/app"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/grpcserver"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/httpserver"
 )
+
+var infoService = tracer.InfoService{
+	Name:    "Calendar",
+	Version: "1.0.0",
+}
 
 var ctx = context.Background()
 
@@ -43,6 +49,10 @@ func main() {
 		return
 	}
 	defer log.Sync()
+
+	if err := tracer.TraceInit(&conf.Tracer, &infoService); err != nil {
+		log.Errorf("Init jaeger tracer: %v", err)
+	}
 
 	var storage storage.Storage
 	if conf.InMem {
