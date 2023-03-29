@@ -47,4 +47,6 @@ jobs:
       run: cd hw12-15calendar/services/calendar && make build
 
     - name: Test
-      run: echo "127.0.0.1 postgres" >> /etc/hosts && cd hw12-15calendar/services/calendar && make test
+      run: sed -i 's/postgres/localhost/g' hw12-15calendar/services/calendar/httpserver/handler_test.go \
+                                           hw12-15calendar/internal/storage/sql/storage_test.go && \
+           cd hw12-15calendar/services/calendar && make test
