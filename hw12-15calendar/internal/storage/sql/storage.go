@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	// Add pure Go Postgres driver for the database/sql package.
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 )
