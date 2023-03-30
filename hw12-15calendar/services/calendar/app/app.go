@@ -6,16 +6,19 @@ import (
 	"time"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var ErrStopTimeBeforeStartTime = errors.New("event ends before starts")
 
 type App struct {
 	storage storage.Storage
+	tr      trace.Tracer //Think about it
 }
 
 func New(storage storage.Storage) *App {
-	return &App{storage}
+	return &App{storage, otel.GetTracerProvider().Tracer("App")}
 }
 
 func (a *App) CreateEvent(ctx context.Context, event *storage.Event) error {
@@ -23,11 +26,17 @@ func (a *App) CreateEvent(ctx context.Context, event *storage.Event) error {
 		return ErrStopTimeBeforeStartTime
 	}
 
-	return a.storage.CreateEvent(ctx, event)
+	cctx, sp := a.tr.Start(ctx, "CreateEvent")
+	defer sp.End()
+
+	return a.storage.CreateEvent(cctx, event)
 }
 
 func (a *App) GetEvent(ctx context.Context, id int) (*storage.Event, error) {
-	return a.storage.GetEvent(ctx, id)
+	cctx, sp := a.tr.Start(ctx, "GetEvent")
+	defer sp.End()
+
+	return a.storage.GetEvent(cctx, id)
 }
 
 /*
@@ -38,7 +47,10 @@ func (a *App) GetAllEvents(ctx context.Context) ([]storage.Event, error) {
 
 // TODO: implement at the database level
 func (a *App) GetEventsForUser(ctx context.Context, id int, StartPeriod time.Time, days int) ([]storage.Event, error) {
-	events, err := a.storage.GetEventsForUser(ctx, id)
+	cctx, sp := a.tr.Start(ctx, "GetEventsForUser")
+	defer sp.End()
+
+	events, err := a.storage.GetEventsForUser(cctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -56,29 +68,50 @@ func (a *App) GetEventsForUser(ctx context.Context, id int, StartPeriod time.Tim
 }
 
 func (a *App) UpdateEvent(ctx context.Context, event *storage.Event) error {
-	return a.storage.UpdateEvent(ctx, event)
+	cctx, sp := a.tr.Start(ctx, "UpdateEvent")
+	defer sp.End()
+
+	return a.storage.UpdateEvent(cctx, event)
 }
 
 func (a *App) DeleteEvent(ctx context.Context, id int) error {
-	return a.storage.DeleteEvent(ctx, id)
+	cctx, sp := a.tr.Start(ctx, "DeleteEvent")
+	defer sp.End()
+
+	return a.storage.DeleteEvent(cctx, id)
 }
 
 func (a *App) CreateUser(ctx context.Context, user *storage.User) error {
-	return a.storage.CreateUser(ctx, user)
+	cctx, sp := a.tr.Start(ctx, "CreateUser")
+	defer sp.End()
+
+	return a.storage.CreateUser(cctx, user)
 }
 
 func (a *App) GetUser(ctx context.Context, id int) (*storage.User, error) {
-	return a.storage.GetUser(ctx, id)
+	cctx, sp := a.tr.Start(ctx, "GetUser")
+	defer sp.End()
+
+	return a.storage.GetUser(cctx, id)
 }
 
 func (a *App) GetAllUsers(ctx context.Context) ([]storage.User, error) {
-	return a.storage.GetAllUsers(ctx)
+	cctx, sp := a.tr.Start(ctx, "GetAllUsers")
+	defer sp.End()
+
+	return a.storage.GetAllUsers(cctx)
 }
 
 func (a *App) UpdateUser(ctx context.Context, user *storage.User) error {
-	return a.storage.UpdateUser(ctx, user)
+	cctx, sp := a.tr.Start(ctx, "UpdateUser")
+	defer sp.End()
+
+	return a.storage.UpdateUser(cctx, user)
 }
 
 func (a *App) DeleteUser(ctx context.Context, id int) error {
-	return a.storage.DeleteUser(ctx, id)
+	cctx, sp := a.tr.Start(ctx, "DeleteUser")
+	defer sp.End()
+
+	return a.storage.DeleteUser(cctx, id)
 }
