@@ -47,6 +47,7 @@ jobs:
       run: cd hw12-15calendar/services/calendar && make build
 
     - name: Test
-      run: sed -i 's/postgres/localhost/g' hw12-15calendar/services/calendar/httpserver/handler_test.go \
-                                           hw12-15calendar/internal/storage/sql/storage_test.go && \
-           cd hw12-15calendar/services/calendar && make test
+      run: |
+        sed -i 's/postgres/localhost/g' hw12-15calendar/services/calendar/httpserver/handler_test.go
+        sed -i 's/postgres/localhost/g' hw12-15calendar/internal/storage/sql/storage_test.go
+        cd hw12-15calendar/services/calendar && make test
