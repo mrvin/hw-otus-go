@@ -4,12 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"time"
 
 	// Add pure Go Postgres driver for the database/sql package.
 	_ "github.com/lib/pq"
-	"go.uber.org/zap"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/retry"
 )
+
+const retriesConnect = 5
 
 type Conf struct {
 	Host     string `yaml:"host"`
@@ -22,6 +23,8 @@ type Conf struct {
 type Storage struct {
 	db *sql.DB
 
+	conf *Conf
+
 	insertEvent      *sql.Stmt
 	getEvent         *sql.Stmt
 	getAllEvents     *sql.Stmt
@@ -32,53 +35,30 @@ type Storage struct {
 	getAllUsers *sql.Stmt
 }
 
-type retryConnector func(ctx context.Context, conf *Conf) error
-
-// Retry returns a function matching the retryConnector type that
-// is trying to establish a connection with the database retries number
-// every delay time.
-func Retry(connector retryConnector, retries int) retryConnector {
-	return func(ctx context.Context, conf *Conf) error {
-		for r := 0; ; r++ {
-			err := connector(ctx, conf)
-			if err == nil || r >= retries {
-				return err
-			}
-
-			// Exponential increase in latency.
-			shouldRetryAt := time.Second * 2 << r
-			zap.S().Warnf("Attempt %d failed; retrying in %v", r+1, shouldRetryAt)
-
-			select {
-			case <-time.After(shouldRetryAt):
-			case <-ctx.Done():
-				return ctx.Err()
-			}
-		}
-	}
-}
-
 func New(ctx context.Context, conf *Conf) (*Storage, error) {
-	var s Storage
+	var st Storage
 
-	retryConnect := Retry(s.connect, 5)
-	if err := retryConnect(ctx, conf); err != nil {
-		return nil, fmt.Errorf("connection db: %w", err)
+	st.conf = conf
+
+	if err := st.RetryConnect(ctx, retriesConnect); err != nil {
+		return nil, fmt.Errorf("new database connection: %w", err)
 	}
-	if err := s.createSchema(ctx); err != nil {
-		return nil, fmt.Errorf("create schema db: %w", err)
+
+	if err := MigrationsUp(conf); err != nil {
+		return nil, fmt.Errorf("database migrations: %w", err)
 	}
-	if err := s.prepareQuery(ctx); err != nil {
+
+	if err := st.prepareQuery(ctx); err != nil {
 		return nil, fmt.Errorf("prepare query: %w", err)
 	}
 
-	return &s, nil
+	return &st, nil
 }
 
-func (s *Storage) connect(ctx context.Context, conf *Conf) error {
+func (s *Storage) Connect(ctx context.Context) error {
 	var err error
 	dbConfStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		conf.Host, conf.Port, conf.User, conf.Password, conf.Name)
+		s.conf.Host, s.conf.Port, s.conf.User, s.conf.Password, s.conf.Name)
 	s.db, err = sql.Open("postgres", dbConfStr)
 	if err != nil {
 		return fmt.Errorf("open db: %w", err)
@@ -91,42 +71,10 @@ func (s *Storage) connect(ctx context.Context, conf *Conf) error {
 	return nil
 }
 
-func (s *Storage) createSchema(ctx context.Context) error {
-	sqlCreateTableUsers := `
-	CREATE TABLE IF NOT EXISTS users (
-		id serial primary key,
-		name text,
-		email text
-	)`
-	if _, err := s.db.ExecContext(ctx, sqlCreateTableUsers); err != nil {
-		return fmt.Errorf("create table users: %w", err)
-	}
-
-	sqlCreateTableEvents := `
-	CREATE TABLE IF NOT EXISTS events (
-		id serial primary key,
-		title text,
-		description text,
-		start_time timestamptz,
-		stop_time timestamptz,
-		user_id integer references users(id) on delete cascade
-	)`
-	if _, err := s.db.ExecContext(ctx, sqlCreateTableEvents); err != nil {
-		return fmt.Errorf("create table events: %w", err)
-	}
-
-	return nil
-}
-
-func (s *Storage) DropSchemaDB(ctx context.Context) error {
-	sqlDropTableEvents := `DROP TABLE IF EXISTS events`
-	if _, err := s.db.ExecContext(ctx, sqlDropTableEvents); err != nil {
-		return fmt.Errorf("drop table events: %w", err)
-	}
-
-	sqlDropTableUsers := `DROP TABLE IF EXISTS users`
-	if _, err := s.db.ExecContext(ctx, sqlDropTableUsers); err != nil {
-		return fmt.Errorf("drop table users: %w", err)
+func (s *Storage) RetryConnect(ctx context.Context, retries int) error {
+	retryConnect := retry.Retry(s.Connect, retries)
+	if err := retryConnect(ctx); err != nil {
+		return fmt.Errorf("connection db: %w", err)
 	}
 
 	return nil
@@ -135,6 +83,7 @@ func (s *Storage) DropSchemaDB(ctx context.Context) error {
 func (s *Storage) prepareQuery(ctx context.Context) error {
 	var err error
 	fmtStrErr := "prepare \"%s\" query: %w"
+
 	// Event query prepare
 	sqlInsertEvent := "insert into events (title, description, start_time, stop_time, user_id) values ($1, $2, $3, $4, $5) returning id"
 	s.insertEvent, err = s.db.PrepareContext(ctx, sqlInsertEvent)
@@ -180,10 +129,12 @@ func (s *Storage) prepareQuery(ctx context.Context) error {
 func (s *Storage) Close() error {
 	s.insertEvent.Close()
 	s.getEvent.Close()
+	s.getAllEvents.Close()
 	s.getEventsForUser.Close()
 
 	s.insertUser.Close()
 	s.getUser.Close()
+	s.getAllUsers.Close()
 
 	return s.db.Close() //nolint:wrapcheck
 }

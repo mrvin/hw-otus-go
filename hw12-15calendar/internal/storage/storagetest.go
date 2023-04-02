@@ -99,7 +99,7 @@ func TestUserCRUD(ctx context.Context, t *testing.T, st Storage) {
 	}
 }
 
-func TestEventCRUD(ctx context.Context, t *testing.T, st Storage) {
+func TestEventCRUD(ctx context.Context, t *testing.T, st Storage) { //nolint:funlen,gocognit,cyclop
 	// Create users
 	for i := range users {
 		if err := st.CreateUser(ctx, &users[i]); err != nil {

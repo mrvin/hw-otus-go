@@ -17,7 +17,7 @@ func TestUserCRUD(t *testing.T) {
 		t.Fatalf("db: %v", err)
 	}
 	defer st.Close()
-	defer st.DropSchemaDB(ctx)
+	defer MigrationsDown(&confDBTest)
 
 	storage.TestUserCRUD(ctx, t, st)
 }
@@ -28,7 +28,7 @@ func TestEventCRUD(t *testing.T) {
 		t.Fatalf("db: %v", err)
 	}
 	defer st.Close()
-	defer st.DropSchemaDB(ctx)
+	defer MigrationsDown(&confDBTest)
 
 	storage.TestEventCRUD(ctx, t, st)
 }

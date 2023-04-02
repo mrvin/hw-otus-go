@@ -45,7 +45,7 @@ func (s *Storage) GetUser(_ context.Context, id int) (*storage.User, error) {
 	if !ok {
 		return nil, fmt.Errorf("%w: %d", storage.ErrNoUser, id)
 	}
-
+	//nolint:contextcheck
 	user.Events, _ = s.GetEventsForUser(context.TODO(), user.ID)
 
 	return &user, nil

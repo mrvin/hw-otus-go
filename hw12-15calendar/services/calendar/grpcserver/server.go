@@ -6,18 +6,15 @@ import (
 	"net"
 	"time"
 
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendarapi"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/app"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.uber.org/zap"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
-
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendarapi"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/app"
-
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 )
 
 type Conf struct {

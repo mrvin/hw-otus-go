@@ -53,7 +53,9 @@ func New(conf *Conf, app *app.App) *Server {
 
 	server.serv = http.Server{
 		Addr:    fmt.Sprintf("%s:%d", conf.Host, conf.Port),
-		Handler: otelhttp.NewHandler(http.Handler(&server), "http"),
+		Handler: otelhttp.NewHandler(http.Handler(&server), "HTTP"),
+		ReadTimeout: 5 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 
 	return &server

@@ -51,7 +51,7 @@ func TestHandleUserSQL(t *testing.T) {
 		t.Fatalf("db: %v", err)
 	}
 	defer st.Close()
-	defer st.DropSchemaDB(ctx)
+	defer sqlstorage.MigrationsDown(&confDBTest)
 
 	server := initServerHTTP(st)
 	testHandleUser(t, server)
@@ -65,7 +65,7 @@ func TestHandleEventSQL(t *testing.T) {
 		t.Fatalf("db: %v", err)
 	}
 	defer st.Close()
-	defer st.DropSchemaDB(ctx)
+	defer sqlstorage.MigrationsDown(&confDBTest)
 
 	server := initServerHTTP(st)
 	testHandleEvent(t, server)

@@ -9,19 +9,26 @@ import (
 var ErrNoUser = errors.New("no user with id")
 var ErrNoEvent = errors.New("no event with id")
 
-type Storage interface {
+type EventStorage interface {
 	CreateEvent(ctx context.Context, event *Event) error
 	GetEvent(ctx context.Context, id int) (*Event, error)
 	GetAllEvents(ctx context.Context) ([]Event, error)
 	GetEventsForUser(ctx context.Context, id int) ([]Event, error)
 	UpdateEvent(ctx context.Context, event *Event) error
 	DeleteEvent(ctx context.Context, id int) error
+}
 
+type UserStorage interface {
 	CreateUser(ctx context.Context, user *User) error
 	GetUser(ctx context.Context, id int) (*User, error)
 	GetAllUsers(ctx context.Context) ([]User, error)
 	UpdateUser(ctx context.Context, user *User) error
 	DeleteUser(ctx context.Context, id int) error
+}
+
+type Storage interface {
+	EventStorage
+	UserStorage
 }
 
 //nolint:tagliatelle
