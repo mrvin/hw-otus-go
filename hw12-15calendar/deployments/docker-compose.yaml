@@ -1,4 +1,4 @@
-version: "3.5"
+version: "3.9"
 services:
     calendar-ws:
         build:
@@ -8,7 +8,6 @@ services:
          - "8080:8080"
         links:
          - calendar
-        restart: always
         depends_on:
          - calendar
 
@@ -24,7 +23,8 @@ services:
         links:
          - postgres
         depends_on:
-         - postgres
+          postgres:
+            condition: service_healthy
 
     scheduler:
        build:
@@ -33,10 +33,11 @@ services:
        links:
         - postgres
         - rabbitmq
-       restart: always
        depends_on:
-        - postgres
-        - rabbitmq
+         postgres:
+           condition: service_healthy
+         rabbitmq:
+           condition: service_healthy
 
     sender:
        build:
@@ -44,9 +45,9 @@ services:
         dockerfile: services/sender/Dockerfile
        links:
         - rabbitmq
-       restart: always
        depends_on:
-        - rabbitmq
+         rabbitmq:
+           condition: service_healthy
 
     # Create service with PostgreSQL.
     postgres:
@@ -55,13 +56,26 @@ services:
          POSTGRES_PASSWORD: event-db
          POSTGRES_USER: event-db
          POSTGRES_DB: event-db
+        healthcheck:
+         test: ["CMD-SHELL", "pg_isready", "-d", "event-db"]
+         interval: 30s
+         timeout: 30s
+         retries: 3
 
     # Create service with RabbitMQ.
     rabbitmq:
         image: rabbitmq:3.11.2-management-alpine
+        healthcheck:
+         test: rabbitmq-diagnostics -q ping
+         interval: 30s
+         timeout: 30s
+         retries: 3
         ports:
          - 15672:15672 # for serve RabbitMQ GUI
+
     jaeger:
         image: jaegertracing/all-in-one:1.42
         ports:
          - "16686:16686" # for serve Jaeger GUI
+        depends_on:
+         - calendar
