@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/app"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/httpserver/handler"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.uber.org/zap"
 )
 
 //nolint:tagliatelle
@@ -29,7 +29,6 @@ type Conf struct {
 
 type Server struct {
 	serv http.Server
-	app  *app.App
 	pr   *pathResolver
 	log  *zap.SugaredLogger
 }
@@ -37,24 +36,27 @@ type Server struct {
 func New(conf *Conf, app *app.App) *Server {
 	var server Server
 
-	server.app = app
-	server.log = zap.S()
+	log := zap.S()
+	server.log = log
 	server.pr = newPathResolver()
 
-	server.pr.Add("POST /users", handleCreateUser)
-	server.pr.Add("GET /users", handleGetUser)
-	server.pr.Add("PUT /users", handleUpdateUser)
-	server.pr.Add("DELETE /users", handleDeleteUser)
+	h := handler.New(app, log)
 
-	server.pr.Add("POST /events", handleCreateEvent)
-	server.pr.Add("GET /events", handleGetEvent)
-	server.pr.Add("PUT /events", handleUpdateEvent)
-	server.pr.Add("DELETE /events", handleDeleteEvent)
+	server.pr.Add("POST /users", h.CreateUser)
+	server.pr.Add("GET /users", h.GetUser)
+	server.pr.Add("PUT /users", h.UpdateUser)
+	server.pr.Add("DELETE /users", h.DeleteUser)
 
+	server.pr.Add("POST /events", h.CreateEvent)
+	server.pr.Add("GET /events", h.GetEvent)
+	server.pr.Add("PUT /events", h.UpdateEvent)
+	server.pr.Add("DELETE /events", h.DeleteEvent)
+
+	//nolint:exhaustivestruct,exhaustruct
 	server.serv = http.Server{
-		Addr:    fmt.Sprintf("%s:%d", conf.Host, conf.Port),
-		Handler: otelhttp.NewHandler(http.Handler(&server), "HTTP"),
-		ReadTimeout: 5 * time.Second,
+		Addr:         fmt.Sprintf("%s:%d", conf.Host, conf.Port),
+		Handler:      otelhttp.NewHandler(http.Handler(&server), "HTTP"),
+		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
 
@@ -81,9 +83,8 @@ func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	defer logReq(req)()
 
 	check := req.Method + " " + req.URL.Path
-	handlerFunc := s.pr.Get(check)
-	if handlerFunc != nil {
-		handlerFunc(res, req, s)
+	if handlerFunc := s.pr.Get(check); handlerFunc != nil {
+		handlerFunc(res, req)
 		return
 	}
 

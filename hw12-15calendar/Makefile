@@ -1,6 +1,6 @@
 test:
 	go test -race ./internal/storage/... -cover
-	go test -race ./services/calendar/httpserver -cover
+	cd services/calendar && make test
 
 build:
 	docker-compose -f deployments/docker-compose.yaml build

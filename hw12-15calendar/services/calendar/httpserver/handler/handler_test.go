@@ -1,4 +1,4 @@
-package httpserver
+package handler_test
 
 import (
 	"bytes"
@@ -15,6 +15,7 @@ import (
 	memorystorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/memory"
 	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/app"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/httpserver"
 )
 
 const urlUsers = "http://localhost:8080/users"
@@ -24,9 +25,9 @@ const contextTimeoutDB = 2 * time.Second
 
 var confDBTest = sqlstorage.Conf{"postgres", 5432, "event-db", "event-db", "event-db"}
 
-func initServerHTTP(st storage.Storage) *Server {
-	conf := Conf{"localhost", 8080, false, ConfHTTPS{}}
-	server := New(&conf, app.New(st))
+func initServerHTTP(st storage.Storage) *httpserver.Server {
+	conf := httpserver.Conf{"localhost", 8080, false, httpserver.ConfHTTPS{}}
+	server := httpserver.New(&conf, app.New(st))
 
 	return server
 }
@@ -71,7 +72,7 @@ func TestHandleEventSQL(t *testing.T) {
 	testHandleEvent(t, server)
 }
 
-func testHandleUser(t *testing.T, server *Server) {
+func testHandleUser(t *testing.T, server *httpserver.Server) {
 
 	users := []storage.User{
 		{Name: "Howard Mendoza", Email: "Howard.Mendoza@mail.com"},
@@ -121,7 +122,7 @@ func testHandleUser(t *testing.T, server *Server) {
 	}
 }
 
-func testHandleEvent(t *testing.T, server *Server) {
+func testHandleEvent(t *testing.T, server *httpserver.Server) {
 
 	user := storage.User{Name: "Bob", Email: "bobi@mail.com", Events: make([]storage.Event, 0)}
 	user.ID = 1
@@ -189,7 +190,7 @@ func testHandleEvent(t *testing.T, server *Server) {
 	testHandleDeleteEvent(t, server, len(events), http.StatusBadRequest)
 }
 
-func testHandleCreateUser(t *testing.T, server *Server, user *storage.User, status int) {
+func testHandleCreateUser(t *testing.T, server *httpserver.Server, user *storage.User, status int) {
 	res := httptest.NewRecorder()
 
 	dataJsonUser, err := json.Marshal(*user)
@@ -209,7 +210,7 @@ func testHandleCreateUser(t *testing.T, server *Server, user *storage.User, stat
 	}
 }
 
-func testHandleGetUser(t *testing.T, server *Server, id int, status int) *storage.User {
+func testHandleGetUser(t *testing.T, server *httpserver.Server, id int, status int) *storage.User {
 	res := httptest.NewRecorder()
 
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s?id=%d", urlUsers, id), nil)
@@ -234,7 +235,7 @@ func testHandleGetUser(t *testing.T, server *Server, id int, status int) *storag
 	return &user
 }
 
-func testHandleUpdateUser(t *testing.T, server *Server, user *storage.User, status int) {
+func testHandleUpdateUser(t *testing.T, server *httpserver.Server, user *storage.User, status int) {
 	res := httptest.NewRecorder()
 
 	dataJsonUser, err := json.Marshal(*user)
@@ -254,7 +255,7 @@ func testHandleUpdateUser(t *testing.T, server *Server, user *storage.User, stat
 	}
 }
 
-func testHandleDeleteUser(t *testing.T, server *Server, id int, status int) {
+func testHandleDeleteUser(t *testing.T, server *httpserver.Server, id int, status int) {
 	res := httptest.NewRecorder()
 
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s?id=%d", urlUsers, id), nil)
@@ -269,7 +270,7 @@ func testHandleDeleteUser(t *testing.T, server *Server, id int, status int) {
 	}
 }
 
-func testHandleCreateEvent(t *testing.T, server *Server, event *storage.Event, status int) {
+func testHandleCreateEvent(t *testing.T, server *httpserver.Server, event *storage.Event, status int) {
 	res := httptest.NewRecorder()
 
 	dataJsonEvent, err := json.Marshal(*event)
@@ -290,7 +291,7 @@ func testHandleCreateEvent(t *testing.T, server *Server, event *storage.Event, s
 	}
 }
 
-func testHandleGetEvent(t *testing.T, server *Server, id int, status int) *storage.Event {
+func testHandleGetEvent(t *testing.T, server *httpserver.Server, id int, status int) *storage.Event {
 	res := httptest.NewRecorder()
 
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s?id=%d", urlEvents, id), nil)
@@ -315,7 +316,7 @@ func testHandleGetEvent(t *testing.T, server *Server, id int, status int) *stora
 	return &event
 }
 
-func testHandleUpdateEvent(t *testing.T, server *Server, event *storage.Event, status int) {
+func testHandleUpdateEvent(t *testing.T, server *httpserver.Server, event *storage.Event, status int) {
 	res := httptest.NewRecorder()
 
 	dataJsonEvent, err := json.Marshal(*event)
@@ -335,7 +336,7 @@ func testHandleUpdateEvent(t *testing.T, server *Server, event *storage.Event, s
 	}
 }
 
-func testHandleDeleteEvent(t *testing.T, server *Server, id int, status int) {
+func testHandleDeleteEvent(t *testing.T, server *httpserver.Server, id int, status int) {
 	res := httptest.NewRecorder()
 
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s?id=%d", urlEvents, id), nil)

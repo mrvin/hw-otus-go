@@ -9,18 +9,18 @@ import (
 
 // TODO:add thread safety.
 type pathResolver struct {
-	handlers map[string]func(res http.ResponseWriter, req *http.Request, server *Server)
+	handlers map[string]http.HandlerFunc
 }
 
 func newPathResolver() *pathResolver {
-	return &pathResolver{make(map[string]func(res http.ResponseWriter, req *http.Request, server *Server))}
+	return &pathResolver{make(map[string]http.HandlerFunc)}
 }
 
-func (p *pathResolver) Add(path string, handler func(res http.ResponseWriter, req *http.Request, server *Server)) {
+func (p *pathResolver) Add(path string, handler http.HandlerFunc) {
 	p.handlers[path] = handler
 }
 
-func (p *pathResolver) Get(pathCheck string) func(res http.ResponseWriter, req *http.Request, server *Server) {
+func (p *pathResolver) Get(pathCheck string) http.HandlerFunc {
 	for pattern, handlerFunc := range p.handlers {
 		if ok, err := path.Match(pattern, pathCheck); ok && err == nil {
 			return handlerFunc
