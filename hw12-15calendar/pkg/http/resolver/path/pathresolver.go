@@ -1,4 +1,4 @@
-package httpserver
+package path
 
 import (
 	"net/http"
@@ -7,20 +7,20 @@ import (
 	"go.uber.org/zap"
 )
 
-// TODO:add thread safety.
-type pathResolver struct {
+// PathResolver is not thread safe.
+type PathResolver struct {
 	handlers map[string]http.HandlerFunc
 }
 
-func newPathResolver() *pathResolver {
-	return &pathResolver{make(map[string]http.HandlerFunc)}
+func New() *PathResolver {
+	return &PathResolver{make(map[string]http.HandlerFunc)}
 }
 
-func (p *pathResolver) Add(path string, handler http.HandlerFunc) {
+func (p *PathResolver) Add(path string, handler http.HandlerFunc) {
 	p.handlers[path] = handler
 }
 
-func (p *pathResolver) Get(pathCheck string) http.HandlerFunc {
+func (p *PathResolver) Get(pathCheck string) http.HandlerFunc {
 	for pattern, handlerFunc := range p.handlers {
 		if ok, err := path.Match(pattern, pathCheck); ok && err == nil {
 			return handlerFunc
