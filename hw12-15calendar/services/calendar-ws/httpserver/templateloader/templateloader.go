@@ -1,28 +1,30 @@
-package httpserver
+package templateloader
 
 import (
 	"embed"
 	"html/template"
 	"path/filepath"
 	"time"
+	"net/http"
+	"fmt"
 )
 
 //go:embed templates/*
 var files embed.FS
 
-type templateLoader struct {
+type TemplateLoader struct {
 	templates map[string]*template.Template
 }
 
-func newTemplateLoader() *templateLoader {
-	return &templateLoader{make(map[string]*template.Template)}
+func New() *TemplateLoader {
+	return &TemplateLoader{make(map[string]*template.Template)}
 }
 
 func dateFormat(layout string, d time.Time) string {
 	return d.Format(layout)
 }
 
-func (t *templateLoader) LoadTemplates(templatesDir string) {
+func (t *TemplateLoader) Load(templatesDir string) {
 	t.templates["form-user.html"] = template.Must(template.ParseFS(files,
 		filepath.Join(templatesDir, "base.html"),
 		filepath.Join(templatesDir, "form-user.html")))
@@ -47,4 +49,17 @@ func (t *templateLoader) LoadTemplates(templatesDir string) {
 		Funcs(template.FuncMap{"dateFormat": dateFormat}).
 		ParseFS(files, filepath.Join(templatesDir, name),
 			filepath.Join(templatesDir, "event.html")))
+}
+
+func (t *TemplateLoader) Execute(nameTemp string, res http.ResponseWriter, data any) error {
+	temp, ok := t.templates[nameTemp]
+	if !ok {
+		return fmt.Errorf("not found template '%s'", nameTemp)
+	}
+
+	if err := temp.Execute(res, data); err != nil {
+		return fmt.Errorf("execute %w", err)
+	}
+
+	return nil
 }
