@@ -6,12 +6,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
-
-var ErrIDEmpty = errors.New("id is empty")
 
 // TODO:add return id created user.
 func (h *Handler) CreateUser(res http.ResponseWriter, req *http.Request) {
@@ -123,19 +120,6 @@ func (h *Handler) DeleteUser(res http.ResponseWriter, req *http.Request) {
 		}
 		return
 	}
-}
-
-func getID(req *http.Request) (int, error) {
-	idStr := req.URL.Query().Get("id")
-	if idStr == "" {
-		return 0, ErrIDEmpty
-	}
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		return 0, fmt.Errorf("convert id: %w", err)
-	}
-
-	return id, nil
 }
 
 func unmarshalUser(req *http.Request) (*storage.User, error) {

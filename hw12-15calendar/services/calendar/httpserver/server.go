@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver"
+	pathresolver "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver/path"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/app"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/httpserver/handler"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -29,7 +31,7 @@ type Conf struct {
 
 type Server struct {
 	serv http.Server
-	pr   *pathResolver
+	res  resolver.Resolver
 	log  *zap.SugaredLogger
 }
 
@@ -38,19 +40,19 @@ func New(conf *Conf, app *app.App) *Server {
 
 	log := zap.S()
 	server.log = log
-	server.pr = newPathResolver()
+	server.res = pathresolver.New()
 
 	h := handler.New(app, log)
 
-	server.pr.Add("POST /users", h.CreateUser)
-	server.pr.Add("GET /users", h.GetUser)
-	server.pr.Add("PUT /users", h.UpdateUser)
-	server.pr.Add("DELETE /users", h.DeleteUser)
+	server.res.Add("POST /users", h.CreateUser)
+	server.res.Add("GET /users", h.GetUser)
+	server.res.Add("PUT /users", h.UpdateUser)
+	server.res.Add("DELETE /users", h.DeleteUser)
 
-	server.pr.Add("POST /events", h.CreateEvent)
-	server.pr.Add("GET /events", h.GetEvent)
-	server.pr.Add("PUT /events", h.UpdateEvent)
-	server.pr.Add("DELETE /events", h.DeleteEvent)
+	server.res.Add("POST /events", h.CreateEvent)
+	server.res.Add("GET /events", h.GetEvent)
+	server.res.Add("PUT /events", h.UpdateEvent)
+	server.res.Add("DELETE /events", h.DeleteEvent)
 
 	//nolint:exhaustivestruct,exhaustruct
 	server.serv = http.Server{
@@ -83,7 +85,7 @@ func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	defer logReq(req)()
 
 	check := req.Method + " " + req.URL.Path
-	if handlerFunc := s.pr.Get(check); handlerFunc != nil {
+	if handlerFunc := s.res.Get(check); handlerFunc != nil {
 		handlerFunc(res, req)
 		return
 	}
