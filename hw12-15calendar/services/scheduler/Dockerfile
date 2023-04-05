@@ -10,6 +10,7 @@ WORKDIR  /app
 # Copy the code into the container.
 COPY services/scheduler services/scheduler
 COPY internal internal
+COPY pkg pkg
 
 # Copy and download dependency using go mod.
 COPY go.mod go.sum ./
@@ -22,7 +23,6 @@ FROM scratch
 
 WORKDIR /
 
-COPY configs/scheduler.yml /configs/
 COPY --from=build ["/app/bin/scheduler", "/"]
 
-ENTRYPOINT ["/scheduler", "-config", "/configs/scheduler.yml"]
+ENTRYPOINT ["/scheduler"]

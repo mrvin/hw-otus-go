@@ -2,11 +2,12 @@ build:
 	go build -o ../../bin/calendar-ws -ldflags '-w'
 
 run:
-	go run -race main.go -config ../../configs/calendar-ws.yml
+	go run -race main.go
 
 test:
-	go test -v -race ./... -cover
+	go test -race ./... -cover
 
 lint:
 	golangci-lint run ./...
 
+.PHONY: build run test lint

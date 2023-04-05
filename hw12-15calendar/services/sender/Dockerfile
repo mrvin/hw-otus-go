@@ -22,7 +22,6 @@ FROM scratch
 
 WORKDIR /
 
-COPY configs/sender.yml /configs/
 COPY --from=build ["/app/bin/sender", "/"]
 
-ENTRYPOINT ["/sender", "-config", "/configs/sender.yml"]
+ENTRYPOINT ["/sender"]

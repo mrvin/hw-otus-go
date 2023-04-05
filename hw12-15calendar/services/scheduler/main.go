@@ -23,7 +23,7 @@ type Config struct {
 }
 
 func main() {
-	configFile := flag.String("config", "/etc/calendar/scheduler.yaml", "path to configuration file")
+	configFile := flag.String("config", "/etc/calendar/scheduler.yml", "path to configuration file")
 	flag.Parse()
 
 	var conf Config

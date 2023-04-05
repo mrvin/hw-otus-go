@@ -11,6 +11,7 @@ WORKDIR  /app
 # Copy the code into the container.
 COPY services/calendar-ws services/calendar-ws
 COPY internal internal
+COPY pkg pkg
 
 # Copy and download dependency using go mod.
 COPY go.mod go.sum ./
@@ -23,8 +24,7 @@ FROM scratch
 
 WORKDIR /
 
-COPY configs/calendar-ws.yml /configs/
 COPY --from=build ["/app/bin/calendar-ws", "/"]
 COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
 
-ENTRYPOINT ["/calendar-ws", "-config", "/configs/calendar-ws.yml"]
+ENTRYPOINT ["/calendar-ws"]

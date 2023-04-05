@@ -6,10 +6,10 @@ services:
          dockerfile: services/calendar-ws/Dockerfile
         ports:
          - "8080:8080"
-        links:
-         - calendar
         depends_on:
          - calendar
+        volumes:
+         - ./../configs/calendar-ws.yml:/etc/calendar/calendar-ws.yml
 
     calendar:
         build:
@@ -20,34 +20,33 @@ services:
          - "55555:55555"
         environment:
          ENV: PROD
-        links:
-         - postgres
         depends_on:
           postgres:
             condition: service_healthy
+        volumes:
+         - ./../configs/calendar.yml:/etc/calendar/calendar.yml
 
     scheduler:
        build:
         context: ../
         dockerfile: services/scheduler/Dockerfile
-       links:
-        - postgres
-        - rabbitmq
        depends_on:
          postgres:
            condition: service_healthy
          rabbitmq:
            condition: service_healthy
+       volumes:
+        - ./../configs/scheduler.yml:/etc/calendar/scheduler.yml
 
     sender:
        build:
         context: ../
         dockerfile: services/sender/Dockerfile
-       links:
-        - rabbitmq
        depends_on:
          rabbitmq:
            condition: service_healthy
+       volumes:
+        - ./../configs/sender.yml:/etc/calendar/sender.yml
 
     # Create service with PostgreSQL.
     postgres:
@@ -58,24 +57,18 @@ services:
          POSTGRES_DB: event-db
         healthcheck:
          test: ["CMD-SHELL", "pg_isready", "-d", "event-db"]
-         interval: 30s
-         timeout: 30s
-         retries: 3
+        volumes:
+         - ./../postgres-data:/var/lib/postgresql/data
 
     # Create service with RabbitMQ.
     rabbitmq:
         image: rabbitmq:3.11.2-management-alpine
         healthcheck:
          test: rabbitmq-diagnostics -q ping
-         interval: 30s
-         timeout: 30s
-         retries: 3
         ports:
-         - 15672:15672 # for serve RabbitMQ GUI
+         - "15672:15672" # for serve RabbitMQ GUI
 
     jaeger:
         image: jaegertracing/all-in-one:1.42
         ports:
          - "16686:16686" # for serve Jaeger GUI
-        depends_on:
-         - calendar

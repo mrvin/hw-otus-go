@@ -13,8 +13,6 @@ import (
 	"sync"
 	"syscall"
 
-	"go.uber.org/zap"
-
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/logger"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
@@ -24,6 +22,7 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/app"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/grpcserver"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/httpserver"
+	"go.uber.org/zap"
 )
 
 var infoService = tracer.InfoService{
@@ -34,7 +33,7 @@ var infoService = tracer.InfoService{
 var ctx = context.Background()
 
 func main() {
-	configFile := flag.String("config", "/etc/calendar/config.yml", "path to configuration file")
+	configFile := flag.String("config", "/etc/calendar/calendar.yml", "path to configuration file")
 	flag.Parse()
 
 	var conf Config

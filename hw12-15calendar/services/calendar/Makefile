@@ -2,7 +2,7 @@ build:
 	go build -o ../../bin/calendar -ldflags '-w'
 
 run:
-	go run -race main.go -config ../../configs/calendar.yml
+	go run -race main.go
 
 test:
 	go test -race ./httpserver/handler -cover
@@ -10,4 +10,4 @@ test:
 lint:
 	golangci-lint run ./...
 
-PHONY: build run test lint
+.PHONY: build run test lint

@@ -15,5 +15,5 @@ elif [ "$ENV" = 'UNIT' ]; then
 else
 	# Запуск сервера собраного при сборке образа docker
 	echo "Running Production Server"
-	exec ./bin/calendar -config "configs/calendar.yml"
+	exec ./bin/calendar
 fi
