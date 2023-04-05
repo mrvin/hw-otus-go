@@ -9,6 +9,11 @@ import (
 	"time"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendarapi"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver"
+	regexpresolver "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver/regex"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar-ws/httpserver/handler"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar-ws/httpserver/templateloader"
+	"go.uber.org/zap"
 )
 
 type Conf struct {
@@ -17,34 +22,34 @@ type Conf struct {
 }
 
 type Server struct {
-	serv       http.Server
-	pr         *regexResolver
-	templates  *templateLoader
-	grpcclient calendarapi.EventServiceClient
+	serv http.Server
+	res  resolver.Resolver
+	log  *zap.SugaredLogger
 }
 
 func New(conf *Conf, grpcclient calendarapi.EventServiceClient) *Server {
 	var server Server
 
-	server.pr = newRegexResolver()
-	server.templates = newTemplateLoader()
-	server.templates.LoadTemplates("templates")
-	server.grpcclient = grpcclient
+	log := zap.S()
+	server.log = log
+	server.res = regexpresolver.New()
 
-	server.pr.Add("GET /list-users", displayListUsers)
-	server.pr.Add(`GET /list-events\?id=([0-9]+$)`, displayListEventsForUser)
+	h := handler.New(templateloader.New(), grpcclient, log)
 
-	server.pr.Add(`GET /user\?id=([0-9]+$)`, displayUser)
-	server.pr.Add(`GET /event\?id=([0-9]+$)`, displayEvent)
+	server.res.Add("GET /list-users", h.DisplayListUsers)
+	server.res.Add(`GET /list-events\?id=([0-9]+$)`, h.DisplayListEventsForUser)
 
-	server.pr.Add(`GET /delete-user\?id=([0-9]+$)`, deleteUser)
-	server.pr.Add(`GET /delete-event\?id=([0-9]+$)`, deleteEvent)
+	server.res.Add(`GET /user\?id=([0-9]+$)`, h.DisplayUser)
+	server.res.Add(`GET /event\?id=([0-9]+$)`, h.DisplayEvent)
 
-	server.pr.Add("GET /form-user", displayFormUser)
-	server.pr.Add("POST /create-user", createUser)
+	server.res.Add(`GET /delete-user\?id=([0-9]+$)`, h.DeleteUser)
+	server.res.Add(`GET /delete-event\?id=([0-9]+$)`, h.DeleteEvent)
 
-	server.pr.Add(`GET /form-event\?id=([0-9]+$)`, displayFormEvent)
-	server.pr.Add("POST /create-event", createEvent)
+	server.res.Add("GET /form-user", h.DisplayFormUser)
+	server.res.Add("POST /create-user", h.CreateUser)
+
+	server.res.Add(`GET /form-event\?id=([0-9]+$)`, h.DisplayFormEvent)
+	server.res.Add("POST /create-event", h.CreateEvent)
 
 	server.serv = http.Server{
 		Addr:    fmt.Sprintf("%s:%d", conf.Host, conf.Port),
@@ -55,7 +60,7 @@ func New(conf *Conf, grpcclient calendarapi.EventServiceClient) *Server {
 }
 
 func (s *Server) Start() error {
-	log.Printf("Start http server: %s", s.serv.Addr)
+	s.log.Infof("Start http server: %s", s.serv.Addr)
 	if err := s.serv.ListenAndServe(); err != nil {
 		return fmt.Errorf("start http server: %w", err)
 	}
@@ -66,9 +71,8 @@ func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	defer logReq(req)()
 
 	check := req.Method + " " + req.URL.Path + "?" + req.URL.RawQuery
-	handlerFunc := s.pr.Get(check)
-	if handlerFunc != nil {
-		handlerFunc(res, req, s)
+	if handlerFunc := s.res.Get(check); handlerFunc != nil {
+		handlerFunc(res, req)
 		return
 	}
 
@@ -85,7 +89,7 @@ func logReq(req *http.Request) func() {
 }
 
 func (s *Server) Stop(ctx context.Context) error {
-	log.Print("Stop http server")
+	s.log.Infof("Stop http server")
 	if err := s.serv.Shutdown(ctx); err != nil {
 		return fmt.Errorf("stop http server: %w", err)
 	}
