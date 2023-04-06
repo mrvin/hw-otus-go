@@ -14,11 +14,11 @@ var ErrStopTimeBeforeStartTime = errors.New("event ends before starts")
 
 type App struct {
 	storage storage.Storage
-	tr      trace.Tracer //Think about it
+	tr      trace.Tracer // Think about it.
 }
 
 func New(storage storage.Storage) *App {
-	return &App{storage, otel.GetTracerProvider().Tracer("App")}
+	return &App{storage, otel.GetTracerProvider().Tracer("Storage")}
 }
 
 func (a *App) CreateEvent(ctx context.Context, event *storage.Event) error {
@@ -45,8 +45,8 @@ func (a *App) GetAllEvents(ctx context.Context) ([]storage.Event, error) {
 }
 */
 
-// TODO: implement at the database level
-func (a *App) GetEventsForUser(ctx context.Context, id int, StartPeriod time.Time, days int) ([]storage.Event, error) {
+// TODO: implement at the database level.
+func (a *App) GetEventsForUser(ctx context.Context, id int, startPeriod time.Time, days int) ([]storage.Event, error) {
 	cctx, sp := a.tr.Start(ctx, "GetEventsForUser")
 	defer sp.End()
 
@@ -54,12 +54,14 @@ func (a *App) GetEventsForUser(ctx context.Context, id int, StartPeriod time.Tim
 	if err != nil {
 		return nil, err
 	}
-
-	StopPeriod := StartPeriod.AddDate(0, 0, days)
+	if days == 0 {
+		return events, nil
+	}
+	stopPeriod := startPeriod.AddDate(0, 0, days)
 	var eventsFromInterval []storage.Event
 	for _, event := range events {
-		if event.StartTime.After(StartPeriod) && event.StartTime.Before(StopPeriod) ||
-			event.StopTime.After(StartPeriod) && event.StopTime.Before(StopPeriod) {
+		if event.StartTime.After(startPeriod) && event.StartTime.Before(stopPeriod) ||
+			event.StopTime.After(startPeriod) && event.StopTime.Before(stopPeriod) {
 			eventsFromInterval = append(eventsFromInterval, event)
 		}
 	}

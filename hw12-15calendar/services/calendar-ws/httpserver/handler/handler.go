@@ -7,25 +7,25 @@ import (
 	"net/http"
 	"strconv"
 
-	"go.uber.org/zap"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendarapi"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar-ws/httpserver/templateloader"
+	"go.uber.org/zap"
 )
 
 var ErrIDEmpty = errors.New("id is empty")
 
 type Handler struct {
-	templates *templateloader.TemplateLoader
+	templates  *templateloader.TemplateLoader
 	grpcclient calendarapi.EventServiceClient
-	log       *zap.SugaredLogger
+	log        *zap.SugaredLogger
 }
 
 func New(templates *templateloader.TemplateLoader, grpcclient calendarapi.EventServiceClient, log *zap.SugaredLogger) *Handler {
 	templates.Load("templates")
 	return &Handler{
-		templates: templates,
+		templates:  templates,
 		grpcclient: grpcclient,
-		log: log,
+		log:        log,
 	}
 }
 

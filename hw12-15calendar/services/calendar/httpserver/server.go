@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver"
@@ -82,8 +81,6 @@ func (s *Server) StartTLS(conf *ConfHTTPS) error {
 }
 
 func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
-	defer logReq(req)()
-
 	check := req.Method + " " + req.URL.Path
 	if handlerFunc := s.res.Get(check); handlerFunc != nil {
 		handlerFunc(res, req)
@@ -91,18 +88,6 @@ func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	}
 
 	http.NotFound(res, req)
-}
-
-func logReq(req *http.Request) func() {
-	start := time.Now()
-	log := zap.S()
-	return func() {
-		log.Infow("", "ip", strings.Split(req.RemoteAddr, ":")[0],
-			"method", req.Method,
-			"path", req.URL.Path,
-			"proto", req.Proto,
-			"duration", time.Since(start) /*, req.Header["User-Agent"]*/)
-	}
 }
 
 func (s *Server) Stop(ctx context.Context) error {

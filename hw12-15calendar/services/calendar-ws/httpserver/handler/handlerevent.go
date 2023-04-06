@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -88,12 +89,14 @@ func (h *Handler) CreateEvent(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	text := resp{Title: "Create event", Body: struct{ Text string }{"Event created successfully"}}
-	if err := h.templates.Execute("text.html", res, text); err != nil {
-		h.log.Errorf("createEvent: %v", err)
+	reqListEvents, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/list-events?id=%d&days=%d", idUser, 0), nil)
+	if err != nil {
+		h.log.Errorf("сreateEvent NewRequest: %v", err)
 		errMsg(res, h.templates)
 		return
 	}
+	// Fix it path: POST /create-event
+	h.DisplayListEventsForUser(res, reqListEvents)
 }
 
 func (h *Handler) DisplayEvent(res http.ResponseWriter, req *http.Request) {
@@ -140,8 +143,21 @@ func (h *Handler) DisplayListEventsForUser(res http.ResponseWriter, req *http.Re
 		errMsg(res, h.templates)
 		return
 	}
-	reqUser := &calendarapi.GetEventsForUserRequest{User: &calendarapi.UserRequest{Id: int64(idUser)},
-		DaysAhead: &calendarapi.DaysAheadRequest{Days: 7, Date: timestamppb.New(time.Now())}}
+	days := 0
+	daysStr := req.URL.Query().Get("days")
+	if daysStr != "" {
+		days, err = strconv.Atoi(daysStr)
+		if err != nil {
+			h.log.Errorf("Convert days: %w", err)
+			return
+		}
+	}
+
+	reqUser := &calendarapi.GetEventsForUserRequest{
+		User: &calendarapi.UserRequest{Id: int64(idUser)},
+		DaysAhead: &calendarapi.DaysAheadRequest{
+			Days: int32(days),
+			Date: timestamppb.New(time.Now())}}
 
 	events, err := h.grpcclient.GetEventsForUser(req.Context(), reqUser)
 	if err != nil {

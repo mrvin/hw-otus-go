@@ -95,13 +95,7 @@ func (h *Handler) CreateUser(res http.ResponseWriter, req *http.Request) {
 		errMsg(res, h.templates)
 		return
 	}
-
-	text := resp{Title: "Create user", Body: struct{ Text string }{"User created successfully"}}
-	if err := h.templates.Execute("text.html", res, text); err != nil {
-		h.log.Errorf("сreateUser: %v", err)
-		errMsg(res, h.templates)
-		return
-	}
+	h.DisplayListUsers(res, req)
 }
 
 func (h *Handler) DeleteUser(res http.ResponseWriter, req *http.Request) {
