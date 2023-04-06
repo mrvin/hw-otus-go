@@ -12,3 +12,8 @@ http:
 logger:
     filepath: log.json
     level: debug # debug, info, warn, error
+
+# tracing settings
+tracer:
+    host: jaeger
+    port: 14268

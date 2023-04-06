@@ -8,9 +8,15 @@ import (
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/logger"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/tracer"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar-ws/grpcclient"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar-ws/httpserver"
 )
+
+var infoService = tracer.InfoService{
+	Name:    "Calendar-ws",
+	Version: "1.0.0",
+}
 
 func main() {
 	configFile := flag.String("config", "/etc/calendar/calendar-ws.yml", "path to configuration file")
@@ -28,6 +34,10 @@ func main() {
 		return
 	}
 	defer log.Sync()
+
+	if err := tracer.TraceInit(&conf.Tracer, &infoService); err != nil {
+		log.Errorf("Init jaeger tracer: %v", err)
+	}
 
 	clientGRPC, err := grpcclient.New(&conf.GRPC)
 	if err != nil {

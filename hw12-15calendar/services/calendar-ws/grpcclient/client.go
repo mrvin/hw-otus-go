@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendarapi"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 )
 
@@ -27,7 +28,10 @@ func New(conf *Conf) (*Client, error) {
 	ctx, _ := context.WithTimeout(context.Background(), shortDuration)
 	confHost := fmt.Sprintf("%s:%d", conf.Host, conf.Port)
 	var err error
-	client.conn, err = grpc.DialContext(ctx, confHost, grpc.WithInsecure(), grpc.WithBlock())
+	client.conn, err = grpc.DialContext(ctx, confHost,
+		grpc.WithInsecure(),
+		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("connect to %s: %w", confHost, err)
 	}
