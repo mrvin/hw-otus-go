@@ -10,7 +10,6 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver"
 	regexpresolver "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver/regex"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar-ws/httpserver/handler"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar-ws/httpserver/templateloader"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.uber.org/zap"
 )
@@ -27,28 +26,29 @@ type Server struct {
 }
 
 func New(conf *Conf, grpcclient calendarapi.EventServiceClient) *Server {
-	var server Server
-
 	log := zap.S()
-	server.log = log
-	server.res = regexpresolver.New()
 
-	h := handler.New(templateloader.New(), grpcclient, log)
+	res := regexpresolver.New()
+	h := handler.New(grpcclient, log)
+	res.Add("GET /list-users", h.DisplayListUsers)
+	res.Add(`GET \/list-events\?id=([0-9]+)\&days=([0-9]+$)`, h.DisplayListEventsForUser)
 
-	server.res.Add("GET /list-users", h.DisplayListUsers)
-	server.res.Add(`GET \/list-events\?id=([0-9]+)\&days=([0-9]+$)`, h.DisplayListEventsForUser)
+	res.Add(`GET \/user\?id=([0-9]+$)`, h.DisplayUser)
+	res.Add(`GET \/event\?id=([0-9]+$)`, h.DisplayEvent)
 
-	server.res.Add(`GET \/user\?id=([0-9]+$)`, h.DisplayUser)
-	server.res.Add(`GET /event\?id=([0-9]+$)`, h.DisplayEvent)
+	res.Add(`GET \/delete-user\?id=([0-9]+$)`, h.DeleteUser)
+	res.Add(`GET \/delete-event\?id=([0-9]+$)`, h.DeleteEvent)
 
-	server.res.Add(`GET \/delete-user\?id=([0-9]+$)`, h.DeleteUser)
-	server.res.Add(`GET \/delete-event\?id=([0-9]+$)`, h.DeleteEvent)
+	res.Add("GET /form-user", h.DisplayFormUser)
+	res.Add("POST /create-user", h.CreateUser)
 
-	server.res.Add("GET /form-user", h.DisplayFormUser)
-	server.res.Add("POST /create-user", h.CreateUser)
+	res.Add(`GET \/form-event\?id=([0-9]+$)`, h.DisplayFormEvent)
+	res.Add("POST /create-event", h.CreateEvent)
 
-	server.res.Add(`GET \/form-event\?id=([0-9]+$)`, h.DisplayFormEvent)
-	server.res.Add("POST /create-event", h.CreateEvent)
+	server := Server{
+		res: res,
+		log: log,
+	}
 
 	//nolint:exhaustivestruct,exhaustruct
 	server.serv = http.Server{

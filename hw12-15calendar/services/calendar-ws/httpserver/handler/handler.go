@@ -3,7 +3,6 @@ package handler
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -20,7 +19,8 @@ type Handler struct {
 	log        *zap.SugaredLogger
 }
 
-func New(templates *templateloader.TemplateLoader, grpcclient calendarapi.EventServiceClient, log *zap.SugaredLogger) *Handler {
+func New(grpcclient calendarapi.EventServiceClient, log *zap.SugaredLogger) *Handler {
+	templates := templateloader.New()
 	templates.Load("templates")
 	return &Handler{
 		templates:  templates,
@@ -49,10 +49,10 @@ func getID(req *http.Request) (int, error) {
 	return id, nil
 }
 
-func errMsg(res http.ResponseWriter, templates *templateloader.TemplateLoader) {
+func (h *Handler) ErrMsg(res http.ResponseWriter) {
 	text := resp{Title: "Error", Body: struct{ Text string }{"Sorry something went wrong."}}
-	if err := templates.Execute("text.html", res, text); err != nil {
-		log.Printf("errMsg: %v", err)
+	if err := h.templates.Execute("text.html", res, text); err != nil {
+		h.log.Errorf("errMsg: %v", err)
 		return
 	}
 }
