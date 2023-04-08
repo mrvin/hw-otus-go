@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	// Add pure Go Postgres driver for the database/sql package.
 	_ "github.com/lib/pq"
@@ -67,6 +68,10 @@ func (s *Storage) Connect(ctx context.Context) error {
 	if err := s.db.PingContext(ctx); err != nil {
 		return fmt.Errorf("ping db: %w", err)
 	}
+
+	s.db.SetMaxOpenConns(25)
+	s.db.SetMaxIdleConns(25)
+	s.db.SetConnMaxLifetime(5*time.Minute)
 
 	return nil
 }
