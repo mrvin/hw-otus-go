@@ -29,5 +29,10 @@ logger:
 
 # tracing settings
 tracer:
-    host: jaeger
-    port: 14268
+    host: otel_collector
+    port: 4317
+
+# metric settings
+metrics:
+    host: otel_collector
+    port: 4317

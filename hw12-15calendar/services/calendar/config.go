@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/logger"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/metric"
 	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/tracer"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/grpcserver"
@@ -15,4 +16,5 @@ type Config struct {
 	GRPC   grpcserver.Conf `yaml:"grpc"`
 	Logger logger.Conf     `yaml:"logger"`
 	Tracer tracer.Conf     `yaml:"tracer"`
+	Metric metric.Conf     `yaml:"metrics"`
 }

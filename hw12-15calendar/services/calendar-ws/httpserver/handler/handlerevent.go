@@ -11,6 +11,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+//TODO: http.Error(res, err.Error(), http.StatusBadRequest)
+
 func (h *Handler) DisplayFormEvent(res http.ResponseWriter, req *http.Request) {
 	idUser, err := getID(req)
 	if err != nil {
@@ -148,7 +150,7 @@ func (h *Handler) DisplayListEventsForUser(res http.ResponseWriter, req *http.Re
 	if daysStr != "" {
 		days, err = strconv.Atoi(daysStr)
 		if err != nil {
-			h.log.Errorf("Convert days: %w", err)
+			h.log.Errorf("Convert days: %v", err)
 			return
 		}
 	}

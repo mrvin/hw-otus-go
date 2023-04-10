@@ -69,9 +69,10 @@ func (s *Storage) Connect(ctx context.Context) error {
 		return fmt.Errorf("ping db: %w", err)
 	}
 
+	// Setting db connections pool.
 	s.db.SetMaxOpenConns(25)
 	s.db.SetMaxIdleConns(25)
-	s.db.SetConnMaxLifetime(5*time.Minute)
+	s.db.SetConnMaxLifetime(5 * time.Minute)
 
 	return nil
 }

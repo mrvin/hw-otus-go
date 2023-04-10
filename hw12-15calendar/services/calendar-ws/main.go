@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	stdlog "log"
@@ -8,15 +9,15 @@ import (
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/logger"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/metric"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/tracer"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar-ws/grpcclient"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar-ws/httpserver"
 )
 
-var infoService = tracer.InfoService{
-	Name:    "Calendar-ws",
-	Version: "1.0.0",
-}
+const serviceName = "Calendar-ws"
+
+var ctx = context.Background()
 
 func main() {
 	configFile := flag.String("config", "/etc/calendar/calendar-ws.yml", "path to configuration file")
@@ -33,11 +34,33 @@ func main() {
 		stdlog.Printf("Init logger: %v", err)
 		return
 	}
-	defer log.Sync()
+	defer func() {
+		if err := log.Sync(); err != nil {
+			log.Errorf("logger sync: %v", err)
+		}
+	}()
 
-	if err := tracer.TraceInit(&conf.Tracer, &infoService); err != nil {
-		log.Errorf("Init jaeger tracer: %v", err)
+	tp, err := tracer.Init(ctx, &conf.Tracer, serviceName)
+	if err != nil {
+		log.Errorf("Init tracer: %v", err)
+		return
 	}
+	defer func() {
+		if err := tp.Shutdown(ctx); err != nil {
+			log.Errorf("Tracer shutdown: %v", err)
+		}
+	}()
+
+	mp, err := metric.Init(ctx, &conf.Metric, serviceName)
+	if err != nil {
+		log.Errorf("Init metric : %v", err)
+		return
+	}
+	defer func() {
+		if err := mp.Shutdown(ctx); err != nil {
+			log.Errorf("Metric shutdown: %v", err)
+		}
+	}()
 
 	clientGRPC, err := grpcclient.New(&conf.GRPC)
 	if err != nil {
