@@ -27,4 +27,6 @@ WORKDIR /
 COPY --from=build ["/app/bin/calendar-ws", "/"]
 COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
 
+EXPOSE 8080
+
 ENTRYPOINT ["/calendar-ws"]

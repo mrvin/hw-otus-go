@@ -20,7 +20,7 @@ RUN go mod download
 
 RUN cd services/calendar/ && make build
 
-EXPOSE 8080
+EXPOSE 8088 55555
 
 CMD ["/start.sh"]
 
