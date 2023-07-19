@@ -57,12 +57,10 @@ services:
         ports:
          - "5432"
         user: root
-        environment:
-         POSTGRES_PASSWORD: event-db
-         POSTGRES_USER: event-db
-         POSTGRES_DB: event-db
+        env_file:
+         - postgres.env
         healthcheck:
-         test: ["CMD-SHELL", "-U", "${POSTGRES_USER}", "pg_isready", "-d", "${POSTGRES_DB}"]
+          test: ["CMD", "pg_isready", "-q", "-d", "${POSTGRES_DB}", "-U", "${POSTGRES_USER}"]
         volumes:
          - ${HOME}/volumes_docker/postgres-data:/var/lib/postgresql/data
 
@@ -73,7 +71,7 @@ services:
          - "15672:15672" # for serve RabbitMQ GUI
          - "5672:5672"
         healthcheck:
-         test: rabbitmq-diagnostics -q ping
+          test: rabbitmq-diagnostics -q ping
 
     # OpenTelemetry Collector
     otel_collector:

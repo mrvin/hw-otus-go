@@ -6,7 +6,7 @@ build:
 	docker-compose -f deployments/docker-compose.yaml build
 
 up:
-	docker-compose -f deployments/docker-compose.yaml up
+	docker-compose -f deployments/docker-compose.yaml --env-file deployments/postgres.env up
 
 down:
 	docker-compose -f deployments/docker-compose.yaml down
