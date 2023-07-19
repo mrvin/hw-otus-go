@@ -1,5 +1,5 @@
 build:
-	go build -o ../../bin/scheduler -ldflags '-w'
+	go build -o ../../bin/scheduler -ldflags '-w -s'
 
 run:
 	go run -race main.go
