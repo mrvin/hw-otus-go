@@ -32,7 +32,7 @@ func main() {
 		return
 	}
 
-	log, err := logger.LogInit(&conf.Logger)
+	log, err := logger.Init(&conf.Logger)
 	if err != nil {
 		stdlog.Printf("Init logger: %v", err)
 		return

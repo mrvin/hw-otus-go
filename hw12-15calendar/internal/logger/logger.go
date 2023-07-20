@@ -12,7 +12,7 @@ type Conf struct {
 	Level    string `yaml:"level"`
 }
 
-func LogInit(conf *Conf) (*zap.SugaredLogger, error) {
+func Init(conf *Conf) (*zap.SugaredLogger, error) {
 	cfg := zap.NewDevelopmentConfig()
 	level, err := zap.ParseAtomicLevel(conf.Level)
 	if err != nil {
