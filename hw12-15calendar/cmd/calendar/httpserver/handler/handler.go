@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/app"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/app"
 	"go.uber.org/zap"
 )
 

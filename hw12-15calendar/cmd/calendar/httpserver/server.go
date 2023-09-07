@@ -8,7 +8,7 @@ import (
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver"
 	pathresolver "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver/path"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/app"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/app"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/httpserver/handler"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.uber.org/zap"
