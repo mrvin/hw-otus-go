@@ -8,8 +8,8 @@ import (
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver"
 	pathresolver "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver/path"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/app"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/httpserver/handler"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/app"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/httpserver/handler"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.uber.org/zap"
 )
@@ -59,6 +59,7 @@ func New(conf *Conf, app *app.App) *Server {
 		Handler:      otelhttp.NewHandler(http.Handler(&server), "HTTP"),
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  1 * time.Minute,
 	}
 
 	return &server

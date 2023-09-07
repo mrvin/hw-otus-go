@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendarapi"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar-ws/httpserver/templateloader"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar-ws/httpserver/templateloader"
 	"go.uber.org/zap"
 )
 

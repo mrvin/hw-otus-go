@@ -8,7 +8,7 @@ RUN apk add --update make
 WORKDIR  /app
 
 # Copy the code into the container.
-COPY services/scheduler services/scheduler
+COPY cmd/scheduler cmd/scheduler
 COPY internal internal
 COPY pkg pkg
 
@@ -16,7 +16,7 @@ COPY pkg pkg
 COPY go.mod go.sum ./
 RUN go mod download
 
-RUN cd services/scheduler/ && make build
+RUN cd cmd/scheduler/ && make build
 
 ## Deploy
 FROM scratch

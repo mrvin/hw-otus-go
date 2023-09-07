@@ -8,7 +8,7 @@ import (
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendarapi"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/app"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/app"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"

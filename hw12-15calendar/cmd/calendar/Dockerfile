@@ -6,7 +6,7 @@ RUN apk add --update make
 
 WORKDIR /calendar/app
 
-COPY services/calendar services/calendar
+COPY cmd/calendar cmd/calendar
 COPY Makefile .
 COPY internal internal
 COPY pkg pkg
@@ -18,7 +18,7 @@ COPY go.sum .
 # Download necessary Go modules
 RUN go mod download
 
-RUN cd services/calendar/ && make build
+RUN cd cmd/calendar/ && make build
 
 EXPOSE 8088 55555
 

@@ -20,9 +20,9 @@ import (
 	memorystorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/memory"
 	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/tracer"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/app"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/grpcserver"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar/httpserver"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/app"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/grpcserver"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/httpserver"
 	"go.uber.org/zap"
 )
 

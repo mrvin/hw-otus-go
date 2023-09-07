@@ -11,8 +11,8 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/logger"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/metric"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/tracer"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar-ws/grpcclient"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar-ws/httpserver"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar-ws/grpcclient"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar-ws/httpserver"
 )
 
 const serviceName = "Calendar-ws"

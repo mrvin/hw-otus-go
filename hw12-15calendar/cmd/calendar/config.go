@@ -3,14 +3,17 @@ package main
 import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/logger"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/metric"
+	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/tracer"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar-ws/grpcclient"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/calendar-ws/httpserver"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/grpcserver"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/httpserver"
 )
 
 type Config struct {
+	InMem  bool            `yaml:"inmemory"`
+	DB     sqlstorage.Conf `yaml:"db"`
 	HTTP   httpserver.Conf `yaml:"http"`
-	GRPC   grpcclient.Conf `yaml:"grpc"`
+	GRPC   grpcserver.Conf `yaml:"grpc"`
 	Logger logger.Conf     `yaml:"logger"`
 	Tracer tracer.Conf     `yaml:"tracer"`
 	Metric metric.Conf     `yaml:"metrics"`

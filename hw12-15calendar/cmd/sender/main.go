@@ -13,7 +13,7 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/logger"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/queue"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/queue/rabbitmq"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/services/sender/email"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/sender/email"
 )
 
 type Config struct {

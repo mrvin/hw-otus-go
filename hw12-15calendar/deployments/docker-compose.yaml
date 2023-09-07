@@ -3,7 +3,7 @@ services:
     calendar-ws:
         build:
          context: ../
-         dockerfile: services/calendar-ws/Dockerfile
+         dockerfile: cmd/calendar-ws/Dockerfile
         ports:
          - "8080:8080"
         depends_on:
@@ -15,7 +15,7 @@ services:
     calendar:
         build:
          context: ../
-         dockerfile: services/calendar/Dockerfile
+         dockerfile: cmd/calendar/Dockerfile
         ports:
          - "8088:8088" # REST API
          - "55555:55555" # gRPC API
@@ -32,7 +32,7 @@ services:
     scheduler:
        build:
         context: ../
-        dockerfile: services/scheduler/Dockerfile
+        dockerfile: cmd/scheduler/Dockerfile
        depends_on:
          postgres:
            condition: service_healthy
@@ -44,7 +44,7 @@ services:
     sender:
        build:
         context: ../
-        dockerfile: services/sender/Dockerfile
+        dockerfile: cmd/sender/Dockerfile
        depends_on:
          rabbitmq:
            condition: service_healthy
