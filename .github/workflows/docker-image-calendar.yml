@@ -3,12 +3,12 @@ name: Docker Image Calendar CI
 on:
   push:
     paths:
-     - 'hw12-15calendar/services/calendar/**'
+     - 'hw12-15calendar/cmd/calendar/**'
      - 'hw12-15calendar/internal/**'
      - '!hw12-15calendar/internal/queue/**'
   pull_request:
      paths:
-     - 'hw12-15calendar/services/calendar/**'
+     - 'hw12-15calendar/cmd/calendar/**'
      - 'hw12-15calendar/internal/**'
      - '!hw12-15calendar/internal/queue/**'
 
@@ -21,4 +21,4 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build hw12-15calendar/ --file hw12-15calendar/services/calendar/Dockerfile --tag calendar:$(date +%s)
+      run: docker build hw12-15calendar/ --file hw12-15calendar/cmd/calendar/Dockerfile --tag calendar:$(date +%s)
