@@ -13,6 +13,9 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/app"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/grpcserver"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/httpserver"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/logger"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/metric"
@@ -20,13 +23,20 @@ import (
 	memorystorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/memory"
 	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/tracer"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/app"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/grpcserver"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/httpserver"
 	"go.uber.org/zap"
 )
 
 const serviceName = "Calendar"
+
+type Config struct {
+	InMem  bool            `yaml:"inmemory"`
+	DB     sqlstorage.Conf `yaml:"db"`
+	HTTP   httpserver.Conf `yaml:"http"`
+	GRPC   grpcserver.Conf `yaml:"grpc"`
+	Logger logger.Conf     `yaml:"logger"`
+	Tracer tracer.Conf     `yaml:"tracer"`
+	Metric metric.Conf     `yaml:"metrics"`
+}
 
 // TODO: ctx
 var ctx = context.Background()

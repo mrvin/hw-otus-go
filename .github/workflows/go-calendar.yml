@@ -6,12 +6,12 @@ name: Go Build/Test Calendar CI
 on:
   push:
     paths:
-     - 'hw12-15calendar/services/calendar/**'
+     - 'hw12-15calendar/cmd/calendar/**'
      - 'hw12-15calendar/internal/**'
      - '!hw12-15calendar/internal/queue/**'
   pull_request:
      paths:
-     - 'hw12-15calendar/services/calendar/**'
+     - 'hw12-15calendar/cmd/calendar/**'
      - 'hw12-15calendar/internal/**'
      - '!hw12-15calendar/internal/queue/**'
 
@@ -44,10 +44,10 @@ jobs:
         go-version: '1.20'
 
     - name: Build
-      run: cd hw12-15calendar/services/calendar && make build
+      run: cd hw12-15calendar/cmd/calendar && make build
 
     - name: Test
       run: |
-        sed -i 's/postgres/localhost/g' hw12-15calendar/services/calendar/httpserver/handler/handler_test.go
+        sed -i 's/postgres/localhost/g' hw12-15calendar/cmd/calendar/httpserver/handler/handler_test.go
         sed -i 's/postgres/localhost/g' hw12-15calendar/internal/storage/sql/storage_test.go
         cd hw12-15calendar/ && make test
