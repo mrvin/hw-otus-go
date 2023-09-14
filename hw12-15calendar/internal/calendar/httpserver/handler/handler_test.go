@@ -14,8 +14,8 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	memorystorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/memory"
 	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/app"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar/httpserver"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/app"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/httpserver"
 )
 
 const urlUsers = "http://localhost:8080/users"

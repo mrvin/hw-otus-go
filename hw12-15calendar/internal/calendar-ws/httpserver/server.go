@@ -9,7 +9,7 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendarapi"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver"
 	regexpresolver "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver/regex"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/cmd/calendar-ws/httpserver/handler"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/httpserver/handler"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.uber.org/zap"
 )
