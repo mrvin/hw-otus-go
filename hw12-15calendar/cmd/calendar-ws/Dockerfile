@@ -1,5 +1,5 @@
 ## Build
-FROM golang:1.20.2-alpine AS build
+FROM golang:1.21.1-alpine AS build
 
 MAINTAINER mrvin <v.v.vinogradovv@gmail.com>
 
