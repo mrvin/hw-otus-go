@@ -1,18 +1,18 @@
 # GRPC server settings
 grpc:
-    host: calendar
+    host: localhost
     port: 55555
 
 # HTTP server setting
 http:
-    host: calendar
+    host: localhost
     port: 8088
     is_https: false # Enable HTTPS
     https:
         cert_file: ../cert/cert.pem
         key_file: ../cert/key.pem
 
-inmemory: false
+inmemory: true
 
 # database settings
 db:
@@ -24,17 +24,17 @@ db:
 
 # logging settings
 logger:
-    filepath:
+    filepath: calendar-log.json
     level: debug # debug, info, warn, error
 
 # tracing settings
 tracer:
-    enable: true
+    enable: false
     host: otel_collector
     port: 4317
 
 # metric settings
 metrics:
-    enable: true
+    enable: false
     host: otel_collector
     port: 4317

@@ -13,8 +13,9 @@ import (
 )
 
 type Conf struct {
-	Host string `yaml:"host"`
-	Port int    `yaml:"port"`
+	Enable bool   `yaml:"enable"`
+	Host   string `yaml:"host"`
+	Port   int    `yaml:"port"`
 }
 
 func Init(ctx context.Context, conf *Conf, serviceName string) (*sdkmetric.MeterProvider, error) {

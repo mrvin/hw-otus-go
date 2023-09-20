@@ -64,31 +64,36 @@ func main() {
 			}
 		}()
 	}
-
-	ctxTracer, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
-	tp, err := tracer.Init(ctxTracer, &conf.Tracer, serviceName)
-	if err != nil {
-		slog.Warn("Failed to init tracer: " + err.Error())
-	} else {
-		slog.Info("Init tracer")
-		defer func() {
-			if err := tp.Shutdown(ctx); err != nil {
-				slog.Error("Failed to shutdown tracer: " + err.Error())
-			}
-		}()
+	if conf.Tracer.Enable {
+		ctxTracer, cancel := context.WithTimeout(ctx, 2*time.Second)
+		defer cancel()
+		tp, err := tracer.Init(ctxTracer, &conf.Tracer, serviceName)
+		if err != nil {
+			slog.Warn("Failed to init tracer: " + err.Error())
+		} else {
+			slog.Info("Init tracer")
+			defer func() {
+				if err := tp.Shutdown(ctx); err != nil {
+					slog.Error("Failed to shutdown tracer: " + err.Error())
+				}
+			}()
+		}
 	}
 
-	mp, err := metric.Init(ctx, &conf.Metric, serviceName)
-	if err != nil {
-		slog.Warn("Failed to init metric: " + err.Error())
-	} else {
-		slog.Info("Init metric")
-		defer func() {
-			if err := mp.Shutdown(ctx); err != nil {
-				slog.Error("Failed to shutdown metric: " + err.Error())
-			}
-		}()
+	if conf.Metric.Enable {
+		ctxMetric, cancel := context.WithTimeout(ctx, 2*time.Second)
+		defer cancel()
+		mp, err := metric.Init(ctxMetric, &conf.Metric, serviceName)
+		if err != nil {
+			slog.Warn("Failed to init metric: " + err.Error())
+		} else {
+			slog.Info("Init metric")
+			defer func() {
+				if err := mp.Shutdown(ctx); err != nil {
+					slog.Error("Failed to shutdown metric: " + err.Error())
+				}
+			}()
+		}
 	}
 
 	var storage storage.Storage
