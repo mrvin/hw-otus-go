@@ -1,10 +1,9 @@
 package path
 
 import (
+	"log/slog"
 	"net/http"
 	"path"
-
-	"go.uber.org/zap"
 )
 
 // PathResolver is not thread safe.
@@ -25,7 +24,7 @@ func (p *PathResolver) Get(pathCheck string) http.HandlerFunc {
 		if ok, err := path.Match(pattern, pathCheck); ok && err == nil {
 			return handlerFunc
 		} else if err != nil {
-			zap.S().Errorf("pathResolver: get: %v", err)
+			slog.Error("pathResolver: get: " + err.Error())
 		}
 	}
 

@@ -3,12 +3,12 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendarapi"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/httpserver/templateloader"
-	"go.uber.org/zap"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendarapi"
 )
 
 var ErrIDEmpty = errors.New("id is empty")
@@ -16,16 +16,14 @@ var ErrIDEmpty = errors.New("id is empty")
 type Handler struct {
 	templates  *templateloader.TemplateLoader
 	grpcclient calendarapi.EventServiceClient
-	log        *zap.SugaredLogger
 }
 
-func New(grpcclient calendarapi.EventServiceClient, log *zap.SugaredLogger) *Handler {
+func New(grpcclient calendarapi.EventServiceClient) *Handler {
 	templates := templateloader.New()
 	templates.Load("templates")
 	return &Handler{
 		templates:  templates,
 		grpcclient: grpcclient,
-		log:        log,
 	}
 }
 
@@ -52,7 +50,7 @@ func getID(req *http.Request) (int, error) {
 func (h *Handler) ErrMsg(res http.ResponseWriter) {
 	text := resp{Title: "Error", Body: struct{ Text string }{"Sorry something went wrong."}}
 	if err := h.templates.Execute("text.html", res, text); err != nil {
-		h.log.Errorf("errMsg: %v", err)
+		slog.Error("Execut error tetemplate: " + err.Error())
 		return
 	}
 }

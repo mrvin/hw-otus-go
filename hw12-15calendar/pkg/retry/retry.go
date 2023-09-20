@@ -3,9 +3,8 @@ package retry
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 type Connector func(ctx context.Context) error
@@ -23,7 +22,7 @@ func Retry(connector Connector, retries int) Connector {
 
 			// Exponential increase in latency.
 			shouldRetryAt := time.Second * 2 << r
-			zap.S().Warnf("Attempt %d failed; retrying in %v", r+1, shouldRetryAt)
+			slog.Warn(fmt.Sprintf("Attempt %d failed; retrying in %v", r+1, shouldRetryAt))
 
 			select {
 			case <-time.After(shouldRetryAt):

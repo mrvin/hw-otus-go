@@ -4,12 +4,12 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/golang-migrate/migrate/v4"
 	// Add Postgres driver for the "github.com/golang-migrate/migrate/v4" package.
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
-	"go.uber.org/zap"
 )
 
 //go:embed migrations/*.sql
@@ -39,7 +39,7 @@ func MigrationsUp(conf *Conf) error {
 	}
 	if err := m.Up(); err != nil {
 		if errors.Is(err, migrate.ErrNoChange) {
-			zap.S().Warnf("Migrations up: %v", err)
+			slog.Warn("Migrations up: " + err.Error())
 		} else {
 			return fmt.Errorf("migrate up: %w", err)
 		}
@@ -62,7 +62,7 @@ func MigrationsDown(conf *Conf) error {
 	}
 	if err := m.Down(); err != nil {
 		if errors.Is(err, migrate.ErrNoChange) {
-			zap.S().Warnf("Migrations down: %v", err)
+			slog.Warn("Migrations down: " + err.Error())
 		} else {
 			return fmt.Errorf("migrate up: %w", err)
 		}

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -16,7 +17,7 @@ import (
 func (h *Handler) DisplayFormEvent(res http.ResponseWriter, req *http.Request) {
 	idUser, err := getID(req)
 	if err != nil {
-		h.log.Errorf("Get id user: %v", err)
+		slog.Error("Get id user: " + err.Error())
 		h.ErrMsg(res)
 		return
 	}
@@ -33,7 +34,7 @@ func (h *Handler) DisplayFormEvent(res http.ResponseWriter, req *http.Request) {
 		}{idUser},
 	}
 	if err := h.templates.Execute("form-event.html", res, data); err != nil {
-		h.log.Errorf("displayFormEvent: %v", err)
+		slog.Error("Execute display form event template: " + err.Error())
 		h.ErrMsg(res)
 		return
 	}
@@ -41,7 +42,7 @@ func (h *Handler) DisplayFormEvent(res http.ResponseWriter, req *http.Request) {
 
 func (h *Handler) CreateEvent(res http.ResponseWriter, req *http.Request) {
 	if err := req.ParseForm(); err != nil {
-		h.log.Errorf("createEvent: %v", err)
+		slog.Error("Parse create event form: " + err.Error())
 		h.ErrMsg(res)
 		return
 	}
@@ -55,13 +56,13 @@ func (h *Handler) CreateEvent(res http.ResponseWriter, req *http.Request) {
 
 	loc, err := time.LoadLocation(timeZone)
 	if err != nil {
-		h.log.Errorf("get location: %v", err)
+		slog.Error("Get location: " + err.Error())
 		h.ErrMsg(res)
 		return
 	}
 	idUser, err := strconv.Atoi(idStr)
 	if err != nil {
-		h.log.Errorf("convert id: %v", err)
+		slog.Error("Convert id: " + err.Error())
 		h.ErrMsg(res)
 		return
 	}
@@ -69,14 +70,14 @@ func (h *Handler) CreateEvent(res http.ResponseWriter, req *http.Request) {
 	tZone := timeNow.Format("Z07:00")
 	startTimeGO, err := time.ParseInLocation(time.RFC3339, startTime+":00"+tZone, loc)
 	if err != nil {
-		h.log.Errorf("сreateEvent: parse startTime: %v", err)
+		slog.Error("Parse start time location: " + err.Error())
 		h.ErrMsg(res)
 		return
 	}
 
 	stopTimeGO, err := time.ParseInLocation(time.RFC3339, stopTime+":00"+tZone, loc)
 	if err != nil {
-		h.log.Errorf("сreateEvent: parse stopTime: %v", err)
+		slog.Error("Parse stop time location: " + err.Error())
 		h.ErrMsg(res)
 		return
 	}
@@ -86,32 +87,32 @@ func (h *Handler) CreateEvent(res http.ResponseWriter, req *http.Request) {
 	event := &calendarapi.Event{Title: title, Description: description, StartTime: starTimePB, StopTime: stopTimePB, UserID: int64(idUser)}
 	_, err = h.grpcclient.CreateEvent(req.Context(), event)
 	if err != nil {
-		h.log.Errorf("сreateEvent: %v", err)
+		slog.Error("gRPC сreate event: " + err.Error())
 		h.ErrMsg(res)
 		return
 	}
 
 	reqListEvents, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/list-events?id=%d&days=%d", idUser, 0), nil)
 	if err != nil {
-		h.log.Errorf("сreateEvent NewRequest: %v", err)
+		slog.Error("Request list events: " + err.Error())
 		h.ErrMsg(res)
 		return
 	}
-	// Fix it path: POST /create-event
+	// FIXIT path: POST /create-event
 	h.DisplayListEventsForUser(res, reqListEvents)
 }
 
 func (h *Handler) DisplayEvent(res http.ResponseWriter, req *http.Request) {
 	idEvent, err := getID(req)
 	if err != nil {
-		h.log.Errorf("Get id event: %v", err)
+		slog.Error("Get id event: " + err.Error())
 		h.ErrMsg(res)
 		return
 	}
 	reqEvent := &calendarapi.EventRequest{Id: int64(idEvent)}
 	event, err := h.grpcclient.GetEvent(req.Context(), reqEvent)
 	if err != nil {
-		h.log.Errorf("displayEvent: %v", err)
+		slog.Error("gRPC get event: " + err.Error())
 		h.ErrMsg(res)
 		return
 	}
@@ -132,7 +133,7 @@ func (h *Handler) DisplayEvent(res http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := h.templates.Execute("event.html", res, dataEvent); err != nil {
-		h.log.Errorf("displayEvent: %v", err)
+		slog.Error("Execute event template: " + err.Error())
 		h.ErrMsg(res)
 		return
 	}
@@ -141,7 +142,7 @@ func (h *Handler) DisplayEvent(res http.ResponseWriter, req *http.Request) {
 func (h *Handler) DisplayListEventsForUser(res http.ResponseWriter, req *http.Request) {
 	idUser, err := getID(req)
 	if err != nil {
-		h.log.Errorf("Get id user: %v", err)
+		slog.Error("Get id user: " + err.Error())
 		h.ErrMsg(res)
 		return
 	}
@@ -150,7 +151,7 @@ func (h *Handler) DisplayListEventsForUser(res http.ResponseWriter, req *http.Re
 	if daysStr != "" {
 		days, err = strconv.Atoi(daysStr)
 		if err != nil {
-			h.log.Errorf("Convert days: %v", err)
+			slog.Error("Convert days: " + err.Error())
 			return
 		}
 	}
@@ -163,7 +164,7 @@ func (h *Handler) DisplayListEventsForUser(res http.ResponseWriter, req *http.Re
 
 	events, err := h.grpcclient.GetEventsForUser(req.Context(), reqUser)
 	if err != nil {
-		h.log.Errorf("displayListEventsForUser: GetEventsForUser: %v", err)
+		slog.Error("gRPC list events for user: " + err.Error())
 		h.ErrMsg(res)
 		return
 	}
@@ -183,7 +184,7 @@ func (h *Handler) DisplayListEventsForUser(res http.ResponseWriter, req *http.Re
 	}
 
 	if err := h.templates.Execute("list-events.html", res, dataEvent); err != nil {
-		h.log.Errorf("displayListEventsForUser: %v", err)
+		slog.Error("Execute display list events template: " + err.Error())
 		h.ErrMsg(res)
 		return
 	}
@@ -192,20 +193,20 @@ func (h *Handler) DisplayListEventsForUser(res http.ResponseWriter, req *http.Re
 func (h *Handler) DeleteEvent(res http.ResponseWriter, req *http.Request) {
 	idEvent, err := getID(req)
 	if err != nil {
-		h.log.Errorf("Get id event: %v", err)
+		slog.Error("Get id event: " + err.Error())
 		h.ErrMsg(res)
 		return
 	}
 	reqEvent := &calendarapi.EventRequest{Id: int64(idEvent)}
 	if _, err := h.grpcclient.DeleteEvent(req.Context(), reqEvent); err != nil {
-		h.log.Errorf("Delete event: %v", err)
+		slog.Error("gRPC delete event: " + err.Error())
 		h.ErrMsg(res)
 		return
 	}
 
 	text := resp{Title: "Delete event", Body: struct{ Text string }{"Event deleted successfully"}}
 	if err := h.templates.Execute("text.html", res, text); err != nil {
-		h.log.Errorf("Delete event: %v", err)
+		slog.Error("Execute delete event template: " + err.Error())
 		h.ErrMsg(res)
 		return
 	}

@@ -3,15 +3,15 @@ package httpserver
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/httpserver/handler"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendarapi"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver"
 	regexpresolver "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver/regex"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/httpserver/handler"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
-	"go.uber.org/zap"
 )
 
 type Conf struct {
@@ -22,14 +22,12 @@ type Conf struct {
 type Server struct {
 	serv http.Server
 	res  resolver.Resolver
-	log  *zap.SugaredLogger
 }
 
 func New(conf *Conf, grpcclient calendarapi.EventServiceClient) *Server {
-	log := zap.S()
 
 	res := regexpresolver.New()
-	h := handler.New(grpcclient, log)
+	h := handler.New(grpcclient)
 	res.Add("GET /list-users", h.DisplayListUsers)
 	res.Add(`GET \/list-events\?id=([0-9]+)\&days=([0-9]+$)`, h.DisplayListEventsForUser)
 
@@ -47,7 +45,6 @@ func New(conf *Conf, grpcclient calendarapi.EventServiceClient) *Server {
 
 	server := Server{
 		res: res,
-		log: log,
 	}
 
 	//nolint:exhaustivestruct,exhaustruct
@@ -62,7 +59,7 @@ func New(conf *Conf, grpcclient calendarapi.EventServiceClient) *Server {
 }
 
 func (s *Server) Start() error {
-	s.log.Infof("Start server: http://%s", s.serv.Addr)
+	slog.Info("Start http server: http://" + s.serv.Addr)
 	if err := s.serv.ListenAndServe(); err != nil {
 		return fmt.Errorf("start http server: %w", err)
 	}
@@ -80,7 +77,7 @@ func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 }
 
 func (s *Server) Stop(ctx context.Context) error {
-	s.log.Info("Stop http server")
+	slog.Info("Stop http server")
 	if err := s.serv.Shutdown(ctx); err != nil {
 		return fmt.Errorf("stop http server: %w", err)
 	}

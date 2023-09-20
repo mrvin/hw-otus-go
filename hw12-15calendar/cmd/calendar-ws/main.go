@@ -5,14 +5,16 @@ import (
 	"errors"
 	"flag"
 	stdlog "log"
+	"log/slog"
 	"net/http"
+	"time"
 
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/grpcclient"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/httpserver"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/logger"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/metric"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/tracer"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/grpcclient"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/httpserver"
 )
 
 type Config struct {
@@ -37,52 +39,63 @@ func main() {
 		return
 	}
 
-	log, err := logger.Init(&conf.Logger)
+	logFile, err := logger.Init(&conf.Logger)
 	if err != nil {
-		stdlog.Printf("Init logger: %v", err)
+		stdlog.Printf("Init logger: %v\n", err)
 		return
+	} else {
+		slog.Info("Init logger")
+		defer func() {
+			if err := logFile.Close(); err != nil {
+				slog.Error("Close log file: " + err.Error())
+			}
+		}()
 	}
-	defer func() {
-		if err := log.Sync(); err != nil {
-			log.Errorf("logger sync: %v", err)
+	if conf.Tracer.Enable {
+		ctxTracer, cancel := context.WithTimeout(ctx, 2*time.Second)
+		defer cancel()
+		tp, err := tracer.Init(ctxTracer, &conf.Tracer, serviceName)
+		if err != nil {
+			slog.Warn("Failed to init tracer: " + err.Error())
+		} else {
+			slog.Info("Init tracer")
+			defer func() {
+				if err := tp.Shutdown(ctx); err != nil {
+					slog.Error("Failed to shutdown tracer: " + err.Error())
+				}
+			}()
 		}
-	}()
+	}
 
-	tp, err := tracer.Init(ctx, &conf.Tracer, serviceName)
-	if err != nil {
-		log.Errorf("Init tracer: %v", err)
-		return
-	}
-	defer func() {
-		if err := tp.Shutdown(ctx); err != nil {
-			log.Errorf("Tracer shutdown: %v", err)
+	if conf.Metric.Enable {
+		ctxMetric, cancel := context.WithTimeout(ctx, 2*time.Second)
+		defer cancel()
+		mp, err := metric.Init(ctxMetric, &conf.Metric, serviceName)
+		if err != nil {
+			slog.Warn("Failed to init metric: " + err.Error())
+		} else {
+			slog.Info("Init metric")
+			defer func() {
+				if err := mp.Shutdown(ctx); err != nil {
+					slog.Error("Failed to shutdown metric: " + err.Error())
+				}
+			}()
 		}
-	}()
-
-	mp, err := metric.Init(ctx, &conf.Metric, serviceName)
-	if err != nil {
-		log.Errorf("Init metric : %v", err)
-		return
 	}
-	defer func() {
-		if err := mp.Shutdown(ctx); err != nil {
-			log.Errorf("Metric shutdown: %v", err)
-		}
-	}()
 
 	clientGRPC, err := grpcclient.New(&conf.GRPC)
 	if err != nil {
-		log.Errorf("gRPC client: %v", err)
+		slog.Error("Failed to init gRPC client: " + err.Error())
 		return
 	}
 	defer clientGRPC.Close()
-	log.Info("Connect gRPC server")
+	slog.Info("Connect to gRPC server")
 
 	serverHTTP := httpserver.New(&conf.HTTP, clientGRPC.Cl)
 
 	if err := serverHTTP.Start(); err != nil {
 		if !errors.Is(err, http.ErrServerClosed) {
-			log.Errorf("HTTP server failed to start: %v", err)
+			slog.Error("Failed to start http server: " + err.Error())
 			return
 		}
 	}
