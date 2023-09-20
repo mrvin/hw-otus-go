@@ -3,16 +3,14 @@ package grpcserver
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
-	"time"
 
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/app"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendarapi"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/app"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/peer"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -27,14 +25,12 @@ type Server struct {
 	ln   net.Listener
 	app  *app.App
 	addr string
-	log  *zap.SugaredLogger
 }
 
 func New(conf *Conf, app *app.App) (*Server, error) {
 	var server Server
 
 	server.app = app
-	server.log = zap.S()
 
 	var err error
 	server.addr = fmt.Sprintf("%s:%d", conf.Host, conf.Port)
@@ -42,8 +38,12 @@ func New(conf *Conf, app *app.App) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("establish tcp connection: %w", err)
 	}
+
 	server.serv = grpc.NewServer(
-		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
+		grpc.ChainUnaryInterceptor(
+			otelgrpc.UnaryServerInterceptor(),
+			LogRequest,
+		),
 	)
 	calendarapi.RegisterEventServiceServer(server.serv, &server)
 
@@ -51,7 +51,7 @@ func New(conf *Conf, app *app.App) (*Server, error) {
 }
 
 func (s *Server) Start() error {
-	s.log.Infof("Start gRPC server: %s", s.addr)
+	slog.Info("Start gRPC server: " + s.addr)
 	if err := s.serv.Serve(s.ln); err != nil {
 		return fmt.Errorf("start grpc server: %w", err)
 	}
@@ -60,17 +60,16 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) Stop() {
-	s.log.Info("Stop gRPC server")
+	slog.Info("Stop gRPC server")
 	s.serv.GracefulStop()
 	s.ln.Close()
 }
 
 func (s *Server) CreateUser(ctx context.Context, userpb *calendarapi.User) (*calendarapi.UserResponse, error) {
-	defer logGRPC(ctx, "create user")()
 	user := storage.User{ID: 0, Name: userpb.GetName(), Email: userpb.GetEmail(), Events: nil}
 	if err := s.app.CreateUser(ctx, &user); err != nil {
 		err := fmt.Errorf("create user: %w", err)
-		s.log.Error(err)
+		slog.Error(err.Error())
 		return nil, err
 	}
 
@@ -78,11 +77,10 @@ func (s *Server) CreateUser(ctx context.Context, userpb *calendarapi.User) (*cal
 }
 
 func (s *Server) GetUser(ctx context.Context, req *calendarapi.UserRequest) (*calendarapi.User, error) {
-	defer logGRPC(ctx, "get user")()
 	user, err := s.app.GetUser(ctx, int(req.GetId()))
 	if err != nil {
 		err := fmt.Errorf("get user: %w", err)
-		s.log.Error(err)
+		slog.Error(err.Error())
 		return nil, err
 	}
 
@@ -90,11 +88,10 @@ func (s *Server) GetUser(ctx context.Context, req *calendarapi.UserRequest) (*ca
 }
 
 func (s *Server) GetAllUsers(ctx context.Context, _ *emptypb.Empty) (*calendarapi.Users, error) {
-	defer logGRPC(ctx, "get all user")()
 	users, err := s.app.GetAllUsers(ctx)
 	if err != nil {
 		err := fmt.Errorf("get all users: %w", err)
-		s.log.Error(err)
+		slog.Error(err.Error())
 		return nil, err
 	}
 
@@ -107,11 +104,10 @@ func (s *Server) GetAllUsers(ctx context.Context, _ *emptypb.Empty) (*calendarap
 }
 
 func (s *Server) UpdateUser(ctx context.Context, userpb *calendarapi.User) (*emptypb.Empty, error) {
-	defer logGRPC(ctx, "update user")()
 	user := storage.User{ID: int(userpb.GetId()), Name: userpb.GetName(), Email: userpb.GetEmail(), Events: nil}
 	if err := s.app.UpdateUser(ctx, &user); err != nil {
 		err := fmt.Errorf("update user: %w", err)
-		s.log.Error(err)
+		slog.Error(err.Error())
 		return nil, err
 	}
 
@@ -119,10 +115,9 @@ func (s *Server) UpdateUser(ctx context.Context, userpb *calendarapi.User) (*emp
 }
 
 func (s *Server) DeleteUser(ctx context.Context, req *calendarapi.UserRequest) (*emptypb.Empty, error) {
-	defer logGRPC(ctx, "delete user")()
 	if err := s.app.DeleteUser(ctx, int(req.GetId())); err != nil {
 		err := fmt.Errorf("delete user: %w", err)
-		s.log.Error(err)
+		slog.Error(err.Error())
 		return nil, err
 	}
 
@@ -130,16 +125,15 @@ func (s *Server) DeleteUser(ctx context.Context, req *calendarapi.UserRequest) (
 }
 
 func (s *Server) CreateEvent(ctx context.Context, pbEvent *calendarapi.Event) (*calendarapi.EventResponse, error) {
-	defer logGRPC(ctx, "create event")()
 	event, err := convertpbEventToEvent(pbEvent)
 	if err != nil {
 		err := fmt.Errorf("create event: %w", err)
-		s.log.Error(err)
+		slog.Error(err.Error())
 		return nil, err
 	}
 	if err := s.app.CreateEvent(ctx, event); err != nil {
 		err := fmt.Errorf("create event: %w", err)
-		s.log.Error(err)
+		slog.Error(err.Error())
 		return nil, err
 	}
 
@@ -147,11 +141,10 @@ func (s *Server) CreateEvent(ctx context.Context, pbEvent *calendarapi.Event) (*
 }
 
 func (s *Server) GetEvent(ctx context.Context, req *calendarapi.EventRequest) (*calendarapi.Event, error) {
-	defer logGRPC(ctx, "get event")()
 	event, err := s.app.GetEvent(ctx, int(req.GetId()))
 	if err != nil {
 		err := fmt.Errorf("get event: %w", err)
-		s.log.Error(err)
+		slog.Error(err.Error())
 		return nil, err
 	}
 
@@ -160,8 +153,6 @@ func (s *Server) GetEvent(ctx context.Context, req *calendarapi.EventRequest) (*
 }
 
 func (s *Server) GetEventsForUser(ctx context.Context, req *calendarapi.GetEventsForUserRequest) (*calendarapi.Events, error) {
-	defer logGRPC(ctx, "get event for user")()
-
 	if err := req.DaysAhead.Date.CheckValid(); err != nil {
 		return nil, fmt.Errorf("incorrect value date: %w", err)
 	}
@@ -170,7 +161,7 @@ func (s *Server) GetEventsForUser(ctx context.Context, req *calendarapi.GetEvent
 	events, err := s.app.GetEventsForUser(ctx, int(req.User.GetId()), date, int(req.DaysAhead.Days))
 	if err != nil {
 		err := fmt.Errorf("get events for user: %w", err)
-		s.log.Error(err)
+		slog.Error(err.Error())
 		return nil, err
 	}
 
@@ -184,17 +175,16 @@ func (s *Server) GetEventsForUser(ctx context.Context, req *calendarapi.GetEvent
 }
 
 func (s *Server) UpdateEvent(ctx context.Context, pbEvent *calendarapi.Event) (*emptypb.Empty, error) {
-	defer logGRPC(ctx, "update event")()
 	event, err := convertpbEventToEvent(pbEvent)
 	if err != nil {
 		err := fmt.Errorf("update event: %w", err)
-		s.log.Error(err)
+		slog.Error(err.Error())
 		return nil, err
 	}
 
 	if err := s.app.UpdateEvent(ctx, event); err != nil {
 		err := fmt.Errorf("update event: %w", err)
-		s.log.Error(err)
+		slog.Error(err.Error())
 		return nil, err
 	}
 
@@ -202,10 +192,9 @@ func (s *Server) UpdateEvent(ctx context.Context, pbEvent *calendarapi.Event) (*
 }
 
 func (s *Server) DeleteEvent(ctx context.Context, req *calendarapi.EventRequest) (*emptypb.Empty, error) {
-	defer logGRPC(ctx, "delete event")()
 	if err := s.app.DeleteEvent(ctx, int(req.GetId())); err != nil {
 		err := fmt.Errorf("delete event: %w", err)
-		s.log.Error(err)
+		slog.Error(err.Error())
 		return nil, err
 	}
 
@@ -229,6 +218,7 @@ func convertpbEventToEvent(pbEvent *calendarapi.Event) (*storage.Event, error) {
 	return &event, nil
 }
 
+/*
 func logGRPC(ctx context.Context, operation string) func() {
 	start := time.Now()
 	log := zap.S()
@@ -245,4 +235,12 @@ func logGRPC(ctx context.Context, operation string) func() {
 			"proto", "gRPC",
 			"duration", time.Since(start))
 	}
+}*/
+
+// LogRequest is a gRPC UnaryServerInterceptor that will log the API call to stdOut
+func LogRequest(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (response interface{}, err error) {
+	// TODO
+	fmt.Printf("Request for : %s\n", info.FullMethod)
+	// Last but super important, execute the handler so that the actualy gRPC request is also performed
+	return handler(ctx, req)
 }

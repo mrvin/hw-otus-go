@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
@@ -14,19 +15,19 @@ import (
 func (h *Handler) CreateUser(res http.ResponseWriter, req *http.Request) {
 	user, err := unmarshalUser(req)
 	if err != nil {
-		h.log.Errorf("Get user from request body: %v", err)
+		slog.Error("Get user from request body: " + err.Error())
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
 	if user.Name == "" || user.Email == "" {
 		errMsg := "Empty fields user: name, email"
-		h.log.Error(errMsg)
+		slog.Error(errMsg)
 		http.Error(res, errMsg, http.StatusBadRequest)
 		return
 	}
 
 	if err := h.app.CreateUser(req.Context(), user); err != nil {
-		h.log.Errorf("Saving user to storage: %v", err)
+		slog.Error("Saving user to storage: " + err.Error())
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -38,7 +39,7 @@ func (h *Handler) CreateUser(res http.ResponseWriter, req *http.Request) {
 func (h *Handler) GetUser(res http.ResponseWriter, req *http.Request) {
 	id, err := getID(req)
 	if err != nil {
-		h.log.Errorf("Get user id from request body: %v", err)
+		slog.Error("Get user id from request body: " + err.Error())
 		if errors.Is(err, ErrIDEmpty) {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 		} else {
@@ -49,7 +50,7 @@ func (h *Handler) GetUser(res http.ResponseWriter, req *http.Request) {
 
 	user, err := h.app.GetUser(req.Context(), id)
 	if err != nil {
-		h.log.Errorf("Get user from storage: %v", err)
+		slog.Error("Get user from storage: " + err.Error())
 		if errors.Is(err, storage.ErrNoUser) {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 		} else {
@@ -60,14 +61,14 @@ func (h *Handler) GetUser(res http.ResponseWriter, req *http.Request) {
 
 	jsonUser, err := json.Marshal(user)
 	if err != nil {
-		h.log.Errorf("Marshaling user to json: %v", err)
+		slog.Error("Marshaling user to json: " + err.Error())
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	res.Header().Set("Content-Type", "application/json")
 	if _, err := res.Write(jsonUser); err != nil {
-		h.log.Errorf("Write user to response: %v", err)
+		slog.Error("Write user to response: " + err.Error())
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -77,19 +78,19 @@ func (h *Handler) UpdateUser(res http.ResponseWriter, req *http.Request) {
 	// Update only required fields
 	user, err := unmarshalUser(req)
 	if err != nil {
-		h.log.Errorf("Get user from request body: %v", err)
+		slog.Error("Get user from request body: " + err.Error())
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
 	if user.ID == 0 {
 		errMsg := "User id not set"
-		h.log.Error(errMsg)
+		slog.Error(errMsg)
 		http.Error(res, errMsg, http.StatusBadRequest)
 		return
 	}
 
 	if err := h.app.UpdateUser(req.Context(), user); err != nil {
-		h.log.Errorf("Update user in storage: %v", err)
+		slog.Error("Update user in storage: ", err.Error())
 		if errors.Is(err, storage.ErrNoUser) {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 		} else {
@@ -102,7 +103,7 @@ func (h *Handler) UpdateUser(res http.ResponseWriter, req *http.Request) {
 func (h *Handler) DeleteUser(res http.ResponseWriter, req *http.Request) {
 	id, err := getID(req)
 	if err != nil {
-		h.log.Errorf("Get user id from request body: %v", err)
+		slog.Error("Get user id from request body: " + err.Error())
 		if errors.Is(err, ErrIDEmpty) {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 		} else {
@@ -112,7 +113,7 @@ func (h *Handler) DeleteUser(res http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := h.app.DeleteUser(req.Context(), id); err != nil {
-		h.log.Errorf("Delete user in storage: %v", err)
+		slog.Error("Delete user in storage: ", err.Error())
 		if errors.Is(err, storage.ErrNoUser) {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 		} else {

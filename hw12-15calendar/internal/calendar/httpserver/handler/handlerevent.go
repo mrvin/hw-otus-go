@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
@@ -14,19 +15,19 @@ import (
 func (h *Handler) CreateEvent(res http.ResponseWriter, req *http.Request) {
 	event, err := unmarshalEvent(req)
 	if err != nil {
-		h.log.Errorf("Get event from request body: %v", err)
+		slog.Error("Get event from request body: " + err.Error())
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
 	if event.Title == "" || event.StartTime.IsZero() || event.UserID == 0 {
 		errMsg := "Empty fields event: title, start time, user id"
-		h.log.Error(errMsg)
+		slog.Error(errMsg)
 		http.Error(res, errMsg, http.StatusBadRequest)
 		return
 	}
 
 	if err := h.app.CreateEvent(req.Context(), event); err != nil {
-		h.log.Errorf("Saving event to storage: %v", err)
+		slog.Error("Saving event to storage: " + err.Error())
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -38,7 +39,7 @@ func (h *Handler) CreateEvent(res http.ResponseWriter, req *http.Request) {
 func (h *Handler) GetEvent(res http.ResponseWriter, req *http.Request) {
 	id, err := getID(req)
 	if err != nil {
-		h.log.Errorf("Get event id from request body: %v", err)
+		slog.Error("Get event id from request body: " + err.Error())
 		if errors.Is(err, ErrIDEmpty) {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 		} else {
@@ -49,7 +50,7 @@ func (h *Handler) GetEvent(res http.ResponseWriter, req *http.Request) {
 
 	event, err := h.app.GetEvent(req.Context(), id)
 	if err != nil {
-		h.log.Errorf("Get event from storage: %v", err)
+		slog.Error("Get event from storage: " + err.Error())
 		if errors.Is(err, storage.ErrNoEvent) {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 		} else {
@@ -60,14 +61,14 @@ func (h *Handler) GetEvent(res http.ResponseWriter, req *http.Request) {
 
 	jsonEvent, err := json.Marshal(event)
 	if err != nil {
-		h.log.Errorf("Marshaling event to json: %v", err)
+		slog.Error("Marshaling event to json: " + err.Error())
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	res.Header().Set("Content-Type", "application/json")
 	if _, err := res.Write(jsonEvent); err != nil {
-		h.log.Errorf("Write event to response: %v", err)
+		slog.Error("Write event to response: " + err.Error())
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -77,19 +78,19 @@ func (h *Handler) UpdateEvent(res http.ResponseWriter, req *http.Request) {
 	// Update only required fields
 	event, err := unmarshalEvent(req)
 	if err != nil {
-		h.log.Errorf("Get event from request body: %v", err)
+		slog.Error("Get event from request body: " + err.Error())
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
 	if event.ID == 0 {
 		errMsg := "Event id not set"
-		h.log.Error(errMsg)
+		slog.Error(errMsg)
 		http.Error(res, errMsg, http.StatusBadRequest)
 		return
 	}
 
 	if err := h.app.UpdateEvent(req.Context(), event); err != nil {
-		h.log.Errorf("Update event in storage: %v", err)
+		slog.Error("Update event in storage: " + err.Error())
 		if errors.Is(err, storage.ErrNoEvent) {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 		} else {
@@ -102,7 +103,7 @@ func (h *Handler) UpdateEvent(res http.ResponseWriter, req *http.Request) {
 func (h *Handler) DeleteEvent(res http.ResponseWriter, req *http.Request) {
 	id, err := getID(req)
 	if err != nil {
-		h.log.Errorf("Get event id from request body: %v", err)
+		slog.Error("Get event id from request body: " + err.Error())
 		if errors.Is(err, ErrIDEmpty) {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 		} else {
@@ -112,7 +113,7 @@ func (h *Handler) DeleteEvent(res http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := h.app.DeleteEvent(req.Context(), id); err != nil {
-		h.log.Errorf("Delete event in storage: %v", err)
+		slog.Error("Delete event in storage: " + err.Error())
 		if errors.Is(err, storage.ErrNoEvent) {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 		} else {

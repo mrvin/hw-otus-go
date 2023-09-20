@@ -7,11 +7,13 @@ import (
 	"errors"
 	"flag"
 	stdlog "log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/app"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/grpcserver"
@@ -23,7 +25,6 @@ import (
 	memorystorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/memory"
 	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/tracer"
-	"go.uber.org/zap"
 )
 
 const serviceName = "Calendar"
@@ -51,59 +52,65 @@ func main() {
 		return
 	}
 
-	log, err := logger.Init(&conf.Logger)
+	logFile, err := logger.Init(&conf.Logger)
 	if err != nil {
-		stdlog.Printf("Init logger: %v", err)
+		stdlog.Printf("Init logger: %v\n", err)
 		return
+	} else {
+		slog.Info("Init logger")
+		defer func() {
+			if err := logFile.Close(); err != nil {
+				slog.Error("Close log file: " + err.Error())
+			}
+		}()
 	}
-	defer func() {
-		if err := log.Sync(); err != nil {
-			log.Errorf("logger sync: %v", err)
-		}
-	}()
 
-	tp, err := tracer.Init(ctx, &conf.Tracer, serviceName)
+	ctxTracer, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	tp, err := tracer.Init(ctxTracer, &conf.Tracer, serviceName)
 	if err != nil {
-		log.Errorf("Init tracer: %v", err)
-		return
+		slog.Warn("Failed to init tracer: " + err.Error())
+	} else {
+		slog.Info("Init tracer")
+		defer func() {
+			if err := tp.Shutdown(ctx); err != nil {
+				slog.Error("Failed to shutdown tracer: " + err.Error())
+			}
+		}()
 	}
-	defer func() {
-		if err := tp.Shutdown(ctx); err != nil {
-			log.Errorf("Tracer shutdown: %v", err)
-		}
-	}()
 
 	mp, err := metric.Init(ctx, &conf.Metric, serviceName)
 	if err != nil {
-		log.Errorf("Init metric : %v", err)
-		return
+		slog.Warn("Failed to init metric: " + err.Error())
+	} else {
+		slog.Info("Init metric")
+		defer func() {
+			if err := mp.Shutdown(ctx); err != nil {
+				slog.Error("Failed to shutdown metric: " + err.Error())
+			}
+		}()
 	}
-	defer func() {
-		if err := mp.Shutdown(ctx); err != nil {
-			log.Errorf("Metric shutdown: %v", err)
-		}
-	}()
 
 	var storage storage.Storage
 	if conf.InMem {
-		log.Info("Storage in memory")
+		slog.Info("Storage in memory")
 		storage = memorystorage.New()
 	} else {
 		var err error
-		log.Info("Storage in sql database")
+		slog.Info("Storage in sql database")
 		storage, err = sqlstorage.New(ctx, &conf.DB)
 		if err != nil {
-			log.Errorf("SQL database: %v", err)
+			slog.Error("Failed to init storag: " + err.Error())
 			return
 		}
-		log.Info("Connected to database")
+		slog.Info("Connected to database")
 	}
 
 	app := app.New(storage)
 	serverHTTP := httpserver.New(&conf.HTTP, app)
 	serverGRPC, err := grpcserver.New(&conf.GRPC, app)
 	if err != nil {
-		log.Errorf("New gRPC server: %v", err)
+		slog.Error("Failed to init gRPC server: " + err.Error())
 		return
 	}
 
@@ -123,7 +130,7 @@ func main() {
 			err = serverHTTP.Start()
 		}
 		if !errors.Is(err, http.ErrServerClosed) {
-			log.Errorf("HTTP server failed to start: %v", err)
+			slog.Error("Failed to start http server: " + err.Error())
 			return
 		}
 	}()
@@ -131,7 +138,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 		if err := serverGRPC.Start(); err != nil {
-			log.Errorf("gRPC server failed to start: %v", err)
+			slog.Error("Failed to start gRPC server: " + err.Error())
 			return
 		}
 	}()
@@ -140,13 +147,13 @@ func main() {
 
 	if storageSQL, ok := storage.(*sqlstorage.Storage); ok {
 		if err := storageSQL.Close(); err != nil {
-			log.Errorf("Closing the database connection: %v", err)
+			slog.Error("Failed to close storage: " + err.Error())
 		} else {
-			log.Info("Closing the database connection")
+			slog.Info("Closing the database connection")
 		}
 	}
 
-	log.Info("Stop service calendar")
+	slog.Info("Stop service calendar")
 }
 
 func listenForShutdown(signals chan os.Signal, serverHTTP *httpserver.Server, serverGRPC *grpcserver.Server) {
@@ -154,7 +161,7 @@ func listenForShutdown(signals chan os.Signal, serverHTTP *httpserver.Server, se
 	signal.Stop(signals)
 
 	if err := serverHTTP.Stop(ctx); err != nil {
-		zap.S().Errorf("HTTP server failed to stop: %v", err)
+		slog.Error("Failed to stop http server: " + err.Error())
 		return
 	}
 

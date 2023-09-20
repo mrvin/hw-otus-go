@@ -7,20 +7,17 @@ import (
 	"strconv"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/app"
-	"go.uber.org/zap"
 )
 
 var ErrIDEmpty = errors.New("id is empty")
 
 type Handler struct {
 	app *app.App
-	log *zap.SugaredLogger
 }
 
-func New(a *app.App, log *zap.SugaredLogger) *Handler {
+func New(a *app.App) *Handler {
 	return &Handler{
 		app: a,
-		log: log,
 	}
 }
 

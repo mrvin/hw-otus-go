@@ -3,15 +3,15 @@ package httpserver
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver"
-	pathresolver "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver/path"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/app"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/httpserver/handler"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver"
+	pathresolver "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver/path"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
-	"go.uber.org/zap"
 )
 
 //nolint:tagliatelle
@@ -31,17 +31,14 @@ type Conf struct {
 type Server struct {
 	serv http.Server
 	res  resolver.Resolver
-	log  *zap.SugaredLogger
 }
 
 func New(conf *Conf, app *app.App) *Server {
 	var server Server
 
-	log := zap.S()
-	server.log = log
 	server.res = pathresolver.New()
 
-	h := handler.New(app, log)
+	h := handler.New(app)
 
 	server.res.Add("POST /users", h.CreateUser)
 	server.res.Add("GET /users", h.GetUser)
@@ -66,7 +63,7 @@ func New(conf *Conf, app *app.App) *Server {
 }
 
 func (s *Server) Start() error {
-	s.log.Infof("Start server: http://%s", s.serv.Addr)
+	slog.Info("Start http server: http://" + s.serv.Addr)
 	if err := s.serv.ListenAndServe(); err != nil {
 		return fmt.Errorf("start http server: %w", err)
 	}
@@ -74,7 +71,7 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) StartTLS(conf *ConfHTTPS) error {
-	s.log.Infof("Start server: https://%s", s.serv.Addr)
+	slog.Info("Start http server: https://" + s.serv.Addr)
 	if err := s.serv.ListenAndServeTLS(conf.CertFile, conf.KeyFile); err != nil {
 		return fmt.Errorf("start http server: %w", err)
 	}
@@ -92,7 +89,7 @@ func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 }
 
 func (s *Server) Stop(ctx context.Context) error {
-	s.log.Info("Stop http server")
+	slog.Info("Stop http server")
 	if err := s.serv.Shutdown(ctx); err != nil {
 		return fmt.Errorf("stop http server: %w", err)
 	}
