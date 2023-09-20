@@ -105,7 +105,7 @@ func main() {
 		slog.Info("Storage in sql database")
 		storage, err = sqlstorage.New(ctx, &conf.DB)
 		if err != nil {
-			slog.Error("Failed to init storag: " + err.Error())
+			slog.Error("Failed to init storage: " + err.Error())
 			return
 		}
 		slog.Info("Connected to database")

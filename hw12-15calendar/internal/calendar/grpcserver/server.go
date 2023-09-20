@@ -11,6 +11,7 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -42,7 +43,7 @@ func New(conf *Conf, app *app.App) (*Server, error) {
 	server.serv = grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			otelgrpc.UnaryServerInterceptor(),
-			LogRequest,
+			LogRequestGRPC,
 		),
 	)
 	calendarapi.RegisterEventServiceServer(server.serv, &server)
@@ -218,29 +219,19 @@ func convertpbEventToEvent(pbEvent *calendarapi.Event) (*storage.Event, error) {
 	return &event, nil
 }
 
-/*
-func logGRPC(ctx context.Context, operation string) func() {
-	start := time.Now()
-	log := zap.S()
-	ip := ""
-	peer, ok := peer.FromContext(ctx)
-	if !ok {
-		log.Warn("cant get perr")
-	} else {
-		ip = peer.Addr.String()
-	}
-	return func() {
-		log.Infow("", "ip", ip,
-			"operation", operation,
-			"proto", "gRPC",
-			"duration", time.Since(start))
-	}
-}*/
-
 // LogRequest is a gRPC UnaryServerInterceptor that will log the API call to stdOut
-func LogRequest(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (response interface{}, err error) {
-	// TODO
-	fmt.Printf("Request for : %s\n", info.FullMethod)
+func LogRequestGRPC(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (response interface{}, err error) {
+	var ip string
+	p, ok := peer.FromContext(ctx)
+	if !ok {
+		slog.Warn("Cant get perr")
+	} else {
+		ip = p.Addr.String()
+	}
+	slog.Info("gRPC",
+		slog.String("ip", ip),
+		slog.String("Method", info.FullMethod),
+	)
 	// Last but super important, execute the handler so that the actualy gRPC request is also performed
 	return handler(ctx, req)
 }

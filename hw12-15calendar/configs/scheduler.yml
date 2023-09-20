@@ -16,7 +16,7 @@ db:
 
 # logging settings
 logger:
-    filepath: log.json
+    filepath:
     level: debug # debug, info, warn, error
 
 # database scan period in minutes

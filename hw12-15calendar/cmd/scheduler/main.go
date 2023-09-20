@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	stdlog "log"
+	"log/slog"
 	"os/signal"
 	"syscall"
 	"time"
@@ -32,33 +33,39 @@ func main() {
 		return
 	}
 
-	log, err := logger.Init(&conf.Logger)
+	logFile, err := logger.Init(&conf.Logger)
 	if err != nil {
-		stdlog.Printf("Init logger: %v", err)
+		stdlog.Printf("Init logger: %v\n", err)
 		return
+	} else {
+		slog.Info("Init logger")
+		defer func() {
+			if err := logFile.Close(); err != nil {
+				slog.Error("Close log file: " + err.Error())
+			}
+		}()
 	}
-	defer log.Sync()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	st, err := sqlstorage.New(ctx, &conf.DB)
 	if err != nil {
-		log.Errorf("New database connection: %v", err)
+		slog.Error("Failed to init storag: " + err.Error())
 		return
 	}
 	defer st.Close()
-	log.Info("Connected to database")
+	slog.Info("Connected to database")
 
 	var qm rabbitmq.Queue
 
 	url := rabbitmq.QueryBuildAMQP(&conf.Queue)
 
 	if err := qm.ConnectAndCreate(url, conf.Queue.Name); err != nil {
-		log.Errorf("New queue connection: %v", err)
+		slog.Error("Failed to init queue: " + err.Error())
 		return
 	}
 	defer qm.Close()
-	log.Info("Connected to queue")
+	slog.Info("Connected to queue")
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT /*(Control-C)*/, syscall.SIGTERM, syscall.SIGQUIT)
 	defer stop()
@@ -70,9 +77,9 @@ func main() {
 		defer cancel()
 		events, err := st.GetAllEvents(ctxGetAllEvents)
 		if err != nil {
-			log.Errorf("List event: %v", err)
+			slog.Error("List event: " + err.Error())
 		}
-		log.Info("Start send event...")
+		slog.Info("Start send event")
 		for _, event := range events {
 			if cancelled(ctx) {
 				break
@@ -81,7 +88,7 @@ func main() {
 			if event.StartTime.After(nowTime) && event.StartTime.Before(nowTime.Add(schedPeriod)) {
 				user, err := st.GetUser(ctx, event.UserID)
 				if err != nil {
-					log.Error(err)
+					slog.Error(err.Error())
 					continue
 				}
 				alertEvent := queue.AlertEvent{EventID: event.ID, Title: event.Title, Description: event.Description,
@@ -89,24 +96,24 @@ func main() {
 
 				byteAlertEvent, err := queue.EncodeAlertEvent(&alertEvent)
 				if err != nil {
-					log.Error(err)
+					slog.Error(err.Error())
 					continue
 				}
 
 				ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 				defer cancel()
 				if err := qm.SendMsg(ctx, byteAlertEvent); err != nil {
-					log.Error(err)
+					slog.Error(err.Error())
 					continue
 				}
-				log.Infof("Put alert message in queue with id: %d\n", event.ID)
+				slog.Info("Put alert message in queue", slog.Int("Event id", event.ID))
 			}
 		}
 		select {
 		case <-ticker:
 		// do nothing.
 		case <-ctx.Done():
-			log.Info("Stop scheduler")
+			slog.Info("Stop scheduler")
 			return
 		}
 	}
