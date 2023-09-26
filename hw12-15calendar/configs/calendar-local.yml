@@ -24,7 +24,7 @@ db:
 
 # logging settings
 logger:
-    filepath: calendar-log.json
+    filepath: logs/calendar-log.json
     level: debug # debug, info, warn, error
 
 # tracing settings

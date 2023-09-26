@@ -100,6 +100,7 @@ func (h *Handler) CreateEvent(res http.ResponseWriter, req *http.Request) {
 	}
 	// FIXIT path: POST /create-event
 	h.DisplayListEventsForUser(res, reqListEvents)
+	//http.Redirect(res, reqListEvents, reqListEvents.URL.RequestURI(), http.StatusTemporaryRedirect)
 }
 
 func (h *Handler) DisplayEvent(res http.ResponseWriter, req *http.Request) {

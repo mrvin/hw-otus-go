@@ -221,15 +221,15 @@ func convertpbEventToEvent(pbEvent *calendarapi.Event) (*storage.Event, error) {
 
 // LogRequest is a gRPC UnaryServerInterceptor that will log the API call to stdOut
 func LogRequestGRPC(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (response interface{}, err error) {
-	var ip string
+	var addr string
 	p, ok := peer.FromContext(ctx)
 	if !ok {
 		slog.Warn("Cant get perr")
 	} else {
-		ip = p.Addr.String()
+		addr = p.Addr.String()
 	}
-	slog.Info("gRPC",
-		slog.String("ip", ip),
+	slog.Info("Request gRPC",
+		slog.String("addr", addr),
 		slog.String("Method", info.FullMethod),
 	)
 	// Last but super important, execute the handler so that the actualy gRPC request is also performed

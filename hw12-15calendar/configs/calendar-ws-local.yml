@@ -10,7 +10,7 @@ http:
 
 # logging settings
 logger:
-    filepath: calendar-ws-log.json
+    filepath: logs/calendar-ws-log.json
     level: debug # debug, info, warn, error
 
 # tracing settings
