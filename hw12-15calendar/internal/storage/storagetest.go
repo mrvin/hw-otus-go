@@ -59,7 +59,7 @@ func TestUserCRUD(ctx context.Context, t *testing.T, st Storage) {
 		}
 	}
 
-	_, err := st.GetAllUsers(ctx)
+	_, err := st.ListUsers(ctx)
 	if err != nil {
 		t.Errorf("GetAllUsers: %v", err)
 	}
@@ -151,7 +151,7 @@ func TestEventCRUD(ctx context.Context, t *testing.T, st Storage) { //nolint:fun
 	}
 	cmpEvent(t, event, &events[0])
 
-	_, err = st.GetAllEvents(ctx)
+	_, err = st.ListEvents(ctx)
 	if err != nil {
 		t.Errorf("GetAllEvents: %v", err)
 	}

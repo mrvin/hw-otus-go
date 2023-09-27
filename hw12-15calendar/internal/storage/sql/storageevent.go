@@ -30,10 +30,10 @@ func (s *Storage) GetEvent(ctx context.Context, id int) (*storage.Event, error) 
 	return &event, nil
 }
 
-func (s *Storage) GetAllEvents(ctx context.Context) ([]storage.Event, error) {
+func (s *Storage) ListEvents(ctx context.Context) ([]storage.Event, error) {
 	events := make([]storage.Event, 0)
 
-	rows, err := s.getAllEvents.QueryContext(ctx)
+	rows, err := s.listEvents.QueryContext(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return events, nil
@@ -92,10 +92,10 @@ func (s *Storage) DeleteEvent(ctx context.Context, id int) error {
 	return nil
 }
 
-func (s *Storage) GetEventsForUser(ctx context.Context, userID int) ([]storage.Event, error) {
+func (s *Storage) ListEventsForUser(ctx context.Context, userID int) ([]storage.Event, error) {
 	events := make([]storage.Event, 0)
 
-	rows, err := s.getEventsForUser.QueryContext(ctx, userID)
+	rows, err := s.listEventsForUser.QueryContext(ctx, userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return events, nil

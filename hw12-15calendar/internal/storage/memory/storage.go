@@ -46,12 +46,12 @@ func (s *Storage) GetUser(_ context.Context, id int) (*storage.User, error) {
 		return nil, fmt.Errorf("%w: %d", storage.ErrNoUser, id)
 	}
 	//nolint:contextcheck
-	user.Events, _ = s.GetEventsForUser(context.TODO(), user.ID)
+	user.Events, _ = s.ListEventsForUser(context.TODO(), user.ID)
 
 	return &user, nil
 }
 
-func (s *Storage) GetAllUsers(_ context.Context) ([]storage.User, error) {
+func (s *Storage) ListUsers(_ context.Context) ([]storage.User, error) {
 	users := make([]storage.User, 0)
 
 	s.muUsers.RLock()
@@ -125,7 +125,7 @@ func (s *Storage) GetEvent(_ context.Context, id int) (*storage.Event, error) {
 	return &user, nil
 }
 
-func (s *Storage) GetAllEvents(_ context.Context) ([]storage.Event, error) {
+func (s *Storage) ListEvents(_ context.Context) ([]storage.Event, error) {
 	events := make([]storage.Event, 0)
 
 	s.muEvents.RLock()
@@ -161,7 +161,7 @@ func (s *Storage) DeleteEvent(_ context.Context, id int) error {
 	return nil
 }
 
-func (s *Storage) GetEventsForUser(_ context.Context, id int) ([]storage.Event, error) {
+func (s *Storage) ListEventsForUser(_ context.Context, id int) ([]storage.Event, error) {
 	events := make([]storage.Event, 0)
 
 	s.muEvents.RLock()

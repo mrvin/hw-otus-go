@@ -26,14 +26,16 @@ type Storage struct {
 
 	conf *Conf
 
-	insertEvent      *sql.Stmt
-	getEvent         *sql.Stmt
-	getAllEvents     *sql.Stmt
-	getEventsForUser *sql.Stmt
+	insertEvent *sql.Stmt
+	getEvent    *sql.Stmt
 
-	insertUser  *sql.Stmt
-	getUser     *sql.Stmt
-	getAllUsers *sql.Stmt
+	listEvents        *sql.Stmt
+	listEventsForUser *sql.Stmt
+
+	insertUser *sql.Stmt
+	getUser    *sql.Stmt
+
+	listUsers *sql.Stmt
 }
 
 func New(ctx context.Context, conf *Conf) (*Storage, error) {
@@ -102,12 +104,12 @@ func (s *Storage) prepareQuery(ctx context.Context) error {
 		return fmt.Errorf(fmtStrErr, "getEvent", err)
 	}
 	sqlGetAllEvent := "SELECT * FROM events"
-	s.getAllEvents, err = s.db.PrepareContext(ctx, sqlGetAllEvent)
+	s.listEvents, err = s.db.PrepareContext(ctx, sqlGetAllEvent)
 	if err != nil {
 		return fmt.Errorf(fmtStrErr, "getAllEvents", err)
 	}
 	sqlGetEventsForUser := "select id, title, description, start_time, stop_time, user_id from events where user_id = $1"
-	s.getEventsForUser, err = s.db.PrepareContext(ctx, sqlGetEventsForUser)
+	s.listEventsForUser, err = s.db.PrepareContext(ctx, sqlGetEventsForUser)
 	if err != nil {
 		return fmt.Errorf(fmtStrErr, "getEventsForUser", err)
 	}
@@ -124,7 +126,7 @@ func (s *Storage) prepareQuery(ctx context.Context) error {
 		return fmt.Errorf(fmtStrErr, "getUser", err)
 	}
 	sqlGetAllUsers := "SELECT * FROM users"
-	s.getAllUsers, err = s.db.PrepareContext(ctx, sqlGetAllUsers)
+	s.listUsers, err = s.db.PrepareContext(ctx, sqlGetAllUsers)
 	if err != nil {
 		return fmt.Errorf(fmtStrErr, "getAllUsers", err)
 	}
@@ -135,12 +137,12 @@ func (s *Storage) prepareQuery(ctx context.Context) error {
 func (s *Storage) Close() error {
 	s.insertEvent.Close()
 	s.getEvent.Close()
-	s.getAllEvents.Close()
-	s.getEventsForUser.Close()
+	s.listEvents.Close()
+	s.listEventsForUser.Close()
 
 	s.insertUser.Close()
 	s.getUser.Close()
-	s.getAllUsers.Close()
+	s.listUsers.Close()
 
 	return s.db.Close() //nolint:wrapcheck
 }

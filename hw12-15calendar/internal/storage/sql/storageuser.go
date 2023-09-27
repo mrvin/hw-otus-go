@@ -29,7 +29,7 @@ func (s *Storage) GetUser(ctx context.Context, id int) (*storage.User, error) {
 
 	// TRANSACTION SQL
 	var err error
-	user.Events, err = s.GetEventsForUser(ctx, user.ID)
+	user.Events, err = s.ListEventsForUser(ctx, user.ID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return &user, nil
@@ -40,10 +40,10 @@ func (s *Storage) GetUser(ctx context.Context, id int) (*storage.User, error) {
 	return &user, nil
 }
 
-func (s *Storage) GetAllUsers(ctx context.Context) ([]storage.User, error) {
+func (s *Storage) ListUsers(ctx context.Context) ([]storage.User, error) {
 	users := make([]storage.User, 0)
 
-	rows, err := s.getAllUsers.QueryContext(ctx)
+	rows, err := s.listUsers.QueryContext(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return users, nil

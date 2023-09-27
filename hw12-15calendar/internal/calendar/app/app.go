@@ -21,6 +21,8 @@ func New(storage storage.Storage) *App {
 	return &App{storage, otel.GetTracerProvider().Tracer("Storage")}
 }
 
+// CRUD Event
+
 func (a *App) CreateEvent(ctx context.Context, event *storage.Event) error {
 	if event.StopTime.Before(event.StartTime) {
 		return ErrStopTimeBeforeStartTime
@@ -39,18 +41,32 @@ func (a *App) GetEvent(ctx context.Context, id int) (*storage.Event, error) {
 	return a.storage.GetEvent(cctx, id)
 }
 
+func (a *App) UpdateEvent(ctx context.Context, event *storage.Event) error {
+	cctx, sp := a.tr.Start(ctx, "UpdateEvent")
+	defer sp.End()
+
+	return a.storage.UpdateEvent(cctx, event)
+}
+
+func (a *App) DeleteEvent(ctx context.Context, id int) error {
+	cctx, sp := a.tr.Start(ctx, "DeleteEvent")
+	defer sp.End()
+
+	return a.storage.DeleteEvent(cctx, id)
+}
+
 /*
-func (a *App) GetAllEvents(ctx context.Context) ([]storage.Event, error) {
+func (a *App) ListEvents(ctx context.Context) ([]storage.Event, error) {
 	return a.storage.GetAllEvents(ctx)
 }
 */
 
 // TODO: implement at the database level.
-func (a *App) GetEventsForUser(ctx context.Context, id int, startPeriod time.Time, days int) ([]storage.Event, error) {
+func (a *App) ListEventsForUser(ctx context.Context, id int, startPeriod time.Time, days int) ([]storage.Event, error) {
 	cctx, sp := a.tr.Start(ctx, "GetEventsForUser")
 	defer sp.End()
 
-	events, err := a.storage.GetEventsForUser(cctx, id)
+	events, err := a.storage.ListEventsForUser(cctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -69,19 +85,7 @@ func (a *App) GetEventsForUser(ctx context.Context, id int, startPeriod time.Tim
 	return eventsFromInterval, nil
 }
 
-func (a *App) UpdateEvent(ctx context.Context, event *storage.Event) error {
-	cctx, sp := a.tr.Start(ctx, "UpdateEvent")
-	defer sp.End()
-
-	return a.storage.UpdateEvent(cctx, event)
-}
-
-func (a *App) DeleteEvent(ctx context.Context, id int) error {
-	cctx, sp := a.tr.Start(ctx, "DeleteEvent")
-	defer sp.End()
-
-	return a.storage.DeleteEvent(cctx, id)
-}
+// CRUD User
 
 func (a *App) CreateUser(ctx context.Context, user *storage.User) error {
 	cctx, sp := a.tr.Start(ctx, "CreateUser")
@@ -97,13 +101,6 @@ func (a *App) GetUser(ctx context.Context, id int) (*storage.User, error) {
 	return a.storage.GetUser(cctx, id)
 }
 
-func (a *App) GetAllUsers(ctx context.Context) ([]storage.User, error) {
-	cctx, sp := a.tr.Start(ctx, "GetAllUsers")
-	defer sp.End()
-
-	return a.storage.GetAllUsers(cctx)
-}
-
 func (a *App) UpdateUser(ctx context.Context, user *storage.User) error {
 	cctx, sp := a.tr.Start(ctx, "UpdateUser")
 	defer sp.End()
@@ -116,4 +113,11 @@ func (a *App) DeleteUser(ctx context.Context, id int) error {
 	defer sp.End()
 
 	return a.storage.DeleteUser(cctx, id)
+}
+
+func (a *App) ListUsers(ctx context.Context) ([]storage.User, error) {
+	cctx, sp := a.tr.Start(ctx, "GetAllUsers")
+	defer sp.End()
+
+	return a.storage.ListUsers(cctx)
 }

@@ -6,8 +6,8 @@ import (
 	"log/slog"
 	"net"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/app"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-api"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/app"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
@@ -89,7 +89,7 @@ func (s *Server) GetUser(ctx context.Context, req *calendarapi.UserRequest) (*ca
 }
 
 func (s *Server) GetAllUsers(ctx context.Context, _ *emptypb.Empty) (*calendarapi.Users, error) {
-	users, err := s.app.GetAllUsers(ctx)
+	users, err := s.app.ListUsers(ctx)
 	if err != nil {
 		err := fmt.Errorf("get all users: %w", err)
 		slog.Error(err.Error())
@@ -159,7 +159,7 @@ func (s *Server) GetEventsForUser(ctx context.Context, req *calendarapi.GetEvent
 	}
 	date := req.DaysAhead.Date.AsTime()
 
-	events, err := s.app.GetEventsForUser(ctx, int(req.User.GetId()), date, int(req.DaysAhead.Days))
+	events, err := s.app.ListEventsForUser(ctx, int(req.User.GetId()), date, int(req.DaysAhead.Days))
 	if err != nil {
 		err := fmt.Errorf("get events for user: %w", err)
 		slog.Error(err.Error())
