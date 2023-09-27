@@ -9,6 +9,7 @@ import (
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/app"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/httpserver/handler"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/logger"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver"
 	pathresolver "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver/path"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -29,70 +30,73 @@ type Conf struct {
 }
 
 type Server struct {
-	serv http.Server
-	res  resolver.Resolver
+	http.Server
 }
 
 func New(conf *Conf, app *app.App) *Server {
-	var server Server
-
-	server.res = pathresolver.New()
+	res := pathresolver.New()
 
 	h := handler.New(app)
 
-	server.res.Add("POST /users", h.CreateUser)
-	server.res.Add("GET /users", h.GetUser)
-	server.res.Add("PUT /users", h.UpdateUser)
-	server.res.Add("DELETE /users", h.DeleteUser)
+	res.Add("POST /users", h.CreateUser)
+	res.Add("GET /users", h.GetUser)
+	res.Add("PUT /users", h.UpdateUser)
+	res.Add("DELETE /users", h.DeleteUser)
 
-	server.res.Add("POST /events", h.CreateEvent)
-	server.res.Add("GET /events", h.GetEvent)
-	server.res.Add("PUT /events", h.UpdateEvent)
-	server.res.Add("DELETE /events", h.DeleteEvent)
+	res.Add("POST /events", h.CreateEvent)
+	res.Add("GET /events", h.GetEvent)
+	res.Add("PUT /events", h.UpdateEvent)
+	res.Add("DELETE /events", h.DeleteEvent)
 
-	//nolint:exhaustivestruct,exhaustruct
-	server.serv = http.Server{
-		Addr:         fmt.Sprintf("%s:%d", conf.Host, conf.Port),
-		Handler:      otelhttp.NewHandler(http.Handler(&server), "HTTP"),
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  1 * time.Minute,
+	loggerServer := logger.Logger{Inner: otelhttp.NewHandler(&Router{res}, "HTTP")}
+
+	return &Server{
+		//nolint:exhaustivestruct,exhaustruct
+		http.Server{
+			Addr:         fmt.Sprintf("%s:%d", conf.Host, conf.Port),
+			Handler:      &loggerServer,
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 10 * time.Second,
+			IdleTimeout:  1 * time.Minute,
+		},
 	}
-
-	return &server
 }
 
 func (s *Server) Start() error {
-	slog.Info("Start http server: http://" + s.serv.Addr)
-	if err := s.serv.ListenAndServe(); err != nil {
+	slog.Info("Start http server: http://" + s.Addr)
+	if err := s.ListenAndServe(); err != nil {
 		return fmt.Errorf("start http server: %w", err)
 	}
 	return nil
 }
 
 func (s *Server) StartTLS(conf *ConfHTTPS) error {
-	slog.Info("Start http server: https://" + s.serv.Addr)
-	if err := s.serv.ListenAndServeTLS(conf.CertFile, conf.KeyFile); err != nil {
+	slog.Info("Start http server: https://" + s.Addr)
+	if err := s.ListenAndServeTLS(conf.CertFile, conf.KeyFile); err != nil {
 		return fmt.Errorf("start http server: %w", err)
 	}
 	return nil
 }
 
-func (s *Server) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+func (s *Server) Stop(ctx context.Context) error {
+	slog.Info("Stop http server")
+	if err := s.Shutdown(ctx); err != nil {
+		return fmt.Errorf("stop http server: %w", err)
+	}
+
+	return nil
+}
+
+type Router struct {
+	resolver.Resolver
+}
+
+func (r *Router) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	check := req.Method + " " + req.URL.Path
-	if handlerFunc := s.res.Get(check); handlerFunc != nil {
+	if handlerFunc := r.Get(check); handlerFunc != nil {
 		handlerFunc(res, req)
 		return
 	}
 
 	http.NotFound(res, req)
-}
-
-func (s *Server) Stop(ctx context.Context) error {
-	slog.Info("Stop http server")
-	if err := s.serv.Shutdown(ctx); err != nil {
-		return fmt.Errorf("stop http server: %w", err)
-	}
-
-	return nil
 }
