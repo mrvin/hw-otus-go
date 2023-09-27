@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/httpserver/handler"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendarapi"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-api"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/logger"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver"
 	regexpresolver "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver/regex"

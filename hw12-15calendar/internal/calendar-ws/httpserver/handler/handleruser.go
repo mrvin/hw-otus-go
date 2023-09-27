@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendarapi"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-api"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 

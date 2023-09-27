@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendarapi"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-api"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )

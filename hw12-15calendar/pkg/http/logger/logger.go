@@ -35,9 +35,9 @@ func (l *Logger) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	logReq := slog.With(
 		slog.String("method", req.Method),
 		slog.String("path", req.URL.Path),
-		slog.String("remote_addr", req.RemoteAddr),
-		slog.String("user_agent", req.UserAgent()),
-		//		slog.String("request_id", middleware.GetReqID(r.Context())),
+		slog.String("addr", req.RemoteAddr),
+		//slog.String("user_agent", req.UserAgent()),
+		//slog.String("request_id", middleware.GetReqID(r.Context())),
 	)
 	timeStart := time.Now()
 	lrw := NewLoggingResponseWriter(res)
