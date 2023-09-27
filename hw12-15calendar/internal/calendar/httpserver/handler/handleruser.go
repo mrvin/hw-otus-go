@@ -90,7 +90,7 @@ func (h *Handler) UpdateUser(res http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := h.app.UpdateUser(req.Context(), user); err != nil {
-		slog.Error("Update user in storage: ", err.Error())
+		slog.Error("Update user in storage: " + err.Error())
 		if errors.Is(err, storage.ErrNoUser) {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 		} else {
@@ -113,7 +113,7 @@ func (h *Handler) DeleteUser(res http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := h.app.DeleteUser(req.Context(), id); err != nil {
-		slog.Error("Delete user in storage: ", err.Error())
+		slog.Error("Delete user in storage: " + err.Error())
 		if errors.Is(err, storage.ErrNoUser) {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 		} else {

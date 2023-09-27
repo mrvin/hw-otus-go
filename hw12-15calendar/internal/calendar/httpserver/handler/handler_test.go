@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/app"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/httpserver"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	memorystorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/memory"
 	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/app"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/httpserver"
 )
 
 const urlUsers = "http://localhost:8080/users"
@@ -203,7 +203,7 @@ func testHandleCreateUser(t *testing.T, server *httpserver.Server, user *storage
 	}
 	req.Header.Add("Content-Type", "application/json")
 
-	server.ServeHTTP(res, req)
+	server.Handler.ServeHTTP(res, req)
 
 	if res.Code != status {
 		t.Errorf("HandleCreateUser: response code is %d; want: %d", res.Code, status)
@@ -218,7 +218,7 @@ func testHandleGetUser(t *testing.T, server *httpserver.Server, id int, status i
 		t.Fatalf("HandleGetUser: create request: %v", err)
 	}
 
-	server.ServeHTTP(res, req)
+	server.Handler.ServeHTTP(res, req)
 
 	if res.Code != status {
 		t.Errorf("HandleGetUser: response code is %d; want: %d", res.Code, status)
@@ -248,7 +248,7 @@ func testHandleUpdateUser(t *testing.T, server *httpserver.Server, user *storage
 	}
 	req.Header.Add("Content-Type", "application/json")
 
-	server.ServeHTTP(res, req)
+	server.Handler.ServeHTTP(res, req)
 
 	if res.Code != status {
 		t.Errorf("HandleUpdateUser: response code is %d; want: %d", res.Code, status)
@@ -263,7 +263,7 @@ func testHandleDeleteUser(t *testing.T, server *httpserver.Server, id int, statu
 		t.Fatalf("HandleDeleteUser: create request %v", err)
 	}
 
-	server.ServeHTTP(res, req)
+	server.Handler.ServeHTTP(res, req)
 
 	if res.Code != status {
 		t.Errorf("HandleDeleteUser: response code is %d; want: %d", res.Code, status)
@@ -284,7 +284,7 @@ func testHandleCreateEvent(t *testing.T, server *httpserver.Server, event *stora
 	}
 	req.Header.Add("Content-Type", "application/json")
 
-	server.ServeHTTP(res, req)
+	server.Handler.ServeHTTP(res, req)
 
 	if res.Code != status {
 		t.Errorf("HandleCreateEvent: response code is %d; want: %d", res.Code, status)
@@ -299,7 +299,7 @@ func testHandleGetEvent(t *testing.T, server *httpserver.Server, id int, status 
 		t.Fatalf("HandleGetEvent: create request: %v", err)
 	}
 
-	server.ServeHTTP(res, req)
+	server.Handler.ServeHTTP(res, req)
 
 	if res.Code != status {
 		t.Errorf("HandleGetEvent: response code is %d; want: %d", res.Code, status)
@@ -329,7 +329,7 @@ func testHandleUpdateEvent(t *testing.T, server *httpserver.Server, event *stora
 	}
 	req.Header.Add("Content-Type", "application/json")
 
-	server.ServeHTTP(res, req)
+	server.Handler.ServeHTTP(res, req)
 
 	if res.Code != status {
 		t.Errorf("HandleUpdateEvent: response code is %d; want: %d", res.Code, status)
@@ -344,7 +344,7 @@ func testHandleDeleteEvent(t *testing.T, server *httpserver.Server, id int, stat
 		t.Fatalf("HandleDeleteEvent: create request: %v", err)
 	}
 
-	server.ServeHTTP(res, req)
+	server.Handler.ServeHTTP(res, req)
 
 	if res.Code != status {
 		t.Errorf("HandleDeleteEvent: response code is %d; want: %d", res.Code, status)
