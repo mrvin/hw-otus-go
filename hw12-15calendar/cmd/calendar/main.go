@@ -1,4 +1,4 @@
-//go:generate protoc -I=../../api/ --go_out=../../internal/calendar-api --go-grpc_out=require_unimplemented_servers=false:../../internal/calendar-api ../../api/eventservice.proto
+//go:generate protoc -I=../../api/ --go_out=../../internal/calendar-api --go-grpc_out=require_unimplemented_servers=false:../../internal/calendar-api ../../api/event_service.proto
 
 package main
 
@@ -57,7 +57,7 @@ func main() {
 		stdlog.Printf("Init logger: %v\n", err)
 		return
 	} else {
-		slog.Info("Init logger")
+		slog.Info("Init logger", slog.String("Logging level", conf.Logger.Level))
 		defer func() {
 			if err := logFile.Close(); err != nil {
 				slog.Error("Close log file: " + err.Error())

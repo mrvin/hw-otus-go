@@ -16,6 +16,7 @@ inmemory: true
 
 # database settings
 db:
+    driver: postgres
     host: postgres
     port: 5432
     user: event-db

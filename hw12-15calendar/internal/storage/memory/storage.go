@@ -9,35 +9,35 @@ import (
 )
 
 type Storage struct {
-	mUsers     map[int]storage.User
-	maxIDEvent int
+	mUsers     map[int64]storage.User
+	maxIDEvent int64
 	muUsers    sync.RWMutex
 
-	mEvents   map[int]storage.Event
-	maxIDUser int
+	mEvents   map[int64]storage.Event
+	maxIDUser int64
 	muEvents  sync.RWMutex
 }
 
 func New() *Storage {
 	var s Storage
-	s.mUsers = make(map[int]storage.User)
-	s.mEvents = make(map[int]storage.Event)
+	s.mUsers = make(map[int64]storage.User)
+	s.mEvents = make(map[int64]storage.Event)
 
 	return &s
 }
 
-func (s *Storage) CreateUser(_ context.Context, user *storage.User) error {
+func (s *Storage) CreateUser(_ context.Context, user *storage.User) (int64, error) {
 	s.muUsers.Lock()
 	defer s.muUsers.Unlock()
 
 	s.maxIDUser++
-	user.ID = s.maxIDUser
+	id := s.maxIDUser
 	s.mUsers[s.maxIDUser] = *user
 
-	return nil
+	return id, nil
 }
 
-func (s *Storage) GetUser(_ context.Context, id int) (*storage.User, error) {
+func (s *Storage) GetUser(_ context.Context, id int64) (*storage.User, error) {
 	s.muUsers.RLock()
 	defer s.muUsers.RUnlock()
 
@@ -75,7 +75,7 @@ func (s *Storage) UpdateUser(_ context.Context, user *storage.User) error {
 	return nil
 }
 
-func (s *Storage) DeleteUser(_ context.Context, id int) error {
+func (s *Storage) DeleteUser(_ context.Context, id int64) error {
 	s.muUsers.Lock()
 	if _, ok := s.mUsers[id]; !ok {
 		s.muUsers.Unlock()
@@ -95,11 +95,11 @@ func (s *Storage) DeleteUser(_ context.Context, id int) error {
 	return nil
 }
 
-func (s *Storage) CreateEvent(_ context.Context, event *storage.Event) error {
+func (s *Storage) CreateEvent(_ context.Context, event *storage.Event) (int64, error) {
 	s.muUsers.Lock()
 	if _, ok := s.mUsers[event.UserID]; !ok {
 		s.muUsers.Unlock()
-		return fmt.Errorf("%w: %d", storage.ErrNoUser, event.UserID)
+		return 0, fmt.Errorf("%w: %d", storage.ErrNoUser, event.UserID)
 	}
 	s.muUsers.Unlock()
 
@@ -107,13 +107,13 @@ func (s *Storage) CreateEvent(_ context.Context, event *storage.Event) error {
 	defer s.muEvents.Unlock()
 
 	s.maxIDEvent++
-	event.ID = s.maxIDEvent
+	id := s.maxIDEvent
 	s.mEvents[s.maxIDEvent] = *event
 
-	return nil
+	return id, nil
 }
 
-func (s *Storage) GetEvent(_ context.Context, id int) (*storage.Event, error) {
+func (s *Storage) GetEvent(_ context.Context, id int64) (*storage.Event, error) {
 	s.muEvents.RLock()
 	defer s.muEvents.RUnlock()
 
@@ -149,7 +149,7 @@ func (s *Storage) UpdateEvent(_ context.Context, event *storage.Event) error {
 	return nil
 }
 
-func (s *Storage) DeleteEvent(_ context.Context, id int) error {
+func (s *Storage) DeleteEvent(_ context.Context, id int64) error {
 	s.muEvents.Lock()
 	defer s.muEvents.Unlock()
 
@@ -161,7 +161,7 @@ func (s *Storage) DeleteEvent(_ context.Context, id int) error {
 	return nil
 }
 
-func (s *Storage) ListEventsForUser(_ context.Context, id int) ([]storage.Event, error) {
+func (s *Storage) ListEventsForUser(_ context.Context, id int64) ([]storage.Event, error) {
 	events := make([]storage.Event, 0)
 
 	s.muEvents.RLock()

@@ -1,6 +1,6 @@
 module github.com/mrvin/hw-otus-go/hw12-15calendar
 
-go 1.20
+go 1.21
 
 require (
 	github.com/golang-migrate/migrate/v4 v4.15.2

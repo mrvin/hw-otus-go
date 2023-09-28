@@ -14,6 +14,7 @@ import (
 const retriesConnect = 5
 
 type Conf struct {
+	Driver   string `yaml:"driver"`
 	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`
 	User     string `yaml:"user"`
@@ -62,7 +63,7 @@ func (s *Storage) Connect(ctx context.Context) error {
 	var err error
 	dbConfStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		s.conf.Host, s.conf.Port, s.conf.User, s.conf.Password, s.conf.Name)
-	s.db, err = sql.Open("postgres", dbConfStr)
+	s.db, err = sql.Open(s.conf.Driver, dbConfStr)
 	if err != nil {
 		return fmt.Errorf("open db: %w", err)
 	}

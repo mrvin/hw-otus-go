@@ -21,12 +21,16 @@ func New(a *app.App) *Handler {
 	}
 }
 
-func getID(req *http.Request) (int, error) {
+type responseID struct {
+	ID int64 `json:"id"`
+}
+
+func getID(req *http.Request) (int64, error) {
 	idStr := req.URL.Query().Get("id")
 	if idStr == "" {
 		return 0, ErrIDEmpty
 	}
-	id, err := strconv.Atoi(idStr)
+	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		return 0, fmt.Errorf("convert id: %w", err)
 	}

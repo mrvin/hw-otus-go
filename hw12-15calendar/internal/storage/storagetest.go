@@ -39,10 +39,11 @@ func (x byIDEvent) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
 func TestUserCRUD(ctx context.Context, t *testing.T, st Storage) {
 	// Create users
 	for i := range users {
-		if err := st.CreateUser(ctx, &users[i]); err != nil {
+		id, err := st.CreateUser(ctx, &users[i])
+		if err != nil {
 			t.Errorf("CreateUser: %v", err)
 		}
-		if users[i].ID == 0 {
+		if id == 0 {
 			t.Errorf("CreateUser: can't get ID")
 		}
 	}
@@ -102,10 +103,11 @@ func TestUserCRUD(ctx context.Context, t *testing.T, st Storage) {
 func TestEventCRUD(ctx context.Context, t *testing.T, st Storage) { //nolint:funlen,gocognit,cyclop
 	// Create users
 	for i := range users {
-		if err := st.CreateUser(ctx, &users[i]); err != nil {
+		id, err := st.CreateUser(ctx, &users[i])
+		if err != nil {
 			t.Errorf("CreateUser: %v", err)
 		}
-		if users[i].ID == 0 {
+		if id == 0 {
 			t.Errorf("CreateUser: can't get ID")
 		}
 	}
@@ -116,10 +118,11 @@ func TestEventCRUD(ctx context.Context, t *testing.T, st Storage) { //nolint:fun
 			if i != j {
 				events[j].UserID = users[i].ID
 
-				if err := st.CreateEvent(ctx, &events[j]); err != nil {
+				id, err := st.CreateEvent(ctx, &events[j])
+				if err != nil {
 					t.Errorf("CreateEvent: %v", err)
 				}
-				if events[j].ID == 0 {
+				if id == 0 {
 					t.Errorf("CreateEvent: can't get ID")
 				}
 

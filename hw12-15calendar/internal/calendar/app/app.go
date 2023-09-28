@@ -23,9 +23,9 @@ func New(storage storage.Storage) *App {
 
 // CRUD Event
 
-func (a *App) CreateEvent(ctx context.Context, event *storage.Event) error {
+func (a *App) CreateEvent(ctx context.Context, event *storage.Event) (int64, error) {
 	if event.StopTime.Before(event.StartTime) {
-		return ErrStopTimeBeforeStartTime
+		return 0, ErrStopTimeBeforeStartTime
 	}
 
 	cctx, sp := a.tr.Start(ctx, "CreateEvent")
@@ -34,7 +34,7 @@ func (a *App) CreateEvent(ctx context.Context, event *storage.Event) error {
 	return a.storage.CreateEvent(cctx, event)
 }
 
-func (a *App) GetEvent(ctx context.Context, id int) (*storage.Event, error) {
+func (a *App) GetEvent(ctx context.Context, id int64) (*storage.Event, error) {
 	cctx, sp := a.tr.Start(ctx, "GetEvent")
 	defer sp.End()
 
@@ -48,7 +48,7 @@ func (a *App) UpdateEvent(ctx context.Context, event *storage.Event) error {
 	return a.storage.UpdateEvent(cctx, event)
 }
 
-func (a *App) DeleteEvent(ctx context.Context, id int) error {
+func (a *App) DeleteEvent(ctx context.Context, id int64) error {
 	cctx, sp := a.tr.Start(ctx, "DeleteEvent")
 	defer sp.End()
 
@@ -62,7 +62,7 @@ func (a *App) ListEvents(ctx context.Context) ([]storage.Event, error) {
 */
 
 // TODO: implement at the database level.
-func (a *App) ListEventsForUser(ctx context.Context, id int, startPeriod time.Time, days int) ([]storage.Event, error) {
+func (a *App) ListEventsForUser(ctx context.Context, id int64, startPeriod time.Time, days int) ([]storage.Event, error) {
 	cctx, sp := a.tr.Start(ctx, "GetEventsForUser")
 	defer sp.End()
 
@@ -87,14 +87,14 @@ func (a *App) ListEventsForUser(ctx context.Context, id int, startPeriod time.Ti
 
 // CRUD User
 
-func (a *App) CreateUser(ctx context.Context, user *storage.User) error {
+func (a *App) CreateUser(ctx context.Context, user *storage.User) (int64, error) {
 	cctx, sp := a.tr.Start(ctx, "CreateUser")
 	defer sp.End()
 
 	return a.storage.CreateUser(cctx, user)
 }
 
-func (a *App) GetUser(ctx context.Context, id int) (*storage.User, error) {
+func (a *App) GetUser(ctx context.Context, id int64) (*storage.User, error) {
 	cctx, sp := a.tr.Start(ctx, "GetUser")
 	defer sp.End()
 
@@ -108,7 +108,7 @@ func (a *App) UpdateUser(ctx context.Context, user *storage.User) error {
 	return a.storage.UpdateUser(cctx, user)
 }
 
-func (a *App) DeleteUser(ctx context.Context, id int) error {
+func (a *App) DeleteUser(ctx context.Context, id int64) error {
 	cctx, sp := a.tr.Start(ctx, "DeleteUser")
 	defer sp.End()
 

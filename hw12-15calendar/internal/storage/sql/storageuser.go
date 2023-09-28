@@ -9,15 +9,16 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
 
-func (s *Storage) CreateUser(ctx context.Context, user *storage.User) error {
-	if err := s.insertUser.QueryRowContext(ctx, user.Name, user.Email).Scan(&user.ID); err != nil {
-		return fmt.Errorf("create user: %w", err)
+func (s *Storage) CreateUser(ctx context.Context, user *storage.User) (int64, error) {
+	var id int64
+	if err := s.insertUser.QueryRowContext(ctx, user.Name, user.Email).Scan(&id); err != nil {
+		return 0, fmt.Errorf("create user: %w", err)
 	}
 
-	return nil
+	return id, nil
 }
 
-func (s *Storage) GetUser(ctx context.Context, id int) (*storage.User, error) {
+func (s *Storage) GetUser(ctx context.Context, id int64) (*storage.User, error) {
 	var user storage.User
 
 	if err := s.getUser.QueryRowContext(ctx, id).Scan(&user.ID, &user.Name, &user.Email); err != nil {
@@ -83,7 +84,7 @@ func (s *Storage) UpdateUser(ctx context.Context, user *storage.User) error {
 	return nil
 }
 
-func (s *Storage) DeleteUser(ctx context.Context, id int) error {
+func (s *Storage) DeleteUser(ctx context.Context, id int64) error {
 	res, err := s.db.ExecContext(ctx, "delete from users where id = $1", id)
 	if err != nil {
 		return fmt.Errorf("delete user: %w", err)

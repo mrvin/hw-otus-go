@@ -11,7 +11,6 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
 
-// TODO:add return id created user.
 func (h *Handler) CreateUser(res http.ResponseWriter, req *http.Request) {
 	user, err := unmarshalUser(req)
 	if err != nil {
@@ -26,8 +25,23 @@ func (h *Handler) CreateUser(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err := h.app.CreateUser(req.Context(), user); err != nil {
+	id, err := h.app.CreateUser(req.Context(), user)
+	if err != nil {
 		slog.Error("Saving user to storage: " + err.Error())
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	jsonResponseID, err := json.Marshal(&responseID{ID: id})
+	if err != nil {
+		slog.Error("Marshaling response id to json: " + err.Error())
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	res.Header().Set("Content-Type", "application/json")
+	if _, err := res.Write(jsonResponseID); err != nil {
+		slog.Error("Write id to response: " + err.Error())
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}

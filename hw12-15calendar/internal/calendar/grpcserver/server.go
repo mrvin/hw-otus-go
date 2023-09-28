@@ -68,17 +68,18 @@ func (s *Server) Stop() {
 
 func (s *Server) CreateUser(ctx context.Context, userpb *calendarapi.User) (*calendarapi.UserResponse, error) {
 	user := storage.User{ID: 0, Name: userpb.GetName(), Email: userpb.GetEmail(), Events: nil}
-	if err := s.app.CreateUser(ctx, &user); err != nil {
-		err := fmt.Errorf("create user: %w", err)
+	id, err := s.app.CreateUser(ctx, &user)
+	if err != nil {
+		err = fmt.Errorf("create user: %w", err)
 		slog.Error(err.Error())
 		return nil, err
 	}
 
-	return &calendarapi.UserResponse{Id: int64(user.ID)}, nil
+	return &calendarapi.UserResponse{Id: id}, nil
 }
 
 func (s *Server) GetUser(ctx context.Context, req *calendarapi.UserRequest) (*calendarapi.User, error) {
-	user, err := s.app.GetUser(ctx, int(req.GetId()))
+	user, err := s.app.GetUser(ctx, req.GetId())
 	if err != nil {
 		err := fmt.Errorf("get user: %w", err)
 		slog.Error(err.Error())
@@ -105,7 +106,7 @@ func (s *Server) GetAllUsers(ctx context.Context, _ *emptypb.Empty) (*calendarap
 }
 
 func (s *Server) UpdateUser(ctx context.Context, userpb *calendarapi.User) (*emptypb.Empty, error) {
-	user := storage.User{ID: int(userpb.GetId()), Name: userpb.GetName(), Email: userpb.GetEmail(), Events: nil}
+	user := storage.User{ID: userpb.GetId(), Name: userpb.GetName(), Email: userpb.GetEmail(), Events: nil}
 	if err := s.app.UpdateUser(ctx, &user); err != nil {
 		err := fmt.Errorf("update user: %w", err)
 		slog.Error(err.Error())
@@ -116,7 +117,7 @@ func (s *Server) UpdateUser(ctx context.Context, userpb *calendarapi.User) (*emp
 }
 
 func (s *Server) DeleteUser(ctx context.Context, req *calendarapi.UserRequest) (*emptypb.Empty, error) {
-	if err := s.app.DeleteUser(ctx, int(req.GetId())); err != nil {
+	if err := s.app.DeleteUser(ctx, req.GetId()); err != nil {
 		err := fmt.Errorf("delete user: %w", err)
 		slog.Error(err.Error())
 		return nil, err
@@ -132,17 +133,18 @@ func (s *Server) CreateEvent(ctx context.Context, pbEvent *calendarapi.Event) (*
 		slog.Error(err.Error())
 		return nil, err
 	}
-	if err := s.app.CreateEvent(ctx, event); err != nil {
-		err := fmt.Errorf("create event: %w", err)
+	id, err := s.app.CreateEvent(ctx, event)
+	if err != nil {
+		err = fmt.Errorf("create event: %w", err)
 		slog.Error(err.Error())
 		return nil, err
 	}
 
-	return &calendarapi.EventResponse{Id: int64(event.ID)}, nil
+	return &calendarapi.EventResponse{Id: id}, nil
 }
 
 func (s *Server) GetEvent(ctx context.Context, req *calendarapi.EventRequest) (*calendarapi.Event, error) {
-	event, err := s.app.GetEvent(ctx, int(req.GetId()))
+	event, err := s.app.GetEvent(ctx, req.GetId())
 	if err != nil {
 		err := fmt.Errorf("get event: %w", err)
 		slog.Error(err.Error())
@@ -159,7 +161,7 @@ func (s *Server) GetEventsForUser(ctx context.Context, req *calendarapi.GetEvent
 	}
 	date := req.DaysAhead.Date.AsTime()
 
-	events, err := s.app.ListEventsForUser(ctx, int(req.User.GetId()), date, int(req.DaysAhead.Days))
+	events, err := s.app.ListEventsForUser(ctx, req.User.GetId(), date, int(req.DaysAhead.Days))
 	if err != nil {
 		err := fmt.Errorf("get events for user: %w", err)
 		slog.Error(err.Error())
@@ -193,7 +195,7 @@ func (s *Server) UpdateEvent(ctx context.Context, pbEvent *calendarapi.Event) (*
 }
 
 func (s *Server) DeleteEvent(ctx context.Context, req *calendarapi.EventRequest) (*emptypb.Empty, error) {
-	if err := s.app.DeleteEvent(ctx, int(req.GetId())); err != nil {
+	if err := s.app.DeleteEvent(ctx, req.GetId()); err != nil {
 		err := fmt.Errorf("delete event: %w", err)
 		slog.Error(err.Error())
 		return nil, err
@@ -212,9 +214,9 @@ func convertpbEventToEvent(pbEvent *calendarapi.Event) (*storage.Event, error) {
 	startTime := pbEvent.StartTime.AsTime()
 	stopTime := pbEvent.StopTime.AsTime()
 
-	event := storage.Event{ID: int(pbEvent.GetId()), Title: pbEvent.GetTitle(),
+	event := storage.Event{ID: pbEvent.GetId(), Title: pbEvent.GetTitle(),
 		Description: pbEvent.GetDescription(), StartTime: startTime, StopTime: stopTime,
-		UserID: int(pbEvent.GetUserID())}
+		UserID: pbEvent.GetUserID()}
 
 	return &event, nil
 }

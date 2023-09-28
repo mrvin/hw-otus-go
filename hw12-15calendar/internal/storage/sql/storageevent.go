@@ -9,15 +9,16 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
 
-func (s *Storage) CreateEvent(ctx context.Context, event *storage.Event) error {
-	if err := s.insertEvent.QueryRowContext(ctx, event.Title, event.Description, event.StartTime, event.StopTime, event.UserID).Scan(&event.ID); err != nil {
-		return fmt.Errorf("create event: %w", err)
+func (s *Storage) CreateEvent(ctx context.Context, event *storage.Event) (int64, error) {
+	var id int64
+	if err := s.insertEvent.QueryRowContext(ctx, event.Title, event.Description, event.StartTime, event.StopTime, event.UserID).Scan(&id); err != nil {
+		return 0, fmt.Errorf("create event: %w", err)
 	}
 
-	return nil
+	return id, nil
 }
 
-func (s *Storage) GetEvent(ctx context.Context, id int) (*storage.Event, error) {
+func (s *Storage) GetEvent(ctx context.Context, id int64) (*storage.Event, error) {
 	var event storage.Event
 
 	if err := s.getEvent.QueryRowContext(ctx, id).Scan(&event.ID, &event.Title, &event.Description, &event.StartTime, &event.StopTime, &event.UserID); err != nil {
@@ -75,7 +76,7 @@ func (s *Storage) UpdateEvent(ctx context.Context, event *storage.Event) error {
 	return nil
 }
 
-func (s *Storage) DeleteEvent(ctx context.Context, id int) error {
+func (s *Storage) DeleteEvent(ctx context.Context, id int64) error {
 	res, err := s.db.ExecContext(ctx, "delete from events where id = $1", id)
 	if err != nil {
 		return fmt.Errorf("delete event: %w", err)
@@ -92,7 +93,7 @@ func (s *Storage) DeleteEvent(ctx context.Context, id int) error {
 	return nil
 }
 
-func (s *Storage) ListEventsForUser(ctx context.Context, userID int) ([]storage.Event, error) {
+func (s *Storage) ListEventsForUser(ctx context.Context, userID int64) ([]storage.Event, error) {
 	events := make([]storage.Event, 0)
 
 	rows, err := s.listEventsForUser.QueryContext(ctx, userID)
