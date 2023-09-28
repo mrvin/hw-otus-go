@@ -9,7 +9,7 @@ import (
 
 var ctx = context.Background()
 
-var confDBTest = Conf{"localhost", 5432, "event-db", "event-db", "event-db"}
+var confDBTest = Conf{"postgres", "localhost", 5432, "event-db", "event-db", "event-db"}
 
 func TestUserCRUD(t *testing.T) {
 	st, err := New(ctx, &confDBTest)

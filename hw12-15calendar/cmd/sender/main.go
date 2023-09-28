@@ -74,7 +74,7 @@ func main() {
 				slog.Error(err.Error())
 				continue
 			}
-			slog.Info("Take alert message from queue", slog.Int("Event id", alertEvent.EventID))
+			slog.Info("Take alert message from queue", slog.Int64("Event id", alertEvent.EventID))
 			emailMsg := email.Message{To: alertEvent.UserEmail, Subject: alertEvent.Title, Description: alertEvent.Description}
 			sendEvent(&conf.Email, &emailMsg)
 		case <-ctx.Done():

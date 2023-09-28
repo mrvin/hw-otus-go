@@ -75,7 +75,7 @@ func main() {
 	for {
 		ctxGetAllEvents, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cancel()
-		events, err := st.GetAllEvents(ctxGetAllEvents)
+		events, err := st.ListEvents(ctxGetAllEvents)
 		if err != nil {
 			slog.Error("List event: " + err.Error())
 		}
@@ -106,7 +106,7 @@ func main() {
 					slog.Error(err.Error())
 					continue
 				}
-				slog.Info("Put alert message in queue", slog.Int("Event id", event.ID))
+				slog.Info("Put alert message in queue", slog.Int64("Event id", event.ID))
 			}
 		}
 		select {

@@ -15,7 +15,7 @@ type Conf struct {
 }
 
 type AlertEvent struct {
-	EventID     int
+	EventID     int64
 	Title       string
 	Description string
 	StartTime   time.Time
