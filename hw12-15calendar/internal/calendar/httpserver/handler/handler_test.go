@@ -23,7 +23,7 @@ const urlEvents = "http://localhost:8080/events"
 
 const contextTimeoutDB = 2 * time.Second
 
-var confDBTest = sqlstorage.Conf{"postgres", 5432, "event-db", "event-db", "event-db"}
+var confDBTest = sqlstorage.Conf{"postgres", "postgres", 5432, "event-db", "event-db", "event-db"}
 
 func initServerHTTP(st storage.Storage) *httpserver.Server {
 	conf := httpserver.Conf{"localhost", 8080, false, httpserver.ConfHTTPS{}}
