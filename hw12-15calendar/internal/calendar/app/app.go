@@ -3,11 +3,13 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var ErrStopTimeBeforeStartTime = errors.New("event ends before starts")
@@ -90,6 +92,12 @@ func (a *App) ListEventsForUser(ctx context.Context, id int64, startPeriod time.
 func (a *App) CreateUser(ctx context.Context, user *storage.User) (int64, error) {
 	cctx, sp := a.tr.Start(ctx, "CreateUser")
 	defer sp.End()
+
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.HashPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return 0, fmt.Errorf("generate hash password: %w", err)
+	}
+	user.HashPassword = string(hashPassword)
 
 	return a.storage.CreateUser(cctx, user)
 }

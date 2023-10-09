@@ -1,8 +1,10 @@
 CREATE TABLE IF NOT EXISTS users (
-	id serial primary key,
-	name text,
-	email text
+	id serial PRIMARY KEY,
+	name TEXT NOT NULL UNIQUE,
+	hash_password TEXT,
+	email TEXT
 );
+CREATE INDEX IF NOT EXISTS idx_name ON users(name);
 
 CREATE TABLE IF NOT EXISTS events (
 	id serial primary key,

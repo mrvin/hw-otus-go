@@ -11,7 +11,7 @@ import (
 
 func (s *Storage) CreateUser(ctx context.Context, user *storage.User) (int64, error) {
 	var id int64
-	if err := s.insertUser.QueryRowContext(ctx, user.Name, user.Email).Scan(&id); err != nil {
+	if err := s.insertUser.QueryRowContext(ctx, user.Name, user.HashPassword, user.Email).Scan(&id); err != nil {
 		return 0, fmt.Errorf("create user: %w", err)
 	}
 

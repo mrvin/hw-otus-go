@@ -46,8 +46,9 @@ type Event struct {
 }
 
 type User struct {
-	ID     int64   `json:"id"`
-	Name   string  `json:"name"`
-	Email  string  `json:"email"`
-	Events []Event `json:"events"`
+	ID           int64   `json:"id"`
+	Name         string  `json:"name"`
+	HashPassword string  `json:hash_password`
+	Email        string  `json:"email"`
+	Events       []Event `json:"events"`
 }

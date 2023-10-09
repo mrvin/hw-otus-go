@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/app"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/httpserver/handler"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/httpserver/handlers"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/logger"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver"
 	pathresolver "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver/path"
