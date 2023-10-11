@@ -1,5 +1,12 @@
+client: "grpc"
+
+# HTTP client settings
+http-client:
+    host: localhost
+    port: 8088
+
 # GRPC client settings
-grpc:
+grpc-client:
     host: localhost
     port: 55555
 
@@ -10,7 +17,7 @@ http:
 
 # logging settings
 logger:
-    filepath: logs/calendar-ws-log.json
+    filepath: ../logs/calendar-ws-log.json
     level: debug # debug, info, warn, error
 
 # tracing settings

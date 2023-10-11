@@ -10,7 +10,8 @@ option go_package = ".;calendarapi";
 message User {
 	int64 id = 1;
 	string name = 2;
-	string email = 3;
+	string password = 3;
+	string email = 4;
 }
 
 message Users {
@@ -58,14 +59,16 @@ message Events {
 service EventService {
 	rpc CreateUser (User) returns (UserResponse) {}
 	rpc GetUser (UserRequest) returns (User) {}
-	rpc GetAllUsers (google.protobuf.Empty) returns (Users) {}
 	rpc UpdateUser (User) returns (google.protobuf.Empty) {}
 	rpc DeleteUser (UserRequest) returns (google.protobuf.Empty) {}
 
+	rpc ListUsers (google.protobuf.Empty) returns (Users) {}
+
 	rpc CreateEvent (Event) returns (EventResponse) {}
 	rpc GetEvent (EventRequest) returns (Event) {}
-	rpc GetEventsForUser (GetEventsForUserRequest) returns (Events) {}
 	rpc UpdateEvent (Event) returns (google.protobuf.Empty) {}
 	rpc DeleteEvent (EventRequest) returns (google.protobuf.Empty) {}
+
+	rpc ListEventsForUser (GetEventsForUserRequest) returns (Events) {}
 }
 

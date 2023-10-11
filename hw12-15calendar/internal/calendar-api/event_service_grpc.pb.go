@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             v3.21.12
-// source: eventservice.proto
+// source: event_service.proto
 
 package calendarapi
 
@@ -20,16 +20,16 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	EventService_CreateUser_FullMethodName       = "/event.EventService/CreateUser"
-	EventService_GetUser_FullMethodName          = "/event.EventService/GetUser"
-	EventService_GetAllUsers_FullMethodName      = "/event.EventService/GetAllUsers"
-	EventService_UpdateUser_FullMethodName       = "/event.EventService/UpdateUser"
-	EventService_DeleteUser_FullMethodName       = "/event.EventService/DeleteUser"
-	EventService_CreateEvent_FullMethodName      = "/event.EventService/CreateEvent"
-	EventService_GetEvent_FullMethodName         = "/event.EventService/GetEvent"
-	EventService_GetEventsForUser_FullMethodName = "/event.EventService/GetEventsForUser"
-	EventService_UpdateEvent_FullMethodName      = "/event.EventService/UpdateEvent"
-	EventService_DeleteEvent_FullMethodName      = "/event.EventService/DeleteEvent"
+	EventService_CreateUser_FullMethodName        = "/event.EventService/CreateUser"
+	EventService_GetUser_FullMethodName           = "/event.EventService/GetUser"
+	EventService_UpdateUser_FullMethodName        = "/event.EventService/UpdateUser"
+	EventService_DeleteUser_FullMethodName        = "/event.EventService/DeleteUser"
+	EventService_ListUsers_FullMethodName         = "/event.EventService/ListUsers"
+	EventService_CreateEvent_FullMethodName       = "/event.EventService/CreateEvent"
+	EventService_GetEvent_FullMethodName          = "/event.EventService/GetEvent"
+	EventService_UpdateEvent_FullMethodName       = "/event.EventService/UpdateEvent"
+	EventService_DeleteEvent_FullMethodName       = "/event.EventService/DeleteEvent"
+	EventService_ListEventsForUser_FullMethodName = "/event.EventService/ListEventsForUser"
 )
 
 // EventServiceClient is the client API for EventService service.
@@ -38,14 +38,14 @@ const (
 type EventServiceClient interface {
 	CreateUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*UserResponse, error)
 	GetUser(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*User, error)
-	GetAllUsers(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Users, error)
 	UpdateUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	DeleteUser(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	ListUsers(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Users, error)
 	CreateEvent(ctx context.Context, in *Event, opts ...grpc.CallOption) (*EventResponse, error)
 	GetEvent(ctx context.Context, in *EventRequest, opts ...grpc.CallOption) (*Event, error)
-	GetEventsForUser(ctx context.Context, in *GetEventsForUserRequest, opts ...grpc.CallOption) (*Events, error)
 	UpdateEvent(ctx context.Context, in *Event, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	DeleteEvent(ctx context.Context, in *EventRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	ListEventsForUser(ctx context.Context, in *GetEventsForUserRequest, opts ...grpc.CallOption) (*Events, error)
 }
 
 type eventServiceClient struct {
@@ -74,15 +74,6 @@ func (c *eventServiceClient) GetUser(ctx context.Context, in *UserRequest, opts 
 	return out, nil
 }
 
-func (c *eventServiceClient) GetAllUsers(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Users, error) {
-	out := new(Users)
-	err := c.cc.Invoke(ctx, EventService_GetAllUsers_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *eventServiceClient) UpdateUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, EventService_UpdateUser_FullMethodName, in, out, opts...)
@@ -95,6 +86,15 @@ func (c *eventServiceClient) UpdateUser(ctx context.Context, in *User, opts ...g
 func (c *eventServiceClient) DeleteUser(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, EventService_DeleteUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *eventServiceClient) ListUsers(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Users, error) {
+	out := new(Users)
+	err := c.cc.Invoke(ctx, EventService_ListUsers_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -119,15 +119,6 @@ func (c *eventServiceClient) GetEvent(ctx context.Context, in *EventRequest, opt
 	return out, nil
 }
 
-func (c *eventServiceClient) GetEventsForUser(ctx context.Context, in *GetEventsForUserRequest, opts ...grpc.CallOption) (*Events, error) {
-	out := new(Events)
-	err := c.cc.Invoke(ctx, EventService_GetEventsForUser_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *eventServiceClient) UpdateEvent(ctx context.Context, in *Event, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, EventService_UpdateEvent_FullMethodName, in, out, opts...)
@@ -146,20 +137,29 @@ func (c *eventServiceClient) DeleteEvent(ctx context.Context, in *EventRequest, 
 	return out, nil
 }
 
+func (c *eventServiceClient) ListEventsForUser(ctx context.Context, in *GetEventsForUserRequest, opts ...grpc.CallOption) (*Events, error) {
+	out := new(Events)
+	err := c.cc.Invoke(ctx, EventService_ListEventsForUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // EventServiceServer is the server API for EventService service.
 // All implementations should embed UnimplementedEventServiceServer
 // for forward compatibility
 type EventServiceServer interface {
 	CreateUser(context.Context, *User) (*UserResponse, error)
 	GetUser(context.Context, *UserRequest) (*User, error)
-	GetAllUsers(context.Context, *emptypb.Empty) (*Users, error)
 	UpdateUser(context.Context, *User) (*emptypb.Empty, error)
 	DeleteUser(context.Context, *UserRequest) (*emptypb.Empty, error)
+	ListUsers(context.Context, *emptypb.Empty) (*Users, error)
 	CreateEvent(context.Context, *Event) (*EventResponse, error)
 	GetEvent(context.Context, *EventRequest) (*Event, error)
-	GetEventsForUser(context.Context, *GetEventsForUserRequest) (*Events, error)
 	UpdateEvent(context.Context, *Event) (*emptypb.Empty, error)
 	DeleteEvent(context.Context, *EventRequest) (*emptypb.Empty, error)
+	ListEventsForUser(context.Context, *GetEventsForUserRequest) (*Events, error)
 }
 
 // UnimplementedEventServiceServer should be embedded to have forward compatible implementations.
@@ -172,14 +172,14 @@ func (UnimplementedEventServiceServer) CreateUser(context.Context, *User) (*User
 func (UnimplementedEventServiceServer) GetUser(context.Context, *UserRequest) (*User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
 }
-func (UnimplementedEventServiceServer) GetAllUsers(context.Context, *emptypb.Empty) (*Users, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAllUsers not implemented")
-}
 func (UnimplementedEventServiceServer) UpdateUser(context.Context, *User) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
 }
 func (UnimplementedEventServiceServer) DeleteUser(context.Context, *UserRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
+}
+func (UnimplementedEventServiceServer) ListUsers(context.Context, *emptypb.Empty) (*Users, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListUsers not implemented")
 }
 func (UnimplementedEventServiceServer) CreateEvent(context.Context, *Event) (*EventResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateEvent not implemented")
@@ -187,14 +187,14 @@ func (UnimplementedEventServiceServer) CreateEvent(context.Context, *Event) (*Ev
 func (UnimplementedEventServiceServer) GetEvent(context.Context, *EventRequest) (*Event, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetEvent not implemented")
 }
-func (UnimplementedEventServiceServer) GetEventsForUser(context.Context, *GetEventsForUserRequest) (*Events, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetEventsForUser not implemented")
-}
 func (UnimplementedEventServiceServer) UpdateEvent(context.Context, *Event) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateEvent not implemented")
 }
 func (UnimplementedEventServiceServer) DeleteEvent(context.Context, *EventRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteEvent not implemented")
+}
+func (UnimplementedEventServiceServer) ListEventsForUser(context.Context, *GetEventsForUserRequest) (*Events, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListEventsForUser not implemented")
 }
 
 // UnsafeEventServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -244,24 +244,6 @@ func _EventService_GetUser_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EventService_GetAllUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(EventServiceServer).GetAllUsers(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: EventService_GetAllUsers_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EventServiceServer).GetAllUsers(ctx, req.(*emptypb.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _EventService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(User)
 	if err := dec(in); err != nil {
@@ -294,6 +276,24 @@ func _EventService_DeleteUser_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(EventServiceServer).DeleteUser(ctx, req.(*UserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EventService_ListUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EventServiceServer).ListUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EventService_ListUsers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EventServiceServer).ListUsers(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -334,24 +334,6 @@ func _EventService_GetEvent_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EventService_GetEventsForUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetEventsForUserRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(EventServiceServer).GetEventsForUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: EventService_GetEventsForUser_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EventServiceServer).GetEventsForUser(ctx, req.(*GetEventsForUserRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _EventService_UpdateEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Event)
 	if err := dec(in); err != nil {
@@ -388,6 +370,24 @@ func _EventService_DeleteEvent_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EventService_ListEventsForUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetEventsForUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EventServiceServer).ListEventsForUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EventService_ListEventsForUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EventServiceServer).ListEventsForUser(ctx, req.(*GetEventsForUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // EventService_ServiceDesc is the grpc.ServiceDesc for EventService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -404,16 +404,16 @@ var EventService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EventService_GetUser_Handler,
 		},
 		{
-			MethodName: "GetAllUsers",
-			Handler:    _EventService_GetAllUsers_Handler,
-		},
-		{
 			MethodName: "UpdateUser",
 			Handler:    _EventService_UpdateUser_Handler,
 		},
 		{
 			MethodName: "DeleteUser",
 			Handler:    _EventService_DeleteUser_Handler,
+		},
+		{
+			MethodName: "ListUsers",
+			Handler:    _EventService_ListUsers_Handler,
 		},
 		{
 			MethodName: "CreateEvent",
@@ -424,10 +424,6 @@ var EventService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EventService_GetEvent_Handler,
 		},
 		{
-			MethodName: "GetEventsForUser",
-			Handler:    _EventService_GetEventsForUser_Handler,
-		},
-		{
 			MethodName: "UpdateEvent",
 			Handler:    _EventService_UpdateEvent_Handler,
 		},
@@ -435,7 +431,11 @@ var EventService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "DeleteEvent",
 			Handler:    _EventService_DeleteEvent_Handler,
 		},
+		{
+			MethodName: "ListEventsForUser",
+			Handler:    _EventService_ListEventsForUser_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "eventservice.proto",
+	Metadata: "event_service.proto",
 }

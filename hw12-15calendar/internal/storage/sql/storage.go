@@ -121,7 +121,7 @@ func (s *Storage) prepareQuery(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf(fmtStrErr, "insertUser", err)
 	}
-	sqlGetUser := "select id, name, email from users where id = $1"
+	sqlGetUser := "select id, name, hash_password, email from users where id = $1"
 	s.getUser, err = s.db.PrepareContext(ctx, sqlGetUser)
 	if err != nil {
 		return fmt.Errorf(fmtStrErr, "getUser", err)

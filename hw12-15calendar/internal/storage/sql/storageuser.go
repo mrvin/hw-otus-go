@@ -21,7 +21,7 @@ func (s *Storage) CreateUser(ctx context.Context, user *storage.User) (int64, er
 func (s *Storage) GetUser(ctx context.Context, id int64) (*storage.User, error) {
 	var user storage.User
 
-	if err := s.getUser.QueryRowContext(ctx, id).Scan(&user.ID, &user.Name, &user.Email); err != nil {
+	if err := s.getUser.QueryRowContext(ctx, id).Scan(&user.ID, &user.Name, &user.HashPassword, &user.Email); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("%w: %d", storage.ErrNoUser, id)
 		}
@@ -55,7 +55,7 @@ func (s *Storage) ListUsers(ctx context.Context) ([]storage.User, error) {
 
 	for rows.Next() {
 		var user storage.User
-		err = rows.Scan(&user.ID, &user.Name, &user.Email)
+		err = rows.Scan(&user.ID, &user.Name, &user.HashPassword, &user.Email)
 		if err != nil {
 			return nil, fmt.Errorf("can't scan next row: %w", err)
 		}

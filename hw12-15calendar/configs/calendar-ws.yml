@@ -1,5 +1,12 @@
+client: "grpc"
+
+# HTTP client settings
+http-client:
+    host: calendar
+    port: 8088
+
 # GRPC client settings
-grpc:
+grpc-client:
     host: calendar
     port: 55555
 

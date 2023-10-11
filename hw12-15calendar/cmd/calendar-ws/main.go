@@ -9,7 +9,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/grpcclient"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/client"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/client/grpc"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/client/http"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/httpserver"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/logger"
@@ -17,15 +19,17 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/tracer"
 )
 
-type Config struct {
-	HTTP   httpserver.Conf `yaml:"http"`
-	GRPC   grpcclient.Conf `yaml:"grpc"`
-	Logger logger.Conf     `yaml:"logger"`
-	Tracer tracer.Conf     `yaml:"tracer"`
-	Metric metric.Conf     `yaml:"metrics"`
-}
-
 const serviceName = "Calendar-ws"
+
+type Config struct {
+	Client     string          `yaml:"client"`
+	HTTPClient httpclient.Conf `yaml:"http-client"`
+	GRPCClient grpcclient.Conf `yaml:"grpc-client"`
+	HTTP       httpserver.Conf `yaml:"http"`
+	Logger     logger.Conf     `yaml:"logger"`
+	Tracer     tracer.Conf     `yaml:"tracer"`
+	Metric     metric.Conf     `yaml:"metrics"`
+}
 
 var ctx = context.Background()
 
@@ -83,15 +87,25 @@ func main() {
 		}
 	}
 
-	clientGRPC, err := grpcclient.New(&conf.GRPC)
-	if err != nil {
-		slog.Error("Failed to init gRPC client: " + err.Error())
-		return
+	var client client.Calendar
+	if conf.Client == "grpc" {
+		client, err = grpcclient.New(&conf.GRPCClient)
+		if err != nil {
+			slog.Error("Failed to init gRPC client: " + err.Error())
+			return
+		}
+		slog.Info("Connect to gRPC server")
+		defer func() {
+			if clientGRPC, ok := client.(*grpcclient.Client); ok {
+				if err := clientGRPC.Close(); err != nil {
+					slog.Error("Failed to close gRPC connect: " + err.Error())
+				} else {
+					slog.Info("Closing the gRPC connection")
+				}
+			}
+		}()
 	}
-	defer clientGRPC.Close()
-	slog.Info("Connect to gRPC server")
-
-	serverHTTP := httpserver.New(&conf.HTTP, clientGRPC.Cl)
+	serverHTTP := httpserver.New(&conf.HTTP, client)
 
 	if err := serverHTTP.Start(); err != nil {
 		if !errors.Is(err, http.ErrServerClosed) {
@@ -99,4 +113,6 @@ func main() {
 			return
 		}
 	}
+
+	slog.Info("Stop service " + serviceName)
 }

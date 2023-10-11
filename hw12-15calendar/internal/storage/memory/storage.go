@@ -31,10 +31,10 @@ func (s *Storage) CreateUser(_ context.Context, user *storage.User) (int64, erro
 	defer s.muUsers.Unlock()
 
 	s.maxIDUser++
-	id := s.maxIDUser
+	user.ID = s.maxIDUser
 	s.mUsers[s.maxIDUser] = *user
 
-	return id, nil
+	return user.ID, nil
 }
 
 func (s *Storage) GetUser(_ context.Context, id int64) (*storage.User, error) {
@@ -107,10 +107,10 @@ func (s *Storage) CreateEvent(_ context.Context, event *storage.Event) (int64, e
 	defer s.muEvents.Unlock()
 
 	s.maxIDEvent++
-	id := s.maxIDEvent
+	event.ID = s.maxIDEvent
 	s.mEvents[s.maxIDEvent] = *event
 
-	return id, nil
+	return event.ID, nil
 }
 
 func (s *Storage) GetEvent(_ context.Context, id int64) (*storage.Event, error) {

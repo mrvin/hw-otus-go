@@ -158,7 +158,7 @@ func main() {
 		}
 	}
 
-	slog.Info("Stop service calendar")
+	slog.Info("Stop service " + serviceName)
 }
 
 func listenForShutdown(signals chan os.Signal, serverHTTP *httpserver.Server, serverGRPC *grpcserver.Server) {
