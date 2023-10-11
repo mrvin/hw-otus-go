@@ -4,28 +4,26 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-api"
-	"google.golang.org/protobuf/types/known/emptypb"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
 
 func (h *Handler) DisplayListUsers(res http.ResponseWriter, req *http.Request) {
-	users, err := h.grpcclient.GetAllUsers(req.Context(), &emptypb.Empty{})
+	users, err := h.client.ListUsers(req.Context())
 	if err != nil {
-		slog.Error("gRPC get all users: GetAllUsers: " + err.Error())
-		h.ErrMsg(res)
+		slog.Error("List users: " + err.Error())
 		return
 	}
 
 	dataUsers := struct {
 		Title string
 		Body  struct {
-			Users []*calendarapi.User
+			Users []storage.User
 		}
 	}{
 		Title: "List users",
 		Body: struct {
-			Users []*calendarapi.User
-		}{users.Users},
+			Users []storage.User
+		}{users},
 	}
 
 	if err := h.templates.Execute("list-users.html", res, dataUsers); err != nil {
@@ -42,23 +40,21 @@ func (h *Handler) DisplayUser(res http.ResponseWriter, req *http.Request) {
 		h.ErrMsg(res)
 		return
 	}
-	reqUser := &calendarapi.UserRequest{Id: int64(idUser)}
-	user, err := h.grpcclient.GetUser(req.Context(), reqUser)
+	user, err := h.client.GetUser(req.Context(), idUser)
 	if err != nil {
-		slog.Error("gRPC get user: " + err.Error())
-		h.ErrMsg(res)
+		slog.Error("Get user: " + err.Error())
 		return
 	}
 
 	dataUser := struct {
 		Title string
 		Body  struct {
-			User *calendarapi.User
+			User *storage.User
 		}
 	}{
 		Title: "User",
 		Body: struct {
-			User *calendarapi.User
+			User *storage.User
 		}{user},
 	}
 
@@ -87,15 +83,15 @@ func (h *Handler) CreateUser(res http.ResponseWriter, req *http.Request) {
 	}
 
 	name := req.FormValue("name")
+	password := req.FormValue("password")
 	email := req.FormValue("email")
 
-	user := &calendarapi.User{Name: name, Email: email}
-	_, err := h.grpcclient.CreateUser(req.Context(), user)
-	if err != nil {
-		slog.Error("gRPC create user: " + err.Error())
-		h.ErrMsg(res)
+	if _, err := h.client.CreateUser(req.Context(), name, password, email); err != nil {
+		slog.Error("Create user: " + err.Error())
 		return
 	}
+
+	// FIXIT
 	h.DisplayListUsers(res, req)
 }
 
@@ -106,10 +102,8 @@ func (h *Handler) DeleteUser(res http.ResponseWriter, req *http.Request) {
 		h.ErrMsg(res)
 		return
 	}
-	reqUser := &calendarapi.UserRequest{Id: int64(idUser)}
-	if _, err := h.grpcclient.DeleteUser(req.Context(), reqUser); err != nil {
-		slog.Error("gRPC delete user: ", err.Error())
-		h.ErrMsg(res)
+	if err := h.client.DeleteUser(req.Context(), idUser); err != nil {
+		slog.Error("Delete user: " + err.Error())
 		return
 	}
 

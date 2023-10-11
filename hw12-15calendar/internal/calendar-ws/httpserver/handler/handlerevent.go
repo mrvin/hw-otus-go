@@ -7,9 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-api"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 //TODO: http.Error(res, err.Error(), http.StatusBadRequest)
@@ -25,12 +23,12 @@ func (h *Handler) DisplayFormEvent(res http.ResponseWriter, req *http.Request) {
 	data := struct {
 		Title string
 		Body  struct {
-			UserID int
+			UserID int64
 		}
 	}{
 		Title: "Create event",
 		Body: struct {
-			UserID int
+			UserID int64
 		}{idUser},
 	}
 	if err := h.templates.Execute("form-event.html", res, data); err != nil {
@@ -60,7 +58,7 @@ func (h *Handler) CreateEvent(res http.ResponseWriter, req *http.Request) {
 		h.ErrMsg(res)
 		return
 	}
-	idUser, err := strconv.Atoi(idStr)
+	idUser, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		slog.Error("Convert id: " + err.Error())
 		h.ErrMsg(res)
@@ -82,13 +80,8 @@ func (h *Handler) CreateEvent(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	starTimePB := timestamppb.New(startTimeGO)
-	stopTimePB := timestamppb.New(stopTimeGO)
-	event := &calendarapi.Event{Title: title, Description: description, StartTime: starTimePB, StopTime: stopTimePB, UserID: int64(idUser)}
-	_, err = h.grpcclient.CreateEvent(req.Context(), event)
-	if err != nil {
-		slog.Error("gRPC сreate event: " + err.Error())
-		h.ErrMsg(res)
+	if _, err := h.client.CreateEvent(req.Context(), title, description, startTimeGO, stopTimeGO, idUser); err != nil {
+		slog.Error("Create event: " + err.Error())
 		return
 	}
 
@@ -110,16 +103,12 @@ func (h *Handler) DisplayEvent(res http.ResponseWriter, req *http.Request) {
 		h.ErrMsg(res)
 		return
 	}
-	reqEvent := &calendarapi.EventRequest{Id: int64(idEvent)}
-	event, err := h.grpcclient.GetEvent(req.Context(), reqEvent)
+
+	event, err := h.client.GetEvent(req.Context(), idEvent)
 	if err != nil {
-		slog.Error("gRPC get event: " + err.Error())
-		h.ErrMsg(res)
+		slog.Error("Get event: " + err.Error())
 		return
 	}
-
-	storageEvent := storage.Event{ID: int(event.Id), Title: event.Title,
-		Description: event.Description, StartTime: event.StartTime.AsTime(), StopTime: event.StopTime.AsTime()}
 
 	dataEvent := struct {
 		Title string
@@ -130,7 +119,7 @@ func (h *Handler) DisplayEvent(res http.ResponseWriter, req *http.Request) {
 		Title: "Event",
 		Body: struct {
 			Event storage.Event
-		}{storageEvent},
+		}{*event},
 	}
 
 	if err := h.templates.Execute("event.html", res, dataEvent); err != nil {
@@ -157,31 +146,20 @@ func (h *Handler) DisplayListEventsForUser(res http.ResponseWriter, req *http.Re
 		}
 	}
 
-	reqUser := &calendarapi.GetEventsForUserRequest{
-		User: &calendarapi.UserRequest{Id: int64(idUser)},
-		DaysAhead: &calendarapi.DaysAheadRequest{
-			Days: int32(days),
-			Date: timestamppb.New(time.Now())}}
-
-	events, err := h.grpcclient.GetEventsForUser(req.Context(), reqUser)
-	if err != nil {
-		slog.Error("gRPC list events for user: " + err.Error())
-		h.ErrMsg(res)
-		return
-	}
+	events, err := h.client.ListEventsForUser(req.Context(), idUser, days)
 
 	dataEvent := struct {
 		Title string
 		Body  struct {
-			UserID int
-			Events []*calendarapi.Event
+			UserID int64
+			Events []storage.Event
 		}
 	}{
 		Title: "List events",
 		Body: struct {
-			UserID int
-			Events []*calendarapi.Event
-		}{idUser, events.Events},
+			UserID int64
+			Events []storage.Event
+		}{idUser, events},
 	}
 
 	if err := h.templates.Execute("list-events.html", res, dataEvent); err != nil {
@@ -198,10 +176,9 @@ func (h *Handler) DeleteEvent(res http.ResponseWriter, req *http.Request) {
 		h.ErrMsg(res)
 		return
 	}
-	reqEvent := &calendarapi.EventRequest{Id: int64(idEvent)}
-	if _, err := h.grpcclient.DeleteEvent(req.Context(), reqEvent); err != nil {
-		slog.Error("gRPC delete event: " + err.Error())
-		h.ErrMsg(res)
+
+	if err := h.client.DeleteEvent(req.Context(), idEvent); err != nil {
+		slog.Error("Delete event: " + err.Error())
 		return
 	}
 

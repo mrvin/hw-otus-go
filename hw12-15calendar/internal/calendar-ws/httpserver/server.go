@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/client"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/httpserver/handler"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-api"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/logger"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver"
 	regexpresolver "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver/regex"
@@ -24,10 +24,10 @@ type Server struct {
 	http.Server
 }
 
-func New(conf *Conf, grpcclient calendarapi.EventServiceClient) *Server {
+func New(conf *Conf, client client.Calendar) *Server {
 	res := regexpresolver.New()
 
-	h := handler.New(grpcclient)
+	h := handler.New(client)
 
 	res.Add("GET /list-users", h.DisplayListUsers)
 	res.Add(`GET \/list-events\?id=([0-9]+)\&days=([0-9]+$)`, h.DisplayListEventsForUser)

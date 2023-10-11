@@ -7,23 +7,23 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/client"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/httpserver/templateloader"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-api"
 )
 
 var ErrIDEmpty = errors.New("id is empty")
 
 type Handler struct {
-	templates  *templateloader.TemplateLoader
-	grpcclient calendarapi.EventServiceClient
+	templates *templateloader.TemplateLoader
+	client    client.Calendar
 }
 
-func New(grpcclient calendarapi.EventServiceClient) *Handler {
+func New(client client.Calendar) *Handler {
 	templates := templateloader.New()
 	templates.Load("templates")
 	return &Handler{
-		templates:  templates,
-		grpcclient: grpcclient,
+		templates: templates,
+		client:    client,
 	}
 }
 
@@ -34,12 +34,12 @@ type resp struct {
 	}
 }
 
-func getID(req *http.Request) (int, error) {
+func getID(req *http.Request) (int64, error) {
 	idStr := req.URL.Query().Get("id")
 	if idStr == "" {
 		return 0, ErrIDEmpty
 	}
-	id, err := strconv.Atoi(idStr)
+	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		return 0, fmt.Errorf("convert id: %w", err)
 	}
