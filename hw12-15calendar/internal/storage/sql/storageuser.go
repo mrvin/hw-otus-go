@@ -84,8 +84,8 @@ func (s *Storage) UpdateUser(ctx context.Context, user *storage.User) error {
 	return nil
 }
 
-func (s *Storage) DeleteUser(ctx context.Context, id int64) error {
-	res, err := s.db.ExecContext(ctx, "delete from users where id = $1", id)
+func (s *Storage) DeleteUser(ctx context.Context, name string) error {
+	res, err := s.db.ExecContext(ctx, "delete from users where name = $1", name)
 	if err != nil {
 		return fmt.Errorf("delete user: %w", err)
 	}
@@ -94,7 +94,7 @@ func (s *Storage) DeleteUser(ctx context.Context, id int64) error {
 		return fmt.Errorf("delete user: %w", err)
 	}
 	if count != 1 {
-		return fmt.Errorf("%w: %d", storage.ErrNoUser, id)
+		return fmt.Errorf("%w: %s", storage.ErrNoUserName, name)
 	}
 
 	return nil

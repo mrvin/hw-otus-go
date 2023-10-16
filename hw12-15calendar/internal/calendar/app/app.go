@@ -116,11 +116,11 @@ func (a *App) UpdateUser(ctx context.Context, user *storage.User) error {
 	return a.storage.UpdateUser(cctx, user)
 }
 
-func (a *App) DeleteUser(ctx context.Context, id int64) error {
+func (a *App) DeleteUser(ctx context.Context, name string) error {
 	cctx, sp := a.tr.Start(ctx, "DeleteUser")
 	defer sp.End()
 
-	return a.storage.DeleteUser(cctx, id)
+	return a.storage.DeleteUser(cctx, name)
 }
 
 func (a *App) ListUsers(ctx context.Context) ([]storage.User, error) {

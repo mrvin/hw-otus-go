@@ -115,18 +115,15 @@ func (h *Handler) UpdateUser(res http.ResponseWriter, req *http.Request) {
 }
 
 func (h *Handler) DeleteUser(res http.ResponseWriter, req *http.Request) {
-	id, err := getID(req)
-	if err != nil {
-		slog.Error("Get user id from request body: " + err.Error())
-		if errors.Is(err, ErrIDEmpty) {
-			http.Error(res, err.Error(), http.StatusBadRequest)
-		} else {
-			http.Error(res, err.Error(), http.StatusInternalServerError)
-		}
+	userName := req.URL.Query().Get("name")
+	if userName == "" {
+		err := fmt.Errorf("Get user name from request: " + req.URL.RawQuery)
+		slog.Error(err.Error())
+		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err := h.app.DeleteUser(req.Context(), id); err != nil {
+	if err := h.app.DeleteUser(req.Context(), userName); err != nil {
 		slog.Error("Delete user in storage: " + err.Error())
 		if errors.Is(err, storage.ErrNoUser) {
 			http.Error(res, err.Error(), http.StatusBadRequest)

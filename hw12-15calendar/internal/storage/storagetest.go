@@ -80,7 +80,7 @@ func TestUserCRUD(ctx context.Context, t *testing.T, st Storage) {
 
 	// Delete all users
 	for _, user := range users {
-		if err := st.DeleteUser(ctx, user.ID); err != nil {
+		if err := st.DeleteUser(ctx, user.Name); err != nil {
 			t.Errorf("DeleteUser: %v", err)
 		}
 	}
@@ -94,7 +94,7 @@ func TestUserCRUD(ctx context.Context, t *testing.T, st Storage) {
 	if !errors.Is(err, ErrNoUser) {
 		t.Errorf("UpdateUser(id = %d): %v", users[1].ID, err)
 	}
-	err = st.DeleteUser(ctx, users[2].ID)
+	err = st.DeleteUser(ctx, users[2].Name)
 	if !errors.Is(err, ErrNoUser) {
 		t.Errorf("DeleteUser(id = %d): %v", users[2].ID, err)
 	}
@@ -170,7 +170,7 @@ func TestEventCRUD(ctx context.Context, t *testing.T, st Storage) { //nolint:fun
 
 	// Delete all users
 	for _, user := range users {
-		if err := st.DeleteUser(ctx, user.ID); err != nil {
+		if err := st.DeleteUser(ctx, user.Name); err != nil {
 			t.Errorf("DeleteUser: %v", err)
 		}
 	}

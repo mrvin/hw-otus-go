@@ -1,5 +1,5 @@
 //go:generate protoc -I=../../api/ --go_out=../../internal/calendar-api --go-grpc_out=require_unimplemented_servers=false:../../internal/calendar-api ../../api/event_service.proto
-
+//go:generate protoc -I=../../api/ --go_out=../../internal/calendar-api --go-grpc_out=require_unimplemented_servers=false:../../internal/calendar-api ../../api/user_service.proto
 package main
 
 import (

@@ -20,8 +20,9 @@ type Conf struct {
 }
 
 type Client struct {
-	Cl   calendarapi.EventServiceClient
-	conn *grpc.ClientConn
+	eventService calendarapi.EventServiceClient
+	userService  calendarapi.UserServiceClient
+	conn         *grpc.ClientConn
 }
 
 const shortDuration = 5 * time.Second
@@ -40,17 +41,18 @@ func New(conf *Conf) (*Client, error) {
 		return nil, fmt.Errorf("connect to %s: %w", confHost, err)
 	}
 
-	client.Cl = calendarapi.NewEventServiceClient(client.conn)
+	client.eventService = calendarapi.NewEventServiceClient(client.conn)
+	client.userService = calendarapi.NewUserServiceClient(client.conn)
 
 	return &client, nil
 }
 func (c *Client) CreateUser(ctx context.Context, name, password, email string) (int64, error) {
-	user := &calendarapi.User{
+	user := &calendarapi.CreateUserRequest{
 		Name:     name,
 		Password: password,
 		Email:    email,
 	}
-	response, err := c.Cl.CreateUser(ctx, user)
+	response, err := c.userService.CreateUser(ctx, user)
 	if err != nil {
 		return 0, fmt.Errorf("gRPC: %w", err)
 	}
@@ -65,8 +67,8 @@ func (c *Client) CreateUser(ctx context.Context, name, password, email string) (
 }
 
 func (c *Client) GetUser(ctx context.Context, id int64) (*storage.User, error) {
-	reqUser := &calendarapi.UserRequest{Id: id}
-	user, err := c.Cl.GetUser(ctx, reqUser)
+	reqUser := &calendarapi.GetUserByIDRequest{Id: id}
+	user, err := c.userService.GetUserByID(ctx, reqUser)
 	if err != nil {
 		return nil, fmt.Errorf("gRPC: %w", err)
 	}
@@ -74,18 +76,18 @@ func (c *Client) GetUser(ctx context.Context, id int64) (*storage.User, error) {
 	return &storage.User{
 		ID:           user.Id,
 		Name:         user.Name,
-		HashPassword: user.Password,
+		HashPassword: user.HashPassword,
 		Email:        user.Email,
 	}, nil
 }
 
 func (c *Client) UpdateUser(ctx context.Context, name, password, email string) error {
-	user := &calendarapi.User{
+	user := &calendarapi.UpdateUserRequest{
 		Name:     name,
 		Password: password,
 		Email:    email,
 	}
-	_, err := c.Cl.UpdateUser(ctx, user)
+	_, err := c.userService.UpdateUser(ctx, user)
 	if err != nil {
 		return fmt.Errorf("gRPC: %w", err)
 	}
@@ -96,9 +98,9 @@ func (c *Client) UpdateUser(ctx context.Context, name, password, email string) e
 	return nil
 }
 
-func (c *Client) DeleteUser(ctx context.Context, id int64) error {
-	reqUser := &calendarapi.UserRequest{Id: id}
-	if _, err := c.Cl.DeleteUser(ctx, reqUser); err != nil {
+func (c *Client) DeleteUser(ctx context.Context, name string) error {
+	reqUser := &calendarapi.DeleteUserRequest{Name: name}
+	if _, err := c.userService.DeleteUser(ctx, reqUser); err != nil {
 		return fmt.Errorf("gRPC: %w", err)
 	}
 
@@ -106,7 +108,7 @@ func (c *Client) DeleteUser(ctx context.Context, id int64) error {
 }
 
 func (c *Client) ListUsers(ctx context.Context) ([]storage.User, error) {
-	users, err := c.Cl.ListUsers(ctx, &emptypb.Empty{})
+	users, err := c.userService.ListUsers(ctx, &emptypb.Empty{})
 	if err != nil {
 		return nil, fmt.Errorf("gRPC: %w", err)
 	}
@@ -116,7 +118,7 @@ func (c *Client) ListUsers(ctx context.Context) ([]storage.User, error) {
 		listUsers = append(listUsers, storage.User{
 			ID:           user.Id,
 			Name:         user.Name,
-			HashPassword: user.Password,
+			HashPassword: user.HashPassword,
 			Email:        user.Email,
 		})
 	}
@@ -129,14 +131,14 @@ func (c *Client) CreateEvent(
 	startTime, stopTime time.Time,
 	userID int64) (int64, error) {
 
-	event := &calendarapi.Event{
+	event := &calendarapi.CreateEventRequest{
 		Title:       title,
 		Description: description,
 		StartTime:   timestamppb.New(startTime),
 		StopTime:    timestamppb.New(stopTime),
 		UserID:      userID,
 	}
-	response, err := c.Cl.CreateEvent(ctx, event)
+	response, err := c.eventService.CreateEvent(ctx, event)
 	if err != nil {
 		return 0, fmt.Errorf("gRPC: %w", err)
 	}
@@ -150,8 +152,8 @@ func (c *Client) CreateEvent(
 }
 
 func (c *Client) GetEvent(ctx context.Context, id int64) (*storage.Event, error) {
-	reqEvent := &calendarapi.EventRequest{Id: id}
-	event, err := c.Cl.GetEvent(ctx, reqEvent)
+	reqEvent := &calendarapi.GetEventByIDRequest{Id: id}
+	event, err := c.eventService.GetEventByID(ctx, reqEvent)
 	if err != nil {
 		return nil, fmt.Errorf("gRPC: %w", err)
 	}
@@ -165,8 +167,8 @@ func (c *Client) GetEvent(ctx context.Context, id int64) (*storage.Event, error)
 	}, nil
 }
 func (c *Client) DeleteEvent(ctx context.Context, id int64) error {
-	reqEvent := &calendarapi.EventRequest{Id: id}
-	if _, err := c.Cl.DeleteEvent(ctx, reqEvent); err != nil {
+	reqEvent := &calendarapi.DeleteEventRequest{Id: id}
+	if _, err := c.eventService.DeleteEvent(ctx, reqEvent); err != nil {
 		return fmt.Errorf("gRPC: %w", err)
 
 	}
@@ -175,15 +177,13 @@ func (c *Client) DeleteEvent(ctx context.Context, id int64) error {
 }
 
 func (c *Client) ListEventsForUser(ctx context.Context, idUser int64, days int) ([]storage.Event, error) {
-	reqUser := &calendarapi.GetEventsForUserRequest{
-		User: &calendarapi.UserRequest{Id: idUser},
-		DaysAhead: &calendarapi.DaysAheadRequest{
-			Days: int32(days),
-			Date: timestamppb.New(time.Now()),
-		},
+	reqUser := &calendarapi.ListEventsForUserRequest{
+		UserId: idUser,
+		Days:   int32(days),
+		Date:   timestamppb.New(time.Now()),
 	}
 
-	events, err := c.Cl.ListEventsForUser(ctx, reqUser)
+	events, err := c.eventService.ListEventsForUser(ctx, reqUser)
 	if err != nil {
 		return nil, fmt.Errorf("gRPC: %w", err)
 	}

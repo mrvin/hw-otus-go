@@ -48,6 +48,6 @@ jobs:
 
     - name: Test
       run: |
-        sed -i 's/, "postgres"/, "localhost"/g' hw12-15calendar/internal/calendar/httpserver/handler/handler_test.go
+        sed -i 's/, "postgres"/, "localhost"/g' hw12-15calendar/internal/calendar/httpserver/handlers/handler_test.go
         sed -i 's/, "postgres"/, "localhost"/g' hw12-15calendar/internal/storage/sql/storage_test.go
         cd hw12-15calendar/ && make test

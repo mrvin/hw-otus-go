@@ -75,13 +75,19 @@ func (s *Storage) UpdateUser(_ context.Context, user *storage.User) error {
 	return nil
 }
 
-func (s *Storage) DeleteUser(_ context.Context, id int64) error {
+func (s *Storage) DeleteUser(_ context.Context, name string) error {
+	var id int64
 	s.muUsers.Lock()
-	if _, ok := s.mUsers[id]; !ok {
-		s.muUsers.Unlock()
-		return fmt.Errorf("%w: %d", storage.ErrNoUser, id)
+	for _, user := range s.mUsers {
+		if user.Name == name {
+			delete(s.mUsers, user.ID)
+			id = user.ID
+			break
+		}
 	}
-	delete(s.mUsers, id)
+	if id == 0 {
+		return fmt.Errorf("%w: %s", storage.ErrNoUserName, name)
+	}
 	s.muUsers.Unlock()
 
 	s.muEvents.Lock()
