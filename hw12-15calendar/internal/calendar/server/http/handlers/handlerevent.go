@@ -25,7 +25,7 @@ func (h *Handler) CreateEvent(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	id, err := h.app.CreateEvent(req.Context(), event)
+	id, err := h.eventService.CreateEvent(req.Context(), event)
 	if err != nil {
 		slog.Error("Saving event to storage: " + err.Error())
 		http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -62,7 +62,7 @@ func (h *Handler) GetEvent(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	event, err := h.app.GetEvent(req.Context(), id)
+	event, err := h.eventService.GetEvent(req.Context(), id)
 	if err != nil {
 		slog.Error("Get event from storage: " + err.Error())
 		if errors.Is(err, storage.ErrNoEvent) {
@@ -103,7 +103,7 @@ func (h *Handler) UpdateEvent(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err := h.app.UpdateEvent(req.Context(), event); err != nil {
+	if err := h.eventService.UpdateEvent(req.Context(), event); err != nil {
 		slog.Error("Update event in storage: " + err.Error())
 		if errors.Is(err, storage.ErrNoEvent) {
 			http.Error(res, err.Error(), http.StatusBadRequest)
@@ -126,7 +126,7 @@ func (h *Handler) DeleteEvent(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err := h.app.DeleteEvent(req.Context(), id); err != nil {
+	if err := h.eventService.DeleteEvent(req.Context(), id); err != nil {
 		slog.Error("Delete event in storage: " + err.Error())
 		if errors.Is(err, storage.ErrNoEvent) {
 			http.Error(res, err.Error(), http.StatusBadRequest)

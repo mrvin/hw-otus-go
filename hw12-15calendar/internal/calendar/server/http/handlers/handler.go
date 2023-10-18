@@ -6,18 +6,21 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/app"
+	authservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/auth"
+	eventservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/event"
 )
 
 var ErrIDEmpty = errors.New("id is empty")
 
 type Handler struct {
-	app *app.App
+	authService  *authservice.AuthService
+	eventService *eventservice.EventService
 }
 
-func New(a *app.App) *Handler {
+func New(auth *authservice.AuthService, events *eventservice.EventService) *Handler {
 	return &Handler{
-		app: a,
+		authService:  auth,
+		eventService: events,
 	}
 }
 

@@ -7,7 +7,8 @@ import (
 	"net"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-api"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/app"
+	authservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/auth"
+	eventservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/event"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
@@ -22,16 +23,18 @@ type Conf struct {
 }
 
 type Server struct {
-	serv *grpc.Server
-	ln   net.Listener
-	app  *app.App
-	addr string
+	serv         *grpc.Server
+	ln           net.Listener
+	authService  *authservice.AuthService
+	eventService *eventservice.EventService
+	addr         string
 }
 
-func New(conf *Conf, app *app.App) (*Server, error) {
+func New(conf *Conf, auth *authservice.AuthService, events *eventservice.EventService) (*Server, error) {
 	var server Server
 
-	server.app = app
+	server.authService = auth
+	server.eventService = events
 
 	var err error
 	server.addr = fmt.Sprintf("%s:%d", conf.Host, conf.Port)
@@ -75,7 +78,7 @@ func (s *Server) CreateUser(ctx context.Context, userpb *calendarapi.CreateUserR
 		Email:        userpb.GetEmail(),
 		Events:       nil,
 	}
-	id, err := s.app.CreateUser(ctx, &user)
+	id, err := s.authService.CreateUser(ctx, &user)
 	if err != nil {
 		err = fmt.Errorf("create user: %w", err)
 		slog.Error(err.Error())
@@ -86,7 +89,7 @@ func (s *Server) CreateUser(ctx context.Context, userpb *calendarapi.CreateUserR
 }
 
 func (s *Server) GetUserByID(ctx context.Context, req *calendarapi.GetUserByIDRequest) (*calendarapi.UserResponse, error) {
-	user, err := s.app.GetUser(ctx, req.GetId())
+	user, err := s.authService.GetUser(ctx, req.GetId())
 	if err != nil {
 		err := fmt.Errorf("get user: %w", err)
 		slog.Error(err.Error())
@@ -102,7 +105,7 @@ func (s *Server) GetUserByID(ctx context.Context, req *calendarapi.GetUserByIDRe
 }
 
 func (s *Server) ListUsers(ctx context.Context, _ *emptypb.Empty) (*calendarapi.ListUsersResponse, error) {
-	users, err := s.app.ListUsers(ctx)
+	users, err := s.authService.ListUsers(ctx)
 	if err != nil {
 		err := fmt.Errorf("get all users: %w", err)
 		slog.Error(err.Error())
@@ -127,7 +130,7 @@ func (s *Server) UpdateUser(ctx context.Context, userpb *calendarapi.UpdateUserR
 		Email:  userpb.GetEmail(),
 		Events: nil,
 	}
-	if err := s.app.UpdateUser(ctx, &user); err != nil {
+	if err := s.authService.UpdateUser(ctx, &user); err != nil {
 		err := fmt.Errorf("update user: %w", err)
 		slog.Error(err.Error())
 		return nil, err
@@ -137,7 +140,7 @@ func (s *Server) UpdateUser(ctx context.Context, userpb *calendarapi.UpdateUserR
 }
 
 func (s *Server) DeleteUser(ctx context.Context, req *calendarapi.DeleteUserRequest) (*emptypb.Empty, error) {
-	if err := s.app.DeleteUser(ctx, req.GetName()); err != nil {
+	if err := s.authService.DeleteUserByName(ctx, req.GetName()); err != nil {
 		err := fmt.Errorf("delete user: %w", err)
 		slog.Error(err.Error())
 		return nil, err
@@ -147,7 +150,11 @@ func (s *Server) DeleteUser(ctx context.Context, req *calendarapi.DeleteUserRequ
 }
 
 func (s *Server) Login(ctx context.Context, req *calendarapi.LoginRequest) (*calendarapi.LoginResponse, error) {
-	tokenString := "Пук"
+	tokenString, err := s.authService.Authenticate(ctx, req.GetUsername(), req.GetPassword())
+	if err != nil {
+		slog.Error(err.Error())
+		return nil, err
+	}
 	return &calendarapi.LoginResponse{AccessToken: tokenString}, nil
 }
 
@@ -172,7 +179,7 @@ func (s *Server) CreateEvent(ctx context.Context, pbEvent *calendarapi.CreateEve
 		UserID:      pbEvent.GetUserID(),
 	}
 
-	id, err := s.app.CreateEvent(ctx, &event)
+	id, err := s.eventService.CreateEvent(ctx, &event)
 	if err != nil {
 		err = fmt.Errorf("create event: %w", err)
 		slog.Error(err.Error())
@@ -183,7 +190,7 @@ func (s *Server) CreateEvent(ctx context.Context, pbEvent *calendarapi.CreateEve
 }
 
 func (s *Server) GetEventByID(ctx context.Context, req *calendarapi.GetEventByIDRequest) (*calendarapi.EventResponse, error) {
-	event, err := s.app.GetEvent(ctx, req.GetId())
+	event, err := s.eventService.GetEvent(ctx, req.GetId())
 	if err != nil {
 		err := fmt.Errorf("get event: %w", err)
 		slog.Error(err.Error())
@@ -206,7 +213,7 @@ func (s *Server) ListEventsForUser(ctx context.Context, req *calendarapi.ListEve
 	}
 	date := req.Date.AsTime()
 
-	events, err := s.app.ListEventsForUser(ctx, req.GetUserId(), date, int(req.Days))
+	events, err := s.eventService.ListEventsForUser(ctx, req.GetUserId(), date, int(req.Days))
 	if err != nil {
 		err := fmt.Errorf("get events for user: %w", err)
 		slog.Error(err.Error())
@@ -249,7 +256,7 @@ func (s *Server) UpdateEvent(ctx context.Context, pbEvent *calendarapi.UpdateEve
 		UserID:      pbEvent.GetUserID(),
 	}
 
-	if err := s.app.UpdateEvent(ctx, &event); err != nil {
+	if err := s.eventService.UpdateEvent(ctx, &event); err != nil {
 		err := fmt.Errorf("update event: %w", err)
 		slog.Error(err.Error())
 		return nil, err
@@ -259,7 +266,7 @@ func (s *Server) UpdateEvent(ctx context.Context, pbEvent *calendarapi.UpdateEve
 }
 
 func (s *Server) DeleteEvent(ctx context.Context, req *calendarapi.DeleteEventRequest) (*emptypb.Empty, error) {
-	if err := s.app.DeleteEvent(ctx, req.GetId()); err != nil {
+	if err := s.eventService.DeleteEvent(ctx, req.GetId()); err != nil {
 		err := fmt.Errorf("delete event: %w", err)
 		slog.Error(err.Error())
 		return nil, err
@@ -289,3 +296,73 @@ func LogRequestGRPC(
 	// Last but super important, execute the handler so that the actualy gRPC request is also performed
 	return handler(ctx, req)
 }
+
+/*
+func (interceptor *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
+    return func(
+        ctx context.Context,
+        req interface{},
+        info *grpc.UnaryServerInfo,
+        handler grpc.UnaryHandler,
+    ) (interface{}, error) {
+        log.Println("--> unary interceptor: ", info.FullMethod)
+
+        err := interceptor.authorize(ctx, info.FullMethod)
+        if err != nil {
+            return nil, err
+        }
+
+        return handler(ctx, req)
+    }
+}
+
+type AuthInterceptor struct {
+    authClient  *AuthClient
+    authMethods map[string]bool
+    accessToken string
+}
+
+func (interceptor *AuthInterceptor) authorize(ctx context.Context, method string) error {
+    accessibleRoles, ok := interceptor.accessibleRoles[method]
+    if !ok {
+        // everyone can access
+        return nil
+    }
+
+    md, ok := metadata.FromIncomingContext(ctx)
+    if !ok {
+        return status.Errorf(codes.Unauthenticated, "metadata is not provided")
+    }
+
+    values := md["authorization"]
+    if len(values) == 0 {
+        return status.Errorf(codes.Unauthenticated, "authorization token is not provided")
+    }
+
+    accessToken := values[0]
+    claims, err := interceptor.jwtManager.Verify(accessToken)
+    if err != nil {
+        return status.Errorf(codes.Unauthenticated, "access token is invalid: %v", err)
+    }
+
+    for _, role := range accessibleRoles {
+        if role == claims.Role {
+            return nil
+        }
+    }
+
+    return status.Error(codes.PermissionDenied, "no permission to access this RPC")
+}
+
+func (interceptor *AuthInterceptor) refreshToken() error {
+    accessToken, err := interceptor.authClient.Login()
+    if err != nil {
+        return err
+    }
+
+    interceptor.accessToken = accessToken
+    log.Printf("token refreshed: %v", accessToken)
+
+    return nil
+}
+*/

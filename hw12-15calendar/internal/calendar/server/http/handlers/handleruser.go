@@ -25,7 +25,7 @@ func (h *Handler) CreateUser(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	id, err := h.app.CreateUser(req.Context(), user)
+	id, err := h.authService.CreateUser(req.Context(), user)
 	if err != nil {
 		slog.Error("Saving user to storage: " + err.Error())
 		http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -62,7 +62,7 @@ func (h *Handler) GetUser(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	user, err := h.app.GetUser(req.Context(), id)
+	user, err := h.authService.GetUser(req.Context(), id)
 	if err != nil {
 		slog.Error("Get user from storage: " + err.Error())
 		if errors.Is(err, storage.ErrNoUser) {
@@ -103,7 +103,7 @@ func (h *Handler) UpdateUser(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err := h.app.UpdateUser(req.Context(), user); err != nil {
+	if err := h.authService.UpdateUser(req.Context(), user); err != nil {
 		slog.Error("Update user in storage: " + err.Error())
 		if errors.Is(err, storage.ErrNoUser) {
 			http.Error(res, err.Error(), http.StatusBadRequest)
@@ -123,7 +123,7 @@ func (h *Handler) DeleteUser(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err := h.app.DeleteUser(req.Context(), userName); err != nil {
+	if err := h.authService.DeleteUserByName(req.Context(), userName); err != nil {
 		slog.Error("Delete user in storage: " + err.Error())
 		if errors.Is(err, storage.ErrNoUser) {
 			http.Error(res, err.Error(), http.StatusBadRequest)

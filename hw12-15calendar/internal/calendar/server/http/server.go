@@ -7,8 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/app"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/httpserver/handlers"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers"
+	authservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/auth"
+	eventservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/event"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/logger"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver"
 	pathresolver "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver/path"
@@ -33,10 +34,10 @@ type Server struct {
 	http.Server
 }
 
-func New(conf *Conf, app *app.App) *Server {
+func New(conf *Conf, auth *authservice.AuthService, events *eventservice.EventService) *Server {
 	res := pathresolver.New()
 
-	h := handler.New(app)
+	h := handler.New(auth, events)
 
 	res.Add("POST /users", h.CreateUser)
 	res.Add("GET /users", h.GetUser)
