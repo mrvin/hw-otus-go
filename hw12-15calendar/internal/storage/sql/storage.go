@@ -116,17 +116,22 @@ func (s *Storage) prepareQuery(ctx context.Context) error {
 	}
 
 	// User query prepare
-	sqlInsertUser := "insert into users (name, hash_password, email) values ($1, $2, $3) returning id"
+	sqlInsertUser := "INSERT INTO users (name, hash_password, email) VALUES ($1, $2, $3) RETURNING id"
 	s.insertUser, err = s.db.PrepareContext(ctx, sqlInsertUser)
 	if err != nil {
 		return fmt.Errorf(fmtStrErr, "insertUser", err)
 	}
-	sqlGetUser := "select id, name, hash_password, email from users where id = $1"
+	sqlGetUser := "SELECT id, name, hash_password, email FROM users WHERE id = $1"
 	s.getUser, err = s.db.PrepareContext(ctx, sqlGetUser)
 	if err != nil {
 		return fmt.Errorf(fmtStrErr, "getUser", err)
 	}
-	sqlGetAllUsers := "SELECT * FROM users"
+	sqlGetUserByName := "SELECT id, name, hash_password, email FROM users WHERE name = $1"
+	s.getUser, err = s.db.PrepareContext(ctx, sqlGetUserByName)
+	if err != nil {
+		return fmt.Errorf(fmtStrErr, "getUserByName", err)
+	}
+	sqlGetAllUsers := "SELECT id, name, hash_password, email FROM users"
 	s.listUsers, err = s.db.PrepareContext(ctx, sqlGetAllUsers)
 	if err != nil {
 		return fmt.Errorf(fmtStrErr, "getAllUsers", err)

@@ -2,11 +2,11 @@ package templateloader
 
 import (
 	"embed"
+	"fmt"
 	"html/template"
+	"net/http"
 	"path/filepath"
 	"time"
-	"net/http"
-	"fmt"
 )
 
 //go:embed templates/*

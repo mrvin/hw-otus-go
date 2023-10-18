@@ -51,6 +51,28 @@ func (s *Storage) GetUser(_ context.Context, id int64) (*storage.User, error) {
 	return &user, nil
 }
 
+func (s *Storage) GetUserByName(_ context.Context, name string) (*storage.User, error) {
+	var resUser storage.User
+
+	s.muUsers.RLock()
+	defer s.muUsers.RUnlock()
+
+	for _, user := range s.mUsers {
+		if user.Name == name {
+			resUser = user
+			break
+		}
+	}
+
+	if resUser.ID == 0 {
+		return nil, fmt.Errorf("%w: %s", storage.ErrNoUserName, name)
+	}
+	//nolint:contextcheck
+	resUser.Events, _ = s.ListEventsForUser(context.TODO(), resUser.ID)
+
+	return &resUser, nil
+}
+
 func (s *Storage) ListUsers(_ context.Context) ([]storage.User, error) {
 	users := make([]storage.User, 0)
 
@@ -75,7 +97,27 @@ func (s *Storage) UpdateUser(_ context.Context, user *storage.User) error {
 	return nil
 }
 
-func (s *Storage) DeleteUser(_ context.Context, name string) error {
+func (s *Storage) DeleteUser(_ context.Context, id int64) error {
+	s.muUsers.Lock()
+	if _, ok := s.mUsers[id]; !ok {
+		s.muUsers.Unlock()
+		return fmt.Errorf("%w: %d", storage.ErrNoUser, id)
+	}
+	delete(s.mUsers, id)
+	s.muUsers.Unlock()
+
+	s.muEvents.Lock()
+	for _, event := range s.mEvents {
+		if event.UserID == id {
+			delete(s.mEvents, event.ID)
+		}
+	}
+	s.muEvents.Unlock()
+
+	return nil
+}
+
+func (s *Storage) DeleteUserByName(_ context.Context, name string) error {
 	var id int64
 	s.muUsers.Lock()
 	for _, user := range s.mUsers {

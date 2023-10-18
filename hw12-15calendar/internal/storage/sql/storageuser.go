@@ -41,6 +41,29 @@ func (s *Storage) GetUser(ctx context.Context, id int64) (*storage.User, error) 
 	return &user, nil
 }
 
+func (s *Storage) GetUserByName(ctx context.Context, name string) (*storage.User, error) {
+	var user storage.User
+
+	if err := s.getUser.QueryRowContext(ctx, name).Scan(&user.ID, &user.Name, &user.HashPassword, &user.Email); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("%w: %s", storage.ErrNoUserName, name)
+		}
+		return nil, fmt.Errorf("can't scan user with name: %s: %w", name, err)
+	}
+
+	// TRANSACTION SQL
+	var err error
+	user.Events, err = s.ListEventsForUser(ctx, user.ID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return &user, nil
+		}
+		return nil, fmt.Errorf("can't scan events for user with name: %s: %w", name, err)
+	}
+
+	return &user, nil
+}
+
 func (s *Storage) ListUsers(ctx context.Context) ([]storage.User, error) {
 	users := make([]storage.User, 0)
 
@@ -84,7 +107,23 @@ func (s *Storage) UpdateUser(ctx context.Context, user *storage.User) error {
 	return nil
 }
 
-func (s *Storage) DeleteUser(ctx context.Context, name string) error {
+func (s *Storage) DeleteUser(ctx context.Context, id int64) error {
+	res, err := s.db.ExecContext(ctx, "DELETE FROM users WHERE id = $1", id)
+	if err != nil {
+		return fmt.Errorf("delete user: %w", err)
+	}
+	count, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("delete user: %w", err)
+	}
+	if count != 1 {
+		return fmt.Errorf("%w: %d", storage.ErrNoUser, id)
+	}
+
+	return nil
+}
+
+func (s *Storage) DeleteUserByName(ctx context.Context, name string) error {
 	res, err := s.db.ExecContext(ctx, "delete from users where name = $1", name)
 	if err != nil {
 		return fmt.Errorf("delete user: %w", err)

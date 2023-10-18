@@ -22,9 +22,14 @@ type EventStorage interface {
 
 type UserStorage interface {
 	CreateUser(ctx context.Context, user *User) (int64, error)
+
 	GetUser(ctx context.Context, id int64) (*User, error)
+	GetUserByName(ctx context.Context, name string) (*User, error)
+
 	UpdateUser(ctx context.Context, user *User) error
-	DeleteUser(ctx context.Context, name string) error
+
+	DeleteUser(ctx context.Context, id int64) error
+	DeleteUserByName(ctx context.Context, name string) error
 
 	ListUsers(ctx context.Context) ([]User, error)
 }

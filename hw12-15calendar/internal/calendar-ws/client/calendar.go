@@ -11,7 +11,7 @@ type Calendar interface {
 	CreateUser(ctx context.Context, name, password, email string) (int64, error)
 	GetUser(ctx context.Context, id int64) (*storage.User, error)
 	UpdateUser(ctx context.Context, name, password, email string) error
-	DeleteUser(ctx context.Context, id int64) error
+	DeleteUser(ctx context.Context, name string) error
 
 	ListUsers(ctx context.Context) ([]storage.User, error)
 

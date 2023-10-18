@@ -96,13 +96,13 @@ func (h *Handler) CreateUser(res http.ResponseWriter, req *http.Request) {
 }
 
 func (h *Handler) DeleteUser(res http.ResponseWriter, req *http.Request) {
-	idUser, err := getID(req)
-	if err != nil {
-		slog.Error("Get id user: " + err.Error())
+	userName := req.URL.Query().Get("name")
+	if userName == "" {
+		slog.Error("Cant get user name")
 		h.ErrMsg(res)
 		return
 	}
-	if err := h.client.DeleteUser(req.Context(), idUser); err != nil {
+	if err := h.client.DeleteUser(req.Context(), userName); err != nil {
 		slog.Error("Delete user: " + err.Error())
 		return
 	}
