@@ -11,8 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/app"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/httpserver"
+	httpserver "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http"
+	authservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/auth"
+	eventservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/event"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	memorystorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/memory"
 	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
@@ -27,7 +28,9 @@ var confDBTest = sqlstorage.Conf{"postgres", "postgres", 5432, "event-db", "even
 
 func initServerHTTP(st storage.Storage) *httpserver.Server {
 	conf := httpserver.Conf{"localhost", 8080, false, httpserver.ConfHTTPS{}}
-	server := httpserver.New(&conf, app.New(st))
+	authService := authservice.New(st)
+	eventService := eventservice.New(st)
+	server := httpserver.New(&conf, authService, eventService)
 
 	return server
 }
@@ -83,7 +86,7 @@ func testHandleUser(t *testing.T, server *httpserver.Server) {
 	// Create users
 	for i := range users {
 		testHandleCreateUser(t, server, &users[i], http.StatusCreated)
-		users[i].ID = i + 1
+		users[i].ID = int64(i) + 1
 	}
 
 	// Get users
@@ -147,7 +150,7 @@ func testHandleEvent(t *testing.T, server *httpserver.Server) {
 	// Create events
 	for i := range events {
 		testHandleCreateEvent(t, server, &events[i], http.StatusCreated)
-		events[i].ID = i + 1
+		events[i].ID = int64(i) + 1
 	}
 
 	// Get events
@@ -185,9 +188,9 @@ func testHandleEvent(t *testing.T, server *httpserver.Server) {
 		testHandleDeleteEvent(t, server, events[i].ID, http.StatusBadRequest)
 	}
 
-	testHandleDeleteEvent(t, server, len(events), http.StatusOK)
+	testHandleDeleteEvent(t, server, int64(len(events)), http.StatusOK)
 	testHandleDeleteUser(t, server, user.ID, http.StatusOK)
-	testHandleDeleteEvent(t, server, len(events), http.StatusBadRequest)
+	testHandleDeleteEvent(t, server, int64(len(events)), http.StatusBadRequest)
 }
 
 func testHandleCreateUser(t *testing.T, server *httpserver.Server, user *storage.User, status int) {
@@ -210,7 +213,7 @@ func testHandleCreateUser(t *testing.T, server *httpserver.Server, user *storage
 	}
 }
 
-func testHandleGetUser(t *testing.T, server *httpserver.Server, id int, status int) *storage.User {
+func testHandleGetUser(t *testing.T, server *httpserver.Server, id int64, status int) *storage.User {
 	res := httptest.NewRecorder()
 
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s?id=%d", urlUsers, id), nil)
@@ -255,7 +258,7 @@ func testHandleUpdateUser(t *testing.T, server *httpserver.Server, user *storage
 	}
 }
 
-func testHandleDeleteUser(t *testing.T, server *httpserver.Server, id int, status int) {
+func testHandleDeleteUser(t *testing.T, server *httpserver.Server, id int64, status int) {
 	res := httptest.NewRecorder()
 
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s?id=%d", urlUsers, id), nil)
@@ -291,7 +294,7 @@ func testHandleCreateEvent(t *testing.T, server *httpserver.Server, event *stora
 	}
 }
 
-func testHandleGetEvent(t *testing.T, server *httpserver.Server, id int, status int) *storage.Event {
+func testHandleGetEvent(t *testing.T, server *httpserver.Server, id int64, status int) *storage.Event {
 	res := httptest.NewRecorder()
 
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s?id=%d", urlEvents, id), nil)
@@ -336,7 +339,7 @@ func testHandleUpdateEvent(t *testing.T, server *httpserver.Server, event *stora
 	}
 }
 
-func testHandleDeleteEvent(t *testing.T, server *httpserver.Server, id int, status int) {
+func testHandleDeleteEvent(t *testing.T, server *httpserver.Server, id int64, status int) {
 	res := httptest.NewRecorder()
 
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s?id=%d", urlEvents, id), nil)

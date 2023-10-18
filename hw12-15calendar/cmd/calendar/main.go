@@ -15,9 +15,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/app"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/grpcserver"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/httpserver"
+	grpcserver "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/grpc"
+	httpserver "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http"
+	authservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/auth"
+	eventservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/event"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/logger"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/metric"
@@ -111,9 +112,10 @@ func main() {
 		slog.Info("Connected to database")
 	}
 
-	app := app.New(storage)
-	serverHTTP := httpserver.New(&conf.HTTP, app)
-	serverGRPC, err := grpcserver.New(&conf.GRPC, app)
+	authService := authservice.New(storage)
+	eventService := eventservice.New(storage)
+	serverHTTP := httpserver.New(&conf.HTTP, authService, eventService)
+	serverGRPC, err := grpcserver.New(&conf.GRPC, authService, eventService)
 	if err != nil {
 		slog.Error("Failed to init gRPC server: " + err.Error())
 		return

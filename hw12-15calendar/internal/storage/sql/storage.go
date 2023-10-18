@@ -33,8 +33,9 @@ type Storage struct {
 	listEvents        *sql.Stmt
 	listEventsForUser *sql.Stmt
 
-	insertUser *sql.Stmt
-	getUser    *sql.Stmt
+	insertUser    *sql.Stmt
+	getUser       *sql.Stmt
+	getUserByName *sql.Stmt
 
 	listUsers *sql.Stmt
 }
@@ -127,7 +128,7 @@ func (s *Storage) prepareQuery(ctx context.Context) error {
 		return fmt.Errorf(fmtStrErr, "getUser", err)
 	}
 	sqlGetUserByName := "SELECT id, name, hash_password, email FROM users WHERE name = $1"
-	s.getUser, err = s.db.PrepareContext(ctx, sqlGetUserByName)
+	s.getUserByName, err = s.db.PrepareContext(ctx, sqlGetUserByName)
 	if err != nil {
 		return fmt.Errorf(fmtStrErr, "getUserByName", err)
 	}
@@ -148,6 +149,7 @@ func (s *Storage) Close() error {
 
 	s.insertUser.Close()
 	s.getUser.Close()
+	s.getUserByName.Close()
 	s.listUsers.Close()
 
 	return s.db.Close() //nolint:wrapcheck

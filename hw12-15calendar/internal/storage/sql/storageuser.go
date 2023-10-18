@@ -28,7 +28,7 @@ func (s *Storage) GetUser(ctx context.Context, id int64) (*storage.User, error) 
 		return nil, fmt.Errorf("can't scan user with id: %d: %w", id, err)
 	}
 
-	// TRANSACTION SQL
+	// TODO: TRANSACTION SQL
 	var err error
 	user.Events, err = s.ListEventsForUser(ctx, user.ID)
 	if err != nil {
@@ -44,14 +44,14 @@ func (s *Storage) GetUser(ctx context.Context, id int64) (*storage.User, error) 
 func (s *Storage) GetUserByName(ctx context.Context, name string) (*storage.User, error) {
 	var user storage.User
 
-	if err := s.getUser.QueryRowContext(ctx, name).Scan(&user.ID, &user.Name, &user.HashPassword, &user.Email); err != nil {
+	if err := s.getUserByName.QueryRowContext(ctx, name).Scan(&user.ID, &user.Name, &user.HashPassword, &user.Email); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("%w: %s", storage.ErrNoUserName, name)
 		}
 		return nil, fmt.Errorf("can't scan user with name: %s: %w", name, err)
 	}
 
-	// TRANSACTION SQL
+	// TODO: TRANSACTION SQL
 	var err error
 	user.Events, err = s.ListEventsForUser(ctx, user.ID)
 	if err != nil {

@@ -5,7 +5,7 @@ run:
 	go run -race main.go
 
 test:
-	go test -race ../../internal/calendar/httpserver/handlers -cover
+	go test -race ../../internal/calendar/server/http/handlers -cover
 
 lint:
 	golangci-lint run ./...
