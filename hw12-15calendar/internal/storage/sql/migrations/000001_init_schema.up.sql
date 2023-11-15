@@ -2,8 +2,8 @@ CREATE TABLE IF NOT EXISTS users (
 	id serial PRIMARY KEY,
 	name TEXT NOT NULL UNIQUE,
 	hash_password TEXT,
-	email TEXT
-	role TEXT,
+	email TEXT,
+	role TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_name ON users(name);
 
