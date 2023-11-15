@@ -7,7 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers"
+	handlerevent "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers/event"
+	handleruser "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers/user"
 	authservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/auth"
 	eventservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/event"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/logger"
@@ -37,17 +38,20 @@ type Server struct {
 func New(conf *Conf, auth *authservice.AuthService, events *eventservice.EventService) *Server {
 	res := pathresolver.New()
 
-	h := handler.New(auth, events)
+	handlerEvent := handlerevent.New(events)
+	handlerUser := handleruser.New(auth)
 
-	res.Add("POST /users", h.CreateUser)
-	res.Add("GET /users", h.GetUser)
-	res.Add("PUT /users", h.UpdateUser)
-	res.Add("DELETE /users", h.DeleteUser)
+	res.Add("POST /signup", handlerUser.SignUp)
+	res.Add("GET /login", handlerUser.SignIn)
 
-	res.Add("POST /events", h.CreateEvent)
-	res.Add("GET /events", h.GetEvent)
-	res.Add("PUT /events", h.UpdateEvent)
-	res.Add("DELETE /events", h.DeleteEvent)
+	res.Add("GET /user", auth.Authorized(handlerUser.GetUser))
+	res.Add("PUT /user", auth.Authorized(handlerUser.UpdateUser))
+	res.Add("DELETE /user", auth.Authorized(handlerUser.DeleteUser))
+
+	res.Add("POST /event", auth.Authorized(handlerEvent.CreateEvent))
+	res.Add("GET /event", auth.Authorized(handlerEvent.GetEvent))
+	res.Add("PUT /event", auth.Authorized(handlerEvent.UpdateEvent))
+	res.Add("DELETE /event", auth.Authorized(handlerEvent.DeleteEvent))
 
 	loggerServer := logger.Logger{Inner: otelhttp.NewHandler(&Router{res}, "HTTP")}
 

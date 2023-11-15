@@ -12,6 +12,8 @@ import (
 	"time"
 
 	httpserver "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http"
+	handlerevent "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers/event"
+	handleruser "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers/user"
 	authservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/auth"
 	eventservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/event"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
@@ -19,8 +21,19 @@ import (
 	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
 )
 
-const urlUsers = "http://localhost:8080/users"
-const urlEvents = "http://localhost:8080/events"
+//nolint:tagliatelle
+type User struct {
+	ID       int64
+	Name     string
+	Password string
+	Email    string
+	Token    string
+}
+
+const urlSignup = "http://localhost:8080/signup"
+const urlLogin = "http://localhost:8080/login"
+const urlUsers = "http://localhost:8080/user"
+const urlEvents = "http://localhost:8080/event"
 
 const contextTimeoutDB = 2 * time.Second
 
@@ -28,7 +41,8 @@ var confDBTest = sqlstorage.Conf{"postgres", "postgres", 5432, "event-db", "even
 
 func initServerHTTP(st storage.Storage) *httpserver.Server {
 	conf := httpserver.Conf{"localhost", 8080, false, httpserver.ConfHTTPS{}}
-	authService := authservice.New(st)
+	confAuth := authservice.Conf{"secret key", 15}
+	authService := authservice.New(st, &confAuth)
 	eventService := eventservice.New(st)
 	server := httpserver.New(&conf, authService, eventService)
 
@@ -76,22 +90,33 @@ func TestHandleEventSQL(t *testing.T) {
 }
 
 func testHandleUser(t *testing.T, server *httpserver.Server) {
-
-	users := []storage.User{
-		{Name: "Howard Mendoza", Email: "Howard.Mendoza@mail.com"},
-		{Name: "Brian Olson", Email: "B.Olson@gmail.com"},
-		{Name: "Clarence Olson", Email: "Clarence.Olson@yandex.ru"},
+	users := []User{
+		{
+			Name:     "Howard Mendoza",
+			Password: "qwerty",
+			Email:    "Howard.Mendoza@mail.com",
+		},
+		{
+			Name:     "Brian Olson",
+			Password: "Olson123456",
+			Email:    "B.Olson@gmail.com",
+		},
+		{
+			Name:     "Clarence Olson",
+			Password: "Russian Bear",
+			Email:    "Clarence.Olson@yandex.ru",
+		},
 	}
 
 	// Create users
-	for i := range users {
-		testHandleCreateUser(t, server, &users[i], http.StatusCreated)
-		users[i].ID = int64(i) + 1
+	for i, user := range users {
+		users[i].ID = testHandleSignUp(t, server, &user, http.StatusCreated)
+		users[i].Token = testHandleLogin(t, server, &user, http.StatusOK)
 	}
 
 	// Get users
-	for i := range users {
-		user := testHandleGetUser(t, server, users[i].ID, http.StatusOK)
+	for i, user := range users {
+		user := testHandleGetUser(t, server, &user, http.StatusOK)
 		if user != nil {
 			if user.Name != users[i].Name {
 				t.Errorf("mismatch name user: %s, %s", user.Name, users[i].Name)
@@ -103,11 +128,11 @@ func testHandleUser(t *testing.T, server *httpserver.Server) {
 	}
 
 	// Update user email and get user
-	for i := range users {
-		users[i].Email = strings.ToLower(users[i].Email)
+	for i, user := range users {
+		users[i].Email = strings.ToLower(user.Email)
 		testHandleUpdateUser(t, server, &users[i], http.StatusOK)
 
-		user := testHandleGetUser(t, server, users[i].ID, http.StatusOK)
+		user := testHandleGetUser(t, server, &user, http.StatusOK)
 		if user != nil {
 			if user.Email != users[i].Email {
 				t.Errorf("mismatch email user: %s, %s", user.Email, users[i].Email)
@@ -116,21 +141,24 @@ func testHandleUser(t *testing.T, server *httpserver.Server) {
 	}
 
 	// Delete all users and trying get, update, delete user that doesn't exist
-	for i := range users {
-		testHandleDeleteUser(t, server, users[i].ID, http.StatusOK)
+	for _, user := range users {
+		testHandleDeleteUser(t, server, &user, http.StatusOK)
 
-		testHandleGetUser(t, server, users[i].ID, http.StatusBadRequest)
-		testHandleUpdateUser(t, server, &users[i], http.StatusBadRequest)
-		testHandleDeleteUser(t, server, users[i].ID, http.StatusBadRequest)
+		testHandleGetUser(t, server, &user, http.StatusBadRequest)
+		testHandleUpdateUser(t, server, &user, http.StatusBadRequest)
+		testHandleDeleteUser(t, server, &user, http.StatusBadRequest)
 	}
 }
 
 func testHandleEvent(t *testing.T, server *httpserver.Server) {
+	user := User{
+		Name:     "Bob",
+		Password: "qwerty",
+		Email:    "bobi@mail.com",
+	}
 
-	user := storage.User{Name: "Bob", Email: "bobi@mail.com", Events: make([]storage.Event, 0)}
-	user.ID = 1
-
-	testHandleCreateUser(t, server, &user, http.StatusCreated)
+	user.ID = testHandleSignUp(t, server, &user, http.StatusCreated)
+	user.Token = testHandleLogin(t, server, &user, http.StatusOK)
 
 	events := []storage.Event{
 		{Title: "Bob's Birthday", Description: "Birthday February 24, 1993. Party in nature.",
@@ -149,13 +177,12 @@ func testHandleEvent(t *testing.T, server *httpserver.Server) {
 
 	// Create events
 	for i := range events {
-		testHandleCreateEvent(t, server, &events[i], http.StatusCreated)
-		events[i].ID = int64(i) + 1
+		events[i].ID = testHandleCreateEvent(t, server, user.Token, &events[i], http.StatusCreated)
 	}
 
 	// Get events
 	for i := range events {
-		event := testHandleGetEvent(t, server, events[i].ID, http.StatusOK)
+		event := testHandleGetEvent(t, server, user.Token, events[i].ID, http.StatusOK)
 		if event != nil {
 			if event.Title != events[i].Title {
 				t.Errorf("mismatch title event: %s, %s", event.Title, events[i].Title)
@@ -169,9 +196,9 @@ func testHandleEvent(t *testing.T, server *httpserver.Server) {
 	// Update event title and get event
 	for i := range events {
 		events[i].Title = strings.ToUpper(events[i].Title)
-		testHandleUpdateEvent(t, server, &events[i], http.StatusOK)
+		testHandleUpdateEvent(t, server, user.Token, &events[i], http.StatusOK)
 
-		event := testHandleGetEvent(t, server, events[i].ID, http.StatusOK)
+		event := testHandleGetEvent(t, server, user.Token, events[i].ID, http.StatusOK)
 		if event != nil {
 			if event.Title != events[i].Title {
 				t.Errorf("mismatch title event: %s, %s", event.Title, events[i].Title)
@@ -181,26 +208,31 @@ func testHandleEvent(t *testing.T, server *httpserver.Server) {
 
 	// Delete all event without last and trying get, update, delete event that doesn't exist
 	for i := 0; i < len(events)-1; i++ {
-		testHandleDeleteEvent(t, server, events[i].ID, http.StatusOK)
+		testHandleDeleteEvent(t, server, user.Token, events[i].ID, http.StatusOK)
 
-		testHandleGetEvent(t, server, events[i].ID, http.StatusBadRequest)
-		testHandleUpdateEvent(t, server, &events[i], http.StatusBadRequest)
-		testHandleDeleteEvent(t, server, events[i].ID, http.StatusBadRequest)
+		testHandleGetEvent(t, server, user.Token, events[i].ID, http.StatusBadRequest)
+		testHandleUpdateEvent(t, server, user.Token, &events[i], http.StatusBadRequest)
+		testHandleDeleteEvent(t, server, user.Token, events[i].ID, http.StatusBadRequest)
 	}
 
-	testHandleDeleteEvent(t, server, int64(len(events)), http.StatusOK)
-	testHandleDeleteUser(t, server, user.ID, http.StatusOK)
-	testHandleDeleteEvent(t, server, int64(len(events)), http.StatusBadRequest)
+	testHandleDeleteEvent(t, server, user.Token, int64(len(events)), http.StatusOK)
+	testHandleDeleteUser(t, server, &user, http.StatusOK)
+	testHandleDeleteEvent(t, server, user.Token, int64(len(events)), http.StatusBadRequest)
 }
 
-func testHandleCreateUser(t *testing.T, server *httpserver.Server, user *storage.User, status int) {
+func testHandleSignUp(t *testing.T, server *httpserver.Server, user *User, status int) int64 {
 	res := httptest.NewRecorder()
 
-	dataJsonUser, err := json.Marshal(*user)
+	request := handleruser.RequestSignUp{
+		UserName: user.Name,
+		Password: user.Password,
+		Email:    user.Email,
+	}
+	dataJsonRequest, err := json.Marshal(request)
 	if err != nil {
 		t.Fatalf("HandleCreateUser: cant marshal JSON: %v", err)
 	}
-	req, err := http.NewRequest("POST", urlUsers, bytes.NewReader(dataJsonUser))
+	req, err := http.NewRequest(http.MethodPost, urlSignup, bytes.NewReader(dataJsonRequest))
 	if err != nil {
 		t.Fatalf("HandleCreateUser: create request: %v", err)
 	}
@@ -211,45 +243,91 @@ func testHandleCreateUser(t *testing.T, server *httpserver.Server, user *storage
 	if res.Code != status {
 		t.Errorf("HandleCreateUser: response code is %d; want: %d", res.Code, status)
 	}
+
+	var response handleruser.ResponseSignUp
+	if err := json.Unmarshal(res.Body.Bytes(), &response); err != nil {
+		t.Fatalf("HandleCreateUser: cant unmarshal JSON: %v", err)
+	}
+
+	return response.ID
 }
 
-func testHandleGetUser(t *testing.T, server *httpserver.Server, id int64, status int) *storage.User {
+func testHandleLogin(t *testing.T, server *httpserver.Server, user *User, status int) string {
 	res := httptest.NewRecorder()
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s?id=%d", urlUsers, id), nil)
+	request := handleruser.RequestSignIn{
+		UserName: user.Name,
+		Password: user.Password,
+	}
+
+	dataJsonRequest, err := json.Marshal(request)
+	if err != nil {
+		t.Fatalf("HandleLogin: cant marshal JSON: %v", err)
+	}
+
+	req, err := http.NewRequest(http.MethodGet, urlLogin, bytes.NewReader(dataJsonRequest))
+	if err != nil {
+		t.Fatalf("HandleLogin: create request: %v", err)
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+
+	server.Handler.ServeHTTP(res, req)
+
+	if res.Code != status {
+		t.Errorf("HandleLogin: response code is %d; want: %d", res.Code, status)
+	}
+
+	var response handleruser.ResponseSignIn
+	if err := json.Unmarshal(res.Body.Bytes(), &response); err != nil {
+		t.Fatalf("HandleLogin: cant unmarshal JSON: %v", err)
+	}
+
+	return response.AccessToken
+}
+
+func testHandleGetUser(t *testing.T, server *httpserver.Server, user *User, status int) *storage.User {
+	res := httptest.NewRecorder()
+
+	req, err := http.NewRequest(http.MethodGet, urlUsers, nil)
 	if err != nil {
 		t.Fatalf("HandleGetUser: create request: %v", err)
 	}
+
+	req.Header.Set("Authorization", "Bearer "+user.Token)
 
 	server.Handler.ServeHTTP(res, req)
 
 	if res.Code != status {
 		t.Errorf("HandleGetUser: response code is %d; want: %d", res.Code, status)
 	}
-	if res.Code != http.StatusOK {
-		return nil
-	}
 
-	var user storage.User
-	if err := json.Unmarshal(res.Body.Bytes(), &user); err != nil {
+	var stUser storage.User
+	if err := json.Unmarshal(res.Body.Bytes(), &stUser); err != nil {
 		t.Fatalf("HandleGetUser: cant unmarshal JSON: %v", err)
 	}
 
-	return &user
+	return &stUser
 }
 
-func testHandleUpdateUser(t *testing.T, server *httpserver.Server, user *storage.User, status int) {
+func testHandleUpdateUser(t *testing.T, server *httpserver.Server, user *User, status int) {
 	res := httptest.NewRecorder()
 
-	dataJsonUser, err := json.Marshal(*user)
+	request := handleruser.RequestUpdateUser{
+		UserName: user.Name,
+		Password: user.Password,
+		Email:    user.Email,
+	}
+	dataJsonRequest, err := json.Marshal(request)
 	if err != nil {
 		t.Fatalf("HandleUpdateUser: cant marshal JSON: %v", err)
 	}
-	req, err := http.NewRequest("PUT", urlUsers, bytes.NewReader(dataJsonUser))
+	req, err := http.NewRequest(http.MethodPut, urlUsers, bytes.NewReader(dataJsonRequest))
 	if err != nil {
 		t.Fatalf("HandleUpdateUser: create request: %v", err)
 	}
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+user.Token)
 
 	server.Handler.ServeHTTP(res, req)
 
@@ -258,13 +336,14 @@ func testHandleUpdateUser(t *testing.T, server *httpserver.Server, user *storage
 	}
 }
 
-func testHandleDeleteUser(t *testing.T, server *httpserver.Server, id int64, status int) {
+func testHandleDeleteUser(t *testing.T, server *httpserver.Server, user *User, status int) {
 	res := httptest.NewRecorder()
 
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s?id=%d", urlUsers, id), nil)
+	req, err := http.NewRequest(http.MethodDelete, urlUsers, nil)
 	if err != nil {
 		t.Fatalf("HandleDeleteUser: create request %v", err)
 	}
+	req.Header.Set("Authorization", "Bearer "+user.Token)
 
 	server.Handler.ServeHTTP(res, req)
 
@@ -273,7 +352,7 @@ func testHandleDeleteUser(t *testing.T, server *httpserver.Server, id int64, sta
 	}
 }
 
-func testHandleCreateEvent(t *testing.T, server *httpserver.Server, event *storage.Event, status int) {
+func testHandleCreateEvent(t *testing.T, server *httpserver.Server, token string, event *storage.Event, status int) int64 {
 	res := httptest.NewRecorder()
 
 	dataJsonEvent, err := json.Marshal(*event)
@@ -281,34 +360,40 @@ func testHandleCreateEvent(t *testing.T, server *httpserver.Server, event *stora
 		t.Fatalf("HandleCreateEvent: cant marshal JSON: %v", err)
 	}
 
-	req, err := http.NewRequest("POST", urlEvents, bytes.NewReader(dataJsonEvent))
+	req, err := http.NewRequest(http.MethodPost, urlEvents, bytes.NewReader(dataJsonEvent))
 	if err != nil {
 		t.Fatalf("HandleCreateEvent: create request %v", err)
 	}
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	server.Handler.ServeHTTP(res, req)
 
 	if res.Code != status {
 		t.Errorf("HandleCreateEvent: response code is %d; want: %d", res.Code, status)
 	}
+
+	var response handlerevent.ResponseCreateEvent
+	if err := json.Unmarshal(res.Body.Bytes(), &response); err != nil {
+		t.Fatalf("HandleCreateEvent: cant unmarshal JSON: %v", err)
+	}
+
+	return response.ID
 }
 
-func testHandleGetEvent(t *testing.T, server *httpserver.Server, id int64, status int) *storage.Event {
+func testHandleGetEvent(t *testing.T, server *httpserver.Server, token string, id int64, status int) *storage.Event {
 	res := httptest.NewRecorder()
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s?id=%d", urlEvents, id), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s?id=%d", urlEvents, id), nil)
 	if err != nil {
 		t.Fatalf("HandleGetEvent: create request: %v", err)
 	}
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	server.Handler.ServeHTTP(res, req)
 
 	if res.Code != status {
 		t.Errorf("HandleGetEvent: response code is %d; want: %d", res.Code, status)
-	}
-	if res.Code != http.StatusOK {
-		return nil
 	}
 
 	var event storage.Event
@@ -319,18 +404,19 @@ func testHandleGetEvent(t *testing.T, server *httpserver.Server, id int64, statu
 	return &event
 }
 
-func testHandleUpdateEvent(t *testing.T, server *httpserver.Server, event *storage.Event, status int) {
+func testHandleUpdateEvent(t *testing.T, server *httpserver.Server, token string, event *storage.Event, status int) {
 	res := httptest.NewRecorder()
 
 	dataJsonEvent, err := json.Marshal(*event)
 	if err != nil {
 		t.Fatalf("HandleUpdateEvent: cant marshal JSON: %v", err)
 	}
-	req, err := http.NewRequest("PUT", urlEvents, bytes.NewReader(dataJsonEvent))
+	req, err := http.NewRequest(http.MethodPut, urlEvents, bytes.NewReader(dataJsonEvent))
 	if err != nil {
 		t.Fatalf("HandleUpdateEvent: create request: %v", err)
 	}
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	server.Handler.ServeHTTP(res, req)
 
@@ -339,13 +425,14 @@ func testHandleUpdateEvent(t *testing.T, server *httpserver.Server, event *stora
 	}
 }
 
-func testHandleDeleteEvent(t *testing.T, server *httpserver.Server, id int64, status int) {
+func testHandleDeleteEvent(t *testing.T, server *httpserver.Server, token string, id int64, status int) {
 	res := httptest.NewRecorder()
 
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s?id=%d", urlEvents, id), nil)
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s?id=%d", urlEvents, id), nil)
 	if err != nil {
 		t.Fatalf("HandleDeleteEvent: create request: %v", err)
 	}
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	server.Handler.ServeHTTP(res, req)
 
