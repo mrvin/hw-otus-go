@@ -2,9 +2,12 @@ package httpserver
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	handlerevent "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers/event"
@@ -19,8 +22,9 @@ import (
 
 //nolint:tagliatelle
 type ConfHTTPS struct {
-	CertFile string `yaml:"cert_file"`
-	KeyFile  string `yaml:"key_file"`
+	CertFile       string `yaml:"cert_file"`
+	KeyFile        string `yaml:"key_file"`
+	ClientCertFile string `yaml:"client_cert_file"`
 }
 
 //nolint:tagliatelle
@@ -55,6 +59,23 @@ func New(conf *Conf, auth *authservice.AuthService, events *eventservice.EventSe
 
 	loggerServer := logger.Logger{Inner: otelhttp.NewHandler(&Router{res}, "HTTP")}
 
+	var tlsConf *tls.Config
+	if conf.IsHTTPS {
+		clientCert, err := os.ReadFile(conf.HTTPS.ClientCertFile)
+		if err != nil {
+			slog.Warn("Failed to read client tls certificate file: " + err.Error())
+		} else {
+			pool := x509.NewCertPool()
+			pool.AppendCertsFromPEM(clientCert)
+
+			tlsConf = &tls.Config{
+				ClientCAs:  pool,
+				ClientAuth: tls.RequireAndVerifyClientCert,
+			}
+			tlsConf.BuildNameToCertificate()
+		}
+	}
+
 	return &Server{
 		//nolint:exhaustivestruct,exhaustruct
 		http.Server{
@@ -63,6 +84,7 @@ func New(conf *Conf, auth *authservice.AuthService, events *eventservice.EventSe
 			ReadTimeout:  5 * time.Second,
 			WriteTimeout: 10 * time.Second,
 			IdleTimeout:  1 * time.Minute,
+			TLSConfig:    tlsConf,
 		},
 	}
 }

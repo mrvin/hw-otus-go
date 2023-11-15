@@ -9,8 +9,9 @@ http:
     port: 8088
     is_https: false # Enable HTTPS
     https:
-        cert_file: ../cert/cert.pem
-        key_file: ../cert/key.pem
+        cert_file: ../cert/serverCert.pem
+        key_file: ../cert/serverKey.pem
+        client_cert_file: ../cert/clientCert.pem
 
 inmemory: false
 
