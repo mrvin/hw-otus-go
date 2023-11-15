@@ -10,12 +10,11 @@ import (
 )
 
 func (s *Storage) CreateUser(ctx context.Context, user *storage.User) (int64, error) {
-	var id int64
-	if err := s.insertUser.QueryRowContext(ctx, user.Name, user.HashPassword, user.Email).Scan(&id); err != nil {
+	if err := s.insertUser.QueryRowContext(ctx, user.Name, user.HashPassword, user.Email).Scan(&user.ID); err != nil {
 		return 0, fmt.Errorf("create user: %w", err)
 	}
 
-	return id, nil
+	return user.ID, nil
 }
 
 func (s *Storage) GetUser(ctx context.Context, id int64) (*storage.User, error) {
@@ -102,6 +101,23 @@ func (s *Storage) UpdateUser(ctx context.Context, user *storage.User) error {
 	}
 	if count != 1 {
 		return fmt.Errorf("%w: %d", storage.ErrNoUser, user.ID)
+	}
+
+	return nil
+}
+
+func (s *Storage) UpdateUserByName(ctx context.Context, user *storage.User) error {
+	sqlUpdateUser := `UPDATE users SET hash_password = $2, email = $3 WHERE name = $1`
+	res, err := s.db.ExecContext(ctx, sqlUpdateUser, user.Name, user.HashPassword, user.Email)
+	if err != nil {
+		return fmt.Errorf("update user: %w", err)
+	}
+	count, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("update user: %w", err)
+	}
+	if count != 1 {
+		return fmt.Errorf("%w: %s", storage.ErrNoUserName, user.Name)
 	}
 
 	return nil

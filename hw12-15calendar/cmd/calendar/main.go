@@ -31,13 +31,14 @@ import (
 const serviceName = "Calendar"
 
 type Config struct {
-	InMem  bool            `yaml:"inmemory"`
-	DB     sqlstorage.Conf `yaml:"db"`
-	HTTP   httpserver.Conf `yaml:"http"`
-	GRPC   grpcserver.Conf `yaml:"grpc"`
-	Logger logger.Conf     `yaml:"logger"`
-	Tracer tracer.Conf     `yaml:"tracer"`
-	Metric metric.Conf     `yaml:"metrics"`
+	InMem  bool             `yaml:"inmemory"`
+	DB     sqlstorage.Conf  `yaml:"db"`
+	HTTP   httpserver.Conf  `yaml:"http"`
+	GRPC   grpcserver.Conf  `yaml:"grpc"`
+	Logger logger.Conf      `yaml:"logger"`
+	Tracer tracer.Conf      `yaml:"tracer"`
+	Metric metric.Conf      `yaml:"metrics"`
+	Auth   authservice.Conf `yaml:"auth"`
 }
 
 // TODO: ctx
@@ -112,7 +113,7 @@ func main() {
 		slog.Info("Connected to database")
 	}
 
-	authService := authservice.New(storage)
+	authService := authservice.New(storage, &conf.Auth)
 	eventService := eventservice.New(storage)
 	serverHTTP := httpserver.New(&conf.HTTP, authService, eventService)
 	serverGRPC, err := grpcserver.New(&conf.GRPC, authService, eventService)

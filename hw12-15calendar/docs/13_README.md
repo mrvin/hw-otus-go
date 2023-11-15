@@ -38,34 +38,39 @@
 ### Заметки
 Клиент для http API
 ```bash
-$ curl -i -X POST 'http://127.0.0.1:8088/users' -H "Content-Type: application/json" -d '{"name":"Bob","email":"bob@mail.com"}'
-$ curl -i -X GET 'http://127.0.0.1:8088/users?id=1'
+$ curl -ik --cert ../cert/clientCert.pem --key ../cert/clientKey.pem -X POST 'https://127.0.0.1:8088/signup' -H "Content-Type: application/json" -d '{"user_name":"Bob","password":"qwerty","email":"bob@mail.com"}'
+$ curl -ik --cert ../cert/clientCert.pem --key ../cert/clientKey.pem -X GET 'https://127.0.0.1:8088/login' -H "Content-Type: application/json" -d '{"user_name":"Bob","password":"qwerty"}'
+$ curl -ik --cert ../cert/clientCert.pem --key ../cert/clientKey.pem -X GET 'https://127.0.0.1:8088/user' -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDAwNjA5MDYsImlhdCI6MTcwMDA2MDAwNiwidXNlcm5hbWUiOiJCb2IifQ.B2_m_bQFs4Q1zMRHISskFN6fZNGUscSOnj8-5Ce0Qug"
 
-$ curl -i -X PUT 'http://127.0.0.1:8088/users' -H "Content-Type: application/json" -d '{"id":1, "name":"Alis","email":"bob@mail.com"}'
-$ curl -i -X GET 'http://127.0.0.1:8088/users?id=1'
+$ curl -ik --cert ../cert/clientCert.pem --key ../cert/clientKey.pem -X PUT 'https://127.0.0.1:8088/user' -H "Content-Type: application/json" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDAwNjA5MDYsImlhdCI6MTcwMDA2MDAwNiwidXNlcm5hbWUiOiJCb2IifQ.B2_m_bQFs4Q1zMRHISskFN6fZNGUscSOnj8-5Ce0Qug" -d '{"user_name":"Bob","password":"123456","email":"bobiiiii@mail.com"}'
 
-$ curl -i -X POST 'http://127.0.0.1:8088/events' -H "Content-Type: application/json" -d '{
+$ curl -ik --cert ../cert/clientCert.pem --key ../cert/clientKey.pem -X GET 'https://127.0.0.1:8088/user' -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDAwNjA5MDYsImlhdCI6MTcwMDA2MDAwNiwidXNlcm5hbWUiOiJCb2IifQ.B2_m_bQFs4Q1zMRHISskFN6fZNGUscSOnj8-5Ce0Qug"
+
+$ curl -ik --cert ../cert/clientCert.pem --key ../cert/clientKey.pem -X POST 'https://127.0.0.1:8088/event' -H "Content-Type: application/json" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDAwNjA5MDYsImlhdCI6MTcwMDA2MDAwNiwidXNlcm5hbWUiOiJCb2IifQ.B2_m_bQFs4Q1zMRHISskFN6fZNGUscSOnj8-5Ce0Qug" -d '{
 	"title":"Aliss Birthday",
 	"description":"Birthday April 12, 1996. House party",
 	"start_time":"2022-05-25T10:41:31Z",
 	"stop_time":"2022-05-25T14:41:31Z",
 	"user_id":1}'
-$ curl -i -X GET 'http://127.0.0.1:8088/events?userid=1&id=1'
+$ curl -ik --cert ../cert/clientCert.pem --key ../cert/clientKey.pem -X GET 'https://127.0.0.1:8088/event?id=1' -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDAwNjA5MDYsImlhdCI6MTcwMDA2MDAwNiwidXNlcm5hbWUiOiJCb2IifQ.B2_m_bQFs4Q1zMRHISskFN6fZNGUscSOnj8-5Ce0Qug"
 
-$ curl -i -X PUT 'http://127.0.0.1:8088/events' -H "Content-Type: application/json" -d '{
+$ curl -ik --cert ../cert/clientCert.pem --key ../cert/clientKey.pem -X PUT 'https://127.0.0.1:8088/event' -H "Content-Type: application/json"  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDAwNjA5MDYsImlhdCI6MTcwMDA2MDAwNiwidXNlcm5hbWUiOiJCb2IifQ.B2_m_bQFs4Q1zMRHISskFN6fZNGUscSOnj8-5Ce0Qug" -d '{
 	"id":1,
 	"title":"Bob Birthday",
 	"description":"Birthday April 17, 1996. House party",
 	"start_time":"2022-05-25T10:41:31Z",
 	"stop_time":"2022-05-25T14:41:31Z",
 	"user_id":1}'
-$ curl -i -X GET 'http://127.0.0.1:8088/events?userid=1&id=1'
+	
+$ curl -ik --cert ../cert/clientCert.pem --key ../cert/clientKey.pem -X GET 'https://127.0.0.1:8088/event?id=1' -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDAwNjA5MDYsImlhdCI6MTcwMDA2MDAwNiwidXNlcm5hbWUiOiJCb2IifQ.B2_m_bQFs4Q1zMRHISskFN6fZNGUscSOnj8-5Ce0Qug"
 
-$ curl -i -X DELETE 'http://127.0.0.1:8088/events?id=1'
-$ curl -i -X GET 'http://127.0.0.1:8088/events?userid=1&id=1'
+$ curl -i -X DELETE 'http://127.0.0.1:8088/event?id=1' -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTk4MDcyNTAsImlhdCI6MTY5OTgwNjM1MCwidXNlcm5hbWUiOiJCb2IifQ.0g0WPM57GVCmi83SHi7mok8zgTlQrPSP8xAtzUVoha4"
 
-$ curl -i -X DELETE 'http://127.0.0.1:8088/users?id=1'
-$ curl -i -X GET 'http://127.0.0.1:8088/users?id=1'
+$ curl -i -X GET 'http://127.0.0.1:8088/event?id=1' -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTk4MDcyNTAsImlhdCI6MTY5OTgwNjM1MCwidXNlcm5hbWUiOiJCb2IifQ.0g0WPM57GVCmi83SHi7mok8zgTlQrPSP8xAtzUVoha4"
+
+$ curl -i -X DELETE 'http://127.0.0.1:8088/user' -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTk4MDcyNTAsImlhdCI6MTY5OTgwNjM1MCwidXNlcm5hbWUiOiJCb2IifQ.0g0WPM57GVCmi83SHi7mok8zgTlQrPSP8xAtzUVoha4"
+
+$ curl -i -X GET 'http://127.0.0.1:8088/users' -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTk4MDcyNTAsImlhdCI6MTY5OTgwNjM1MCwidXNlcm5hbWUiOiJCb2IifQ.0g0WPM57GVCmi83SHi7mok8zgTlQrPSP8xAtzUVoha4"
 ```
 
 ### Ссылки:

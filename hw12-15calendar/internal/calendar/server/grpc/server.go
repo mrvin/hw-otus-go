@@ -89,7 +89,7 @@ func (s *Server) CreateUser(ctx context.Context, userpb *calendarapi.CreateUserR
 }
 
 func (s *Server) GetUserByID(ctx context.Context, req *calendarapi.GetUserByIDRequest) (*calendarapi.UserResponse, error) {
-	user, err := s.authService.GetUser(ctx, req.GetId())
+	user, err := s.authService.GetUserByID(ctx, req.GetId())
 	if err != nil {
 		err := fmt.Errorf("get user: %w", err)
 		slog.Error(err.Error())
@@ -296,73 +296,3 @@ func LogRequestGRPC(
 	// Last but super important, execute the handler so that the actualy gRPC request is also performed
 	return handler(ctx, req)
 }
-
-/*
-func (interceptor *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
-    return func(
-        ctx context.Context,
-        req interface{},
-        info *grpc.UnaryServerInfo,
-        handler grpc.UnaryHandler,
-    ) (interface{}, error) {
-        log.Println("--> unary interceptor: ", info.FullMethod)
-
-        err := interceptor.authorize(ctx, info.FullMethod)
-        if err != nil {
-            return nil, err
-        }
-
-        return handler(ctx, req)
-    }
-}
-
-type AuthInterceptor struct {
-    authClient  *AuthClient
-    authMethods map[string]bool
-    accessToken string
-}
-
-func (interceptor *AuthInterceptor) authorize(ctx context.Context, method string) error {
-    accessibleRoles, ok := interceptor.accessibleRoles[method]
-    if !ok {
-        // everyone can access
-        return nil
-    }
-
-    md, ok := metadata.FromIncomingContext(ctx)
-    if !ok {
-        return status.Errorf(codes.Unauthenticated, "metadata is not provided")
-    }
-
-    values := md["authorization"]
-    if len(values) == 0 {
-        return status.Errorf(codes.Unauthenticated, "authorization token is not provided")
-    }
-
-    accessToken := values[0]
-    claims, err := interceptor.jwtManager.Verify(accessToken)
-    if err != nil {
-        return status.Errorf(codes.Unauthenticated, "access token is invalid: %v", err)
-    }
-
-    for _, role := range accessibleRoles {
-        if role == claims.Role {
-            return nil
-        }
-    }
-
-    return status.Error(codes.PermissionDenied, "no permission to access this RPC")
-}
-
-func (interceptor *AuthInterceptor) refreshToken() error {
-    accessToken, err := interceptor.authClient.Login()
-    if err != nil {
-        return err
-    }
-
-    interceptor.accessToken = accessToken
-    log.Printf("token refreshed: %v", accessToken)
-
-    return nil
-}
-*/

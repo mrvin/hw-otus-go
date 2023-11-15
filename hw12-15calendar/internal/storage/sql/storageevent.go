@@ -10,12 +10,11 @@ import (
 )
 
 func (s *Storage) CreateEvent(ctx context.Context, event *storage.Event) (int64, error) {
-	var id int64
-	if err := s.insertEvent.QueryRowContext(ctx, event.Title, event.Description, event.StartTime, event.StopTime, event.UserID).Scan(&id); err != nil {
+	if err := s.insertEvent.QueryRowContext(ctx, event.Title, event.Description, event.StartTime, event.StopTime, event.UserID).Scan(&event.ID); err != nil {
 		return 0, fmt.Errorf("create event: %w", err)
 	}
 
-	return id, nil
+	return event.ID, nil
 }
 
 func (s *Storage) GetEvent(ctx context.Context, id int64) (*storage.Event, error) {

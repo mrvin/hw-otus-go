@@ -97,6 +97,27 @@ func (s *Storage) UpdateUser(_ context.Context, user *storage.User) error {
 	return nil
 }
 
+func (s *Storage) UpdateUserByName(_ context.Context, user *storage.User) error {
+	flag := false
+
+	s.muUsers.Lock()
+	for id, mUser := range s.mUsers {
+		if mUser.Name == user.Name {
+			mUser.HashPassword = user.HashPassword
+			mUser.Email = user.Email
+			s.mUsers[id] = mUser
+			flag = true
+			break
+		}
+	}
+	s.muUsers.Unlock()
+
+	if !flag {
+		return fmt.Errorf("%w: %s", storage.ErrNoUserName, user.Name)
+	}
+	return nil
+}
+
 func (s *Storage) DeleteUser(_ context.Context, id int64) error {
 	s.muUsers.Lock()
 	if _, ok := s.mUsers[id]; !ok {
@@ -127,10 +148,10 @@ func (s *Storage) DeleteUserByName(_ context.Context, name string) error {
 			break
 		}
 	}
+	s.muUsers.Unlock()
 	if id == 0 {
 		return fmt.Errorf("%w: %s", storage.ErrNoUserName, name)
 	}
-	s.muUsers.Unlock()
 
 	s.muEvents.Lock()
 	for _, event := range s.mEvents {

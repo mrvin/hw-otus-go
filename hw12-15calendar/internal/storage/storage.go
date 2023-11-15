@@ -27,6 +27,7 @@ type UserStorage interface {
 	GetUserByName(ctx context.Context, name string) (*User, error)
 
 	UpdateUser(ctx context.Context, user *User) error
+	UpdateUserByName(ctx context.Context, user *User) error
 
 	DeleteUser(ctx context.Context, id int64) error
 	DeleteUserByName(ctx context.Context, name string) error

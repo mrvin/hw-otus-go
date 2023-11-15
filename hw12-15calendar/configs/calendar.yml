@@ -40,3 +40,8 @@ metrics:
     enable: true
     host: otel_collector
     port: 4317
+
+# JWT auth
+auth:
+    secret_key: PNvEBrLW+zU7SPi+nqmY5KD6FVecuQW1VHFRUI8xAGKM4JnIvR3zQescAq
+    token_validity_period: 15	# in minutes
