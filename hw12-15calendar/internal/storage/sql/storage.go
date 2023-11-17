@@ -95,7 +95,16 @@ func (s *Storage) prepareQuery(ctx context.Context) error {
 	fmtStrErr := "prepare \"%s\" query: %w"
 
 	// Event query prepare
-	sqlInsertEvent := "insert into events (title, description, start_time, stop_time, user_id) values ($1, $2, $3, $4, $5) returning id"
+	sqlInsertEvent := `
+		INSERT INTO events (
+			title,
+			description,
+			start_time,
+			stop_time,
+			user_id
+		)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id`
 	s.insertEvent, err = s.db.PrepareContext(ctx, sqlInsertEvent)
 	if err != nil {
 		return fmt.Errorf(fmtStrErr, "insertEvent", err)
