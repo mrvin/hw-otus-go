@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
-	"go.opentelemetry.io/otel/metric/global"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
@@ -45,7 +45,7 @@ func Init(ctx context.Context, conf *Conf, serviceName string) (*sdkmetric.Meter
 	)
 
 	// Now we can register it as the otel meter provider.
-	global.SetMeterProvider(mp)
+	otel.SetMeterProvider(mp)
 
 	return mp, nil
 }

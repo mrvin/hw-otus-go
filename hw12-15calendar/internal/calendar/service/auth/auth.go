@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
