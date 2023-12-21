@@ -33,9 +33,8 @@ type Storage struct {
 	listEvents        *sql.Stmt
 	listEventsForUser *sql.Stmt
 
-	insertUser    *sql.Stmt
-	getUser       *sql.Stmt
-	getUserByName *sql.Stmt
+	insertUser *sql.Stmt
+	getUser    *sql.Stmt
 
 	listUsers *sql.Stmt
 }
@@ -109,39 +108,55 @@ func (s *Storage) prepareQuery(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf(fmtStrErr, "insertEvent", err)
 	}
-	sqlGetEvent := "select id, title, description, start_time, stop_time, user_id from events where id = $1"
+	sqlGetEvent := `
+		SELECT id, title, description, start_time, stop_time, user_id
+		FROM events
+		WHERE id = $1`
 	s.getEvent, err = s.db.PrepareContext(ctx, sqlGetEvent)
 	if err != nil {
 		return fmt.Errorf(fmtStrErr, "getEvent", err)
 	}
-	sqlGetAllEvent := "SELECT * FROM events"
+	sqlGetAllEvent := `
+		SELECT id, title, description, start_time, stop_time, user_id
+		FROM events`
 	s.listEvents, err = s.db.PrepareContext(ctx, sqlGetAllEvent)
 	if err != nil {
 		return fmt.Errorf(fmtStrErr, "getAllEvents", err)
 	}
-	sqlGetEventsForUser := "select id, title, description, start_time, stop_time, user_id from events where user_id = $1"
+	sqlGetEventsForUser := `
+		SELECT id, title, description, start_time, stop_time, user_id
+		FROM events
+		WHERE user_id = $1`
 	s.listEventsForUser, err = s.db.PrepareContext(ctx, sqlGetEventsForUser)
 	if err != nil {
 		return fmt.Errorf(fmtStrErr, "getEventsForUser", err)
 	}
 
 	// User query prepare
-	sqlInsertUser := "INSERT INTO users (name, hash_password, email) VALUES ($1, $2, $3) RETURNING id"
+	sqlInsertUser := `
+		INSERT INTO users (
+			name,
+			hash_password,
+			email
+		)
+		VALUES ($1, $2, $3)
+		RETURNING id`
 	s.insertUser, err = s.db.PrepareContext(ctx, sqlInsertUser)
 	if err != nil {
 		return fmt.Errorf(fmtStrErr, "insertUser", err)
 	}
-	sqlGetUser := "SELECT id, name, hash_password, email FROM users WHERE id = $1"
+	sqlGetUser := `
+		SELECT id, name, hash_password, email
+		FROM users
+		WHERE name = $1`
 	s.getUser, err = s.db.PrepareContext(ctx, sqlGetUser)
 	if err != nil {
 		return fmt.Errorf(fmtStrErr, "getUser", err)
 	}
-	sqlGetUserByName := "SELECT id, name, hash_password, email FROM users WHERE name = $1"
-	s.getUserByName, err = s.db.PrepareContext(ctx, sqlGetUserByName)
-	if err != nil {
-		return fmt.Errorf(fmtStrErr, "getUserByName", err)
-	}
-	sqlGetAllUsers := "SELECT id, name, hash_password, email FROM users"
+	sqlGetAllUsers := `
+		SELECT id, name, hash_password, email
+		FROM users
+	`
 	s.listUsers, err = s.db.PrepareContext(ctx, sqlGetAllUsers)
 	if err != nil {
 		return fmt.Errorf(fmtStrErr, "getAllUsers", err)
@@ -158,7 +173,6 @@ func (s *Storage) Close() error {
 
 	s.insertUser.Close()
 	s.getUser.Close()
-	s.getUserByName.Close()
 	s.listUsers.Close()
 
 	return s.db.Close() //nolint:wrapcheck

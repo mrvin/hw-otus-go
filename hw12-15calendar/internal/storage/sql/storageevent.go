@@ -125,15 +125,20 @@ func (s *Storage) DeleteEvent(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (s *Storage) ListEventsForUser(ctx context.Context, userID int64) ([]storage.Event, error) {
+func (s *Storage) ListEventsForUser(ctx context.Context, name string) ([]storage.Event, error) {
 	events := make([]storage.Event, 0)
 
-	rows, err := s.listEventsForUser.QueryContext(ctx, userID)
+	user, err := s.GetUser(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := s.listEventsForUser.QueryContext(ctx, user.ID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return events, nil
 		}
-		return nil, fmt.Errorf("can't get events for user with id: %d: %w", userID, err)
+		return nil, fmt.Errorf("can't get events for user with name: %s: %w", name, err)
 	}
 	defer rows.Close()
 

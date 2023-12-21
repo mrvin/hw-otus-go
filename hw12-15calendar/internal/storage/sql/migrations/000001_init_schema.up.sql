@@ -1,9 +1,10 @@
 CREATE TABLE IF NOT EXISTS users (
-	id serial PRIMARY KEY,
+	id UUID DEFAULT gen_random_uuid (),
 	name TEXT NOT NULL UNIQUE,
 	hash_password TEXT,
 	email TEXT,
-	role TEXT
+	role TEXT,
+	PRIMARY KEY (id)
 );
 CREATE INDEX IF NOT EXISTS idx_name ON users(name);
 
@@ -13,5 +14,5 @@ CREATE TABLE IF NOT EXISTS events (
 	description text,
 	start_time timestamptz,
 	stop_time timestamptz,
-	user_id integer references users(id) on delete cascade
+	user_id UUID references users(id) on delete cascade
 );
