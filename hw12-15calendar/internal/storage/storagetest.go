@@ -187,6 +187,7 @@ func TestEventCRUD(ctx context.Context, t *testing.T, st Storage) { //nolint:fun
 }
 
 func cmpUsers(t *testing.T, u1, u2 *User) {
+	t.Helper()
 	if u1.ID != u2.ID {
 		t.Errorf("mismatch id user: %d, %d", u1.ID, u2.ID)
 	}
@@ -199,6 +200,7 @@ func cmpUsers(t *testing.T, u1, u2 *User) {
 }
 
 func cmpEvent(t *testing.T, e1, e2 *Event) {
+	t.Helper()
 	if e1.ID != e2.ID {
 		t.Errorf("mismatch id event: %d, %d", e1.ID, e2.ID)
 	}
