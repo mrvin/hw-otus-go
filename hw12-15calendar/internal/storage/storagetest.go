@@ -4,15 +4,16 @@ import (
 	"context"
 	"errors"
 	"reflect"
-	"sort"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 var users = []User{
-	{Name: "Bob", Email: "bobi@mail.com", Events: make([]Event, 0)},
-	{Name: "Alis", Email: "alisia.jones@gmail.com", Events: make([]Event, 0)},
-	{Name: "Jim", Email: "jimihendrix@yandex.ru", Events: make([]Event, 0)},
+	{Name: "Bob", Email: "bobi@mail.com"},
+	{Name: "Alis", Email: "alisia.jones@gmail.com"},
+	{Name: "Jim", Email: "jimihendrix@yandex.ru"},
 }
 
 var events = []Event{
@@ -30,12 +31,6 @@ var events = []Event{
 		StopTime:  time.Date(2022, time.November, 7, 12, 0, 0, 0, time.UTC)},
 }
 
-type byIDEvent []Event
-
-func (x byIDEvent) Len() int           { return len(x) }
-func (x byIDEvent) Less(i, j int) bool { return x[i].ID < x[j].ID }
-func (x byIDEvent) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
-
 func TestUserCRUD(ctx context.Context, t *testing.T, st Storage) {
 	// Create users
 	for i := range users {
@@ -43,14 +38,14 @@ func TestUserCRUD(ctx context.Context, t *testing.T, st Storage) {
 		if err != nil {
 			t.Errorf("CreateUser: %v", err)
 		}
-		if id == 0 {
+		if id == uuid.Nil {
 			t.Errorf("CreateUser: can't get ID")
 		}
 	}
 
 	// Get users without events
 	for i := range users {
-		user, err := st.GetUser(ctx, users[i].ID)
+		user, err := st.GetUser(ctx, users[i].Name)
 		if err != nil {
 			t.Errorf("GetUser(id = %d): %v", users[i].ID, err)
 		}
@@ -66,11 +61,11 @@ func TestUserCRUD(ctx context.Context, t *testing.T, st Storage) {
 	}
 
 	// Update user name
-	users[0].Name = "Bill"
-	if err := st.UpdateUser(ctx, &users[0]); err != nil {
-		t.Errorf("UpdateUser(id = %d): %v", users[0].ID, err)
+	users[0].Email = "Bill@mail.ru"
+	if err := st.UpdateUser(ctx, users[0].Name, &users[0]); err != nil {
+		t.Errorf("UpdateUser(id = %v): %v", users[0].ID, err)
 	}
-	user, err := st.GetUser(ctx, users[0].ID)
+	user, err := st.GetUser(ctx, users[0].Name)
 	if err != nil {
 		t.Errorf("UpdateUser: get user with id = %d: %v", users[0].ID, err)
 	}
@@ -80,21 +75,21 @@ func TestUserCRUD(ctx context.Context, t *testing.T, st Storage) {
 
 	// Delete all users
 	for _, user := range users {
-		if err := st.DeleteUser(ctx, user.ID); err != nil {
+		if err := st.DeleteUser(ctx, user.Name); err != nil {
 			t.Errorf("DeleteUser: %v", err)
 		}
 	}
 
 	// Trying get, update, delete user that doesn't exist
-	_, err = st.GetUser(ctx, users[0].ID)
+	_, err = st.GetUser(ctx, users[0].Name)
 	if !errors.Is(err, ErrNoUser) {
 		t.Errorf("GetUser(id = %d): %v", users[0].ID, err)
 	}
-	err = st.UpdateUser(ctx, &users[1])
+	err = st.UpdateUser(ctx, users[1].Name, &users[1])
 	if !errors.Is(err, ErrNoUser) {
 		t.Errorf("UpdateUser(id = %d): %v", users[1].ID, err)
 	}
-	err = st.DeleteUser(ctx, users[2].ID)
+	err = st.DeleteUser(ctx, users[2].Name)
 	if !errors.Is(err, ErrNoUser) {
 		t.Errorf("DeleteUser(id = %d): %v", users[2].ID, err)
 	}
@@ -107,7 +102,7 @@ func TestEventCRUD(ctx context.Context, t *testing.T, st Storage) { //nolint:fun
 		if err != nil {
 			t.Errorf("CreateUser: %v", err)
 		}
-		if id == 0 {
+		if id == uuid.Nil {
 			t.Errorf("CreateUser: can't get ID")
 		}
 	}
@@ -125,20 +120,17 @@ func TestEventCRUD(ctx context.Context, t *testing.T, st Storage) { //nolint:fun
 				if id == 0 {
 					t.Errorf("CreateEvent: can't get ID")
 				}
-
-				users[i].Events = append(users[i].Events, events[j])
 			}
 		}
 	}
 
 	// Get users with events
 	for i := range users {
-		user, err := st.GetUser(ctx, users[i].ID)
+		user, err := st.GetUser(ctx, users[i].Name)
 		if err != nil {
 			t.Errorf("GetUser(id = %d): %v", users[i].ID, err)
 		}
 
-		sort.Sort(byIDEvent(user.Events))
 		cmpUsers(t, user, &users[i])
 	}
 
@@ -161,7 +153,11 @@ func TestEventCRUD(ctx context.Context, t *testing.T, st Storage) { //nolint:fun
 
 	// Delete all events
 	for _, user := range users {
-		for _, event := range user.Events {
+		events, err := st.ListEventsForUser(ctx, user.Name)
+		if err != nil {
+			t.Errorf("ListEventsForUser: %v", err)
+		}
+		for _, event := range events {
 			if err := st.DeleteEvent(ctx, event.ID); err != nil {
 				t.Errorf("DeleteEvent: %v", err)
 			}
@@ -170,7 +166,7 @@ func TestEventCRUD(ctx context.Context, t *testing.T, st Storage) { //nolint:fun
 
 	// Delete all users
 	for _, user := range users {
-		if err := st.DeleteUser(ctx, user.ID); err != nil {
+		if err := st.DeleteUser(ctx, user.Name); err != nil {
 			t.Errorf("DeleteUser: %v", err)
 		}
 	}
@@ -199,10 +195,6 @@ func cmpUsers(t *testing.T, u1, u2 *User) {
 	}
 	if u1.Email != u2.Email {
 		t.Errorf("mismatch email user: %s, %s", u1.Email, u2.Email)
-	}
-
-	for i := range u1.Events {
-		cmpEvent(t, &u1.Events[i], &u2.Events[i])
 	}
 }
 
