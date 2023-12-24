@@ -11,9 +11,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	httpserver "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http"
 	handlerevent "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers/event"
-	handleruser "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers/user"
+	handlerusersignin "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers/user/signin"
+	handlerusersignup "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers/user/signup"
+	handleruserupdate "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers/user/update"
 	authservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/auth"
 	eventservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/event"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
@@ -23,7 +26,7 @@ import (
 
 //nolint:tagliatelle
 type User struct {
-	ID       int64
+	ID       uuid.UUID
 	Name     string
 	Password string
 	Email    string
@@ -220,10 +223,10 @@ func testHandleEvent(t *testing.T, server *httpserver.Server) {
 	testHandleDeleteEvent(t, server, user.Token, int64(len(events)), http.StatusBadRequest)
 }
 
-func testHandleSignUp(t *testing.T, server *httpserver.Server, user *User, status int) int64 {
+func testHandleSignUp(t *testing.T, server *httpserver.Server, user *User, status int) uuid.UUID {
 	res := httptest.NewRecorder()
 
-	request := handleruser.RequestSignUp{
+	request := handlerusersignup.RequestSignUp{
 		UserName: user.Name,
 		Password: user.Password,
 		Email:    user.Email,
@@ -244,7 +247,7 @@ func testHandleSignUp(t *testing.T, server *httpserver.Server, user *User, statu
 		t.Errorf("HandleCreateUser: response code is %d; want: %d", res.Code, status)
 	}
 
-	var response handleruser.ResponseSignUp
+	var response handlerusersignup.ResponseSignUp
 	if err := json.Unmarshal(res.Body.Bytes(), &response); err != nil {
 		t.Fatalf("HandleCreateUser: cant unmarshal JSON: %v", err)
 	}
@@ -255,7 +258,7 @@ func testHandleSignUp(t *testing.T, server *httpserver.Server, user *User, statu
 func testHandleLogin(t *testing.T, server *httpserver.Server, user *User, status int) string {
 	res := httptest.NewRecorder()
 
-	request := handleruser.RequestSignIn{
+	request := handlerusersignin.RequestSignIn{
 		UserName: user.Name,
 		Password: user.Password,
 	}
@@ -278,7 +281,7 @@ func testHandleLogin(t *testing.T, server *httpserver.Server, user *User, status
 		t.Errorf("HandleLogin: response code is %d; want: %d", res.Code, status)
 	}
 
-	var response handleruser.ResponseSignIn
+	var response handlerusersignin.ResponseSignIn
 	if err := json.Unmarshal(res.Body.Bytes(), &response); err != nil {
 		t.Fatalf("HandleLogin: cant unmarshal JSON: %v", err)
 	}
@@ -313,7 +316,7 @@ func testHandleGetUser(t *testing.T, server *httpserver.Server, user *User, stat
 func testHandleUpdateUser(t *testing.T, server *httpserver.Server, user *User, status int) {
 	res := httptest.NewRecorder()
 
-	request := handleruser.RequestUpdateUser{
+	request := handleruserupdate.RequestUpdateUser{
 		UserName: user.Name,
 		Password: user.Password,
 		Email:    user.Email,

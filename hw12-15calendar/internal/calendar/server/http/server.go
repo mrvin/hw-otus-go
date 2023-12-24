@@ -11,7 +11,11 @@ import (
 	"time"
 
 	handlerevent "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers/event"
-	handleruser "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers/user"
+	handleruserdelete "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers/user/delete"
+	handleruserget "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers/user/get"
+	handlerusersignin "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers/user/signin"
+	handlerusersignup "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers/user/signup"
+	handleruserupdate "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers/user/update"
 	authservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/auth"
 	eventservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/event"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/logger"
@@ -43,14 +47,13 @@ func New(conf *Conf, auth *authservice.AuthService, events *eventservice.EventSe
 	res := pathresolver.New()
 
 	handlerEvent := handlerevent.New(events)
-	handlerUser := handleruser.New(auth)
 
-	res.Add("POST /signup", handlerUser.SignUp)
-	res.Add("GET /login", handlerUser.SignIn)
+	res.Add(http.MethodPost+" /signup", handlerusersignup.New(auth))
+	res.Add(http.MethodGet+" /login", handlerusersignin.New(auth))
 
-	res.Add("GET /user", auth.Authorized(handlerUser.GetUser))
-	res.Add("PUT /user", auth.Authorized(handlerUser.UpdateUser))
-	res.Add("DELETE /user", auth.Authorized(handlerUser.DeleteUser))
+	res.Add(http.MethodGet+" /user", auth.Authorized(handleruserget.New(auth)))
+	res.Add(http.MethodPut+" /user", auth.Authorized(handleruserupdate.New(auth)))
+	res.Add(http.MethodDelete+" /user", auth.Authorized(handleruserdelete.New(auth)))
 
 	res.Add("POST /event", auth.Authorized(handlerEvent.CreateEvent))
 	res.Add("GET /event", auth.Authorized(handlerEvent.GetEvent))
