@@ -9,12 +9,10 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-api"
 	authservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/auth"
 	eventservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/event"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
+
 	"google.golang.org/grpc/peer"
-	"google.golang.org/protobuf/types/known/emptypb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Conf struct {
@@ -47,6 +45,7 @@ func New(conf *Conf, auth *authservice.AuthService, events *eventservice.EventSe
 		grpc.ChainUnaryInterceptor(
 			otelgrpc.UnaryServerInterceptor(),
 			LogRequestGRPC,
+			server.Auth,
 		),
 	)
 	calendarapi.RegisterEventServiceServer(server.serv, &server)
@@ -70,85 +69,6 @@ func (s *Server) Stop() {
 	s.ln.Close()
 }
 
-func (s *Server) CreateUser(ctx context.Context, userpb *calendarapi.CreateUserRequest) (*calendarapi.CreateUserResponse, error) {
-	user := storage.User{
-		ID:           0,
-		Name:         userpb.GetName(),
-		HashPassword: userpb.GetPassword(),
-		Email:        userpb.GetEmail(),
-		Events:       nil,
-	}
-	id, err := s.authService.CreateUser(ctx, &user)
-	if err != nil {
-		err = fmt.Errorf("create user: %w", err)
-		slog.Error(err.Error())
-		return nil, err
-	}
-
-	return &calendarapi.CreateUserResponse{Id: id}, nil
-}
-
-func (s *Server) GetUserByID(ctx context.Context, req *calendarapi.GetUserByIDRequest) (*calendarapi.UserResponse, error) {
-	user, err := s.authService.GetUserByID(ctx, req.GetId())
-	if err != nil {
-		err := fmt.Errorf("get user: %w", err)
-		slog.Error(err.Error())
-		return nil, err
-	}
-
-	return &calendarapi.UserResponse{
-		Id:           user.ID,
-		Name:         user.Name,
-		HashPassword: user.HashPassword,
-		Email:        user.Email,
-	}, nil
-}
-
-func (s *Server) ListUsers(ctx context.Context, _ *emptypb.Empty) (*calendarapi.ListUsersResponse, error) {
-	users, err := s.authService.ListUsers(ctx)
-	if err != nil {
-		err := fmt.Errorf("get all users: %w", err)
-		slog.Error(err.Error())
-		return nil, err
-	}
-
-	pbUsers := make([]*calendarapi.UserResponse, len(users))
-	for i, user := range users {
-		pbUsers[i] = &calendarapi.UserResponse{
-			Id:    user.ID,
-			Name:  user.Name,
-			Email: user.Email,
-		}
-	}
-
-	return &calendarapi.ListUsersResponse{Users: pbUsers}, nil
-}
-
-func (s *Server) UpdateUser(ctx context.Context, userpb *calendarapi.UpdateUserRequest) (*emptypb.Empty, error) {
-	user := storage.User{
-		Name:   userpb.GetName(),
-		Email:  userpb.GetEmail(),
-		Events: nil,
-	}
-	if err := s.authService.UpdateUser(ctx, &user); err != nil {
-		err := fmt.Errorf("update user: %w", err)
-		slog.Error(err.Error())
-		return nil, err
-	}
-
-	return &emptypb.Empty{}, nil
-}
-
-func (s *Server) DeleteUser(ctx context.Context, req *calendarapi.DeleteUserRequest) (*emptypb.Empty, error) {
-	if err := s.authService.DeleteUserByName(ctx, req.GetName()); err != nil {
-		err := fmt.Errorf("delete user: %w", err)
-		slog.Error(err.Error())
-		return nil, err
-	}
-
-	return &emptypb.Empty{}, nil
-}
-
 func (s *Server) Login(ctx context.Context, req *calendarapi.LoginRequest) (*calendarapi.LoginResponse, error) {
 	tokenString, err := s.authService.Authenticate(ctx, req.GetUsername(), req.GetPassword())
 	if err != nil {
@@ -156,123 +76,6 @@ func (s *Server) Login(ctx context.Context, req *calendarapi.LoginRequest) (*cal
 		return nil, err
 	}
 	return &calendarapi.LoginResponse{AccessToken: tokenString}, nil
-}
-
-func (s *Server) CreateEvent(ctx context.Context, pbEvent *calendarapi.CreateEventRequest) (*calendarapi.CreateEventResponse, error) {
-	if err := pbEvent.StartTime.CheckValid(); err != nil {
-		err = fmt.Errorf("incorrect value StartTime: %w", err)
-		slog.Error(err.Error())
-		return nil, err
-	}
-	if err := pbEvent.StopTime.CheckValid(); err != nil {
-		err = fmt.Errorf("incorrect value StopTime: %w", err)
-		slog.Error(err.Error())
-		return nil, err
-	}
-
-	event := storage.Event{
-		ID:          0,
-		Title:       pbEvent.GetTitle(),
-		Description: pbEvent.GetDescription(),
-		StartTime:   pbEvent.StartTime.AsTime(),
-		StopTime:    pbEvent.StopTime.AsTime(),
-		UserID:      pbEvent.GetUserID(),
-	}
-
-	id, err := s.eventService.CreateEvent(ctx, &event)
-	if err != nil {
-		err = fmt.Errorf("create event: %w", err)
-		slog.Error(err.Error())
-		return nil, err
-	}
-
-	return &calendarapi.CreateEventResponse{Id: id}, nil
-}
-
-func (s *Server) GetEventByID(ctx context.Context, req *calendarapi.GetEventByIDRequest) (*calendarapi.EventResponse, error) {
-	event, err := s.eventService.GetEvent(ctx, req.GetId())
-	if err != nil {
-		err := fmt.Errorf("get event: %w", err)
-		slog.Error(err.Error())
-		return nil, err
-	}
-
-	return &calendarapi.EventResponse{
-		Id:          event.ID,
-		Title:       event.Title,
-		Description: event.Description,
-		StartTime:   timestamppb.New(event.StartTime),
-		StopTime:    timestamppb.New(event.StopTime),
-		UserID:      event.UserID,
-	}, nil
-}
-
-func (s *Server) ListEventsForUser(ctx context.Context, req *calendarapi.ListEventsForUserRequest) (*calendarapi.ListEventsResponse, error) {
-	if err := req.Date.CheckValid(); err != nil {
-		return nil, fmt.Errorf("incorrect value date: %w", err)
-	}
-	date := req.Date.AsTime()
-
-	events, err := s.eventService.ListEventsForUser(ctx, req.GetUserId(), date, int(req.Days))
-	if err != nil {
-		err := fmt.Errorf("get events for user: %w", err)
-		slog.Error(err.Error())
-		return nil, err
-	}
-
-	pbEvents := make([]*calendarapi.EventResponse, len(events), len(events))
-	for i, event := range events {
-		pbEvents[i] = &calendarapi.EventResponse{
-			Id:          event.ID,
-			Title:       event.Title,
-			Description: event.Description,
-			StartTime:   timestamppb.New(event.StartTime),
-			StopTime:    timestamppb.New(event.StopTime),
-			UserID:      event.UserID,
-		}
-	}
-
-	return &calendarapi.ListEventsResponse{Events: pbEvents}, nil
-}
-
-func (s *Server) UpdateEvent(ctx context.Context, pbEvent *calendarapi.UpdateEventRequest) (*emptypb.Empty, error) {
-	if err := pbEvent.StartTime.CheckValid(); err != nil {
-		err = fmt.Errorf("incorrect value StartTime: %w", err)
-		slog.Error(err.Error())
-		return nil, err
-	}
-	if err := pbEvent.StopTime.CheckValid(); err != nil {
-		err = fmt.Errorf("incorrect value StopTime: %w", err)
-		slog.Error(err.Error())
-		return nil, err
-	}
-
-	event := storage.Event{
-		ID:          0,
-		Title:       pbEvent.GetTitle(),
-		Description: pbEvent.GetDescription(),
-		StartTime:   pbEvent.StartTime.AsTime(),
-		StopTime:    pbEvent.StopTime.AsTime(),
-		UserID:      pbEvent.GetUserID(),
-	}
-
-	if err := s.eventService.UpdateEvent(ctx, &event); err != nil {
-		err := fmt.Errorf("update event: %w", err)
-		slog.Error(err.Error())
-		return nil, err
-	}
-
-	return &emptypb.Empty{}, nil
-}
-
-func (s *Server) DeleteEvent(ctx context.Context, req *calendarapi.DeleteEventRequest) (*emptypb.Empty, error) {
-	if err := s.eventService.DeleteEvent(ctx, req.GetId()); err != nil {
-		err := fmt.Errorf("delete event: %w", err)
-		slog.Error(err.Error())
-		return nil, err
-	}
-
-	return &emptypb.Empty{}, nil
 }
 
 // LogRequest is a gRPC UnaryServerInterceptor that will log the API call to stdOut
@@ -294,5 +97,30 @@ func LogRequestGRPC(
 		slog.String("Method", info.FullMethod),
 	)
 	// Last but super important, execute the handler so that the actualy gRPC request is also performed
+	return handler(ctx, req)
+}
+
+type TokenGetter interface {
+	GetAccessToken() string
+}
+
+func (s *Server) Auth(
+	ctx context.Context,
+	req interface{},
+	info *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler,
+) (response interface{}, err error) {
+	if info.FullMethod != "/calendar.UserService/CreateUser" && info.FullMethod != "/calendar.UserService/Login" {
+		reqTokenGetter := req.(TokenGetter)
+		tokenString := reqTokenGetter.GetAccessToken()
+
+		claims, err := s.authService.ParseToken(tokenString)
+		if err != nil {
+			return nil, err
+		}
+
+		username := claims["username"]
+		ctx = context.WithValue(ctx, "username", username)
+	}
 	return handler(ctx, req)
 }
