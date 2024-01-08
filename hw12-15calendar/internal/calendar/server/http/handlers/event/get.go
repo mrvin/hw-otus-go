@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	httpresponse "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/response"
 )
@@ -18,7 +19,7 @@ type ResponseGetEvent struct {
 	Description string    `json:"description,omitempty"`
 	StartTime   time.Time `json:"start_time"`
 	StopTime    time.Time `json:"stop_time,omitempty"`
-	UserID      int64     `json:"user_id"`
+	UserID      uuid.UUID `json:"user_id"`
 	Status      string    `json:"status,required"`
 }
 

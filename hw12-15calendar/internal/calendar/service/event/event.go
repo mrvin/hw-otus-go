@@ -63,11 +63,11 @@ func (a *App) ListEvents(ctx context.Context) ([]storage.Event, error) {
 */
 
 // TODO: implement at the database level.
-func (e *EventService) ListEventsForUser(ctx context.Context, id int64, startPeriod time.Time, days int) ([]storage.Event, error) {
+func (e *EventService) ListEventsForUser(ctx context.Context, name string, startPeriod time.Time, days int) ([]storage.Event, error) {
 	cctx, sp := e.tr.Start(ctx, "GetEventsForUser")
 	defer sp.End()
 
-	events, err := e.eventSt.ListEventsForUser(cctx, id)
+	events, err := e.eventSt.ListEventsForUser(cctx, name)
 	if err != nil {
 		return nil, err
 	}

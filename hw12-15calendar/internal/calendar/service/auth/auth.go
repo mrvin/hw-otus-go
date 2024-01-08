@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
@@ -35,7 +36,7 @@ func New(st storage.UserStorage, conf *Conf) *AuthService {
 	}
 }
 
-func (a *AuthService) CreateUser(ctx context.Context, user *storage.User) (int64, error) {
+func (a *AuthService) CreateUser(ctx context.Context, user *storage.User) (uuid.UUID, error) {
 	cctx, sp := a.tr.Start(ctx, "CreateUser")
 	defer sp.End()
 
@@ -50,45 +51,25 @@ func (a *AuthService) CreateUser(ctx context.Context, user *storage.User) (int64
 	return a.authSt.CreateUser(cctx, user)
 }
 
-func (a *AuthService) GetUserByID(ctx context.Context, id int64) (*storage.User, error) {
+func (a *AuthService) GetUser(ctx context.Context, userName string) (*storage.User, error) {
 	cctx, sp := a.tr.Start(ctx, "GetUser")
 	defer sp.End()
 
-	return a.authSt.GetUser(cctx, id)
+	return a.authSt.GetUser(cctx, userName)
 }
 
-func (a *AuthService) GetUserByName(ctx context.Context, userName string) (*storage.User, error) {
-	cctx, sp := a.tr.Start(ctx, "GetUser")
-	defer sp.End()
-
-	return a.authSt.GetUserByName(cctx, userName)
-}
-
-func (a *AuthService) UpdateUserByName(ctx context.Context, user *storage.User) error {
-	cctx, sp := a.tr.Start(ctx, "UpdateUserByName")
-	defer sp.End()
-
-	return a.authSt.UpdateUserByName(cctx, user)
-}
-
-func (a *AuthService) UpdateUser(ctx context.Context, user *storage.User) error {
+func (a *AuthService) UpdateUser(ctx context.Context, name string, user *storage.User) error {
 	cctx, sp := a.tr.Start(ctx, "UpdateUser")
 	defer sp.End()
 
-	return a.authSt.UpdateUser(cctx, user)
+	return a.authSt.UpdateUser(cctx, name, user)
 }
 
-func (a *AuthService) DeleteUser(ctx context.Context, id int64) error {
+func (a *AuthService) DeleteUser(ctx context.Context, userName string) error {
 	cctx, sp := a.tr.Start(ctx, "DeleteUser")
 	defer sp.End()
 
-	return a.authSt.DeleteUser(cctx, id)
-}
-func (a *AuthService) DeleteUserByName(ctx context.Context, name string) error {
-	cctx, sp := a.tr.Start(ctx, "DeleteUser")
-	defer sp.End()
-
-	return a.authSt.DeleteUserByName(cctx, name)
+	return a.authSt.DeleteUser(cctx, userName)
 }
 
 func (a *AuthService) ListUsers(ctx context.Context) ([]storage.User, error) {
@@ -119,7 +100,7 @@ func (a *AuthService) Authenticate(ctx context.Context, username, password strin
 }
 
 func (a *AuthService) validCredentials(ctx context.Context, username, password string) error {
-	user, err := a.authSt.GetUserByName(ctx, username)
+	user, err := a.authSt.GetUser(ctx, username)
 	if err != nil {
 		return fmt.Errorf("get user by name: %w", err)
 	}
@@ -135,6 +116,27 @@ func (a *AuthService) validCredentials(ctx context.Context, username, password s
 
 	return nil
 }
+func (a *AuthService) ParseToken(tokenString string) (jwt.MapClaims, error) {
+	// Validate token.
+	token, err := jwt.Parse(
+		tokenString,
+		func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return []byte(a.conf.SecretKey), nil
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("invalid token: %w", err)
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return nil, fmt.Errorf("invalid token: %w", err)
+	}
+
+	return claims, nil
+}
 
 // Authorized is middleware
 func (a *AuthService) Authorized(next http.HandlerFunc) http.HandlerFunc {
@@ -147,27 +149,11 @@ func (a *AuthService) Authorized(next http.HandlerFunc) http.HandlerFunc {
 		}
 		tokenString := strings.TrimPrefix(authHeaderValue, bearerPrefix)
 
-		// Validate token.
-		token, err := jwt.Parse(
-			tokenString,
-			func(token *jwt.Token) (interface{}, error) {
-				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-					return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-				}
-				return []byte(a.conf.SecretKey), nil
-			},
-		)
+		claims, err := a.ParseToken(tokenString)
 		if err != nil {
-			err := fmt.Errorf("invalid token: %w", err)
 			http.Error(res, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok || !token.Valid {
-			http.Error(res, "invalid token", http.StatusUnauthorized)
-			return
-		}
-
 		username := claims["username"]
 		ctx := context.WithValue(req.Context(), "username", username)
 

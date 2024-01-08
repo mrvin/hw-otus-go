@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	httpresponse "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/response"
 )
@@ -18,7 +19,7 @@ type RequestCreateEvent struct {
 	Description string    `json:"description" validate:"omitempty,min=2,max=512"`
 	StartTime   time.Time `json:"start_time" validate:"required"`
 	StopTime    time.Time `json:"stop_time" validate:"required"`
-	UserID      int64     `json:"user_id" validate:"min=1"`
+	UserID      uuid.UUID `json:"user_id" validate:"min=1"`
 }
 
 type ResponseCreateEvent struct {

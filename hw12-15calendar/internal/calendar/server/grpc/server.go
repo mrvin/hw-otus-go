@@ -69,15 +69,6 @@ func (s *Server) Stop() {
 	s.ln.Close()
 }
 
-func (s *Server) Login(ctx context.Context, req *calendarapi.LoginRequest) (*calendarapi.LoginResponse, error) {
-	tokenString, err := s.authService.Authenticate(ctx, req.GetUsername(), req.GetPassword())
-	if err != nil {
-		slog.Error(err.Error())
-		return nil, err
-	}
-	return &calendarapi.LoginResponse{AccessToken: tokenString}, nil
-}
-
 // LogRequest is a gRPC UnaryServerInterceptor that will log the API call to stdOut
 func LogRequestGRPC(
 	ctx context.Context,

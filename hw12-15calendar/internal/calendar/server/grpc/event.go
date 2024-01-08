@@ -49,6 +49,15 @@ func (s *Server) CreateEvent(ctx context.Context, pbEvent *calendarapi.CreateEve
 	return &calendarapi.CreateEventResponse{Id: id}, nil
 }
 
+func (s *Server) Login(ctx context.Context, req *calendarapi.LoginRequest) (*calendarapi.LoginResponse, error) {
+	tokenString, err := s.authService.Authenticate(ctx, req.GetUsername(), req.GetPassword())
+	if err != nil {
+		slog.Error(err.Error())
+		return nil, err
+	}
+	return &calendarapi.LoginResponse{AccessToken: tokenString}, nil
+}
+
 func (s *Server) GetEvent(ctx context.Context, req *calendarapi.GetEventRequest) (*calendarapi.EventResponse, error) {
 	event, err := s.eventService.GetEvent(ctx, req.GetId())
 	if err != nil {

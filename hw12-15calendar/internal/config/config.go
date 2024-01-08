@@ -10,7 +10,7 @@ import (
 func Parse(configPath string, conf interface{}) error {
 	configYml, err := os.ReadFile(configPath)
 	if err != nil {
-		return fmt.Errorf("reading %s error: %w", configPath, err)
+		return fmt.Errorf("reading error: %w", err)
 	}
 
 	if err := yaml.Unmarshal(configYml, conf); err != nil {

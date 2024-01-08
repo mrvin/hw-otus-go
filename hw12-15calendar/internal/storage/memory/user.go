@@ -43,6 +43,7 @@ func (s *Storage) GetUserByID(_ context.Context, id uuid.UUID) (*storage.User, e
 	return nil, fmt.Errorf("%w: %v", storage.ErrNoUser, id)
 }
 
+// TODO: update required fields
 func (s *Storage) UpdateUser(_ context.Context, name string, user *storage.User) error {
 	s.muUsers.Lock()
 	defer s.muUsers.Unlock()
