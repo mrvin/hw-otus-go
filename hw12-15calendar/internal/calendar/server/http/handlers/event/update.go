@@ -16,13 +16,12 @@ import (
 
 type RequestUpdateEvent struct {
 	ID          int64     `json:"id"`
-	Title       string    `json:"title" validate:"required,min=2,max=64"`
-	Description string    `json:"description" validate:"omitempty,min=2,max=512"`
-	StartTime   time.Time `json:"start_time" validate:"required"`
-	StopTime    time.Time `json:"stop_time" validate:"required"`
+	Title       string    `json:"title"       validate:"required,min=2,max=64"`
+	Description string    `json:"description" validate:"required,min=2,max=512"`
+	StartTime   time.Time `json:"start_time"  validate:"required"`
+	StopTime    time.Time `json:"stop_time"   validate:"required"`
 }
 
-// Update only required fields
 func (h *Handler) UpdateEvent(res http.ResponseWriter, req *http.Request) {
 	// Read json request
 	var request RequestUpdateEvent

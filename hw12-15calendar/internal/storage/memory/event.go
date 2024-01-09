@@ -50,9 +50,12 @@ func (s *Storage) UpdateEvent(_ context.Context, event *storage.Event) error {
 	s.muEvents.Lock()
 	defer s.muEvents.Unlock()
 
-	if _, ok := s.mEvents[event.ID]; !ok {
+	oldEvent, ok := s.mEvents[event.ID]
+	if !ok {
 		return fmt.Errorf("%w: %d", storage.ErrNoEvent, event.ID)
 	}
+	event.UserID = oldEvent.UserID
+
 	s.mEvents[event.ID] = *event
 
 	return nil

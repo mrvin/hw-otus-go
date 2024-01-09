@@ -23,8 +23,8 @@ type UserUpdater interface {
 
 type RequestUpdateUser struct {
 	UserName string `json:"userName" validate:"required,min=3,max=20"`
-	Password string `json:"password" validate:"omitempty,min=6,max=32"`
-	Email    string `json:"email"    validate:"omitempty,email"`
+	Password string `json:"password" validate:"required,min=6,max=32"`
+	Email    string `json:"email"    validate:"required,email"`
 }
 
 func New(updater UserUpdater) http.HandlerFunc {
