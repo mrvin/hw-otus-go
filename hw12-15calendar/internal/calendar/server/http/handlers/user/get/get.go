@@ -14,7 +14,6 @@ import (
 	httpresponse "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/response"
 )
 
-//go:generate go run github.com/vektra/mockery/v2@v2.38.0 --name=UserGetter
 type UserGetter interface {
 	GetUser(ctx context.Context, name string) (*storage.User, error)
 }

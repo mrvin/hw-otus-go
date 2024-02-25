@@ -16,7 +16,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-//go:generate go run github.com/vektra/mockery/v2@v2.38.0 --name=UserUpdater
 type UserUpdater interface {
 	UpdateUser(ctx context.Context, name string, user *storage.User) error
 }
@@ -38,12 +37,14 @@ func New(updater UserUpdater) http.HandlerFunc {
 			err := fmt.Errorf("UpdateUser: read body request: %w", err)
 			slog.Error(err.Error())
 			httpresponse.WriteError(res, err.Error(), http.StatusBadRequest)
+			return
 		}
 
 		if err := json.Unmarshal(body, &request); err != nil {
 			err := fmt.Errorf("UpdateUser: unmarshal body request: %w", err)
 			slog.Error(err.Error())
 			httpresponse.WriteError(res, err.Error(), http.StatusBadRequest)
+			return
 		}
 
 		slog.Debug(

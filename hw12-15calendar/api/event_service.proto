@@ -14,7 +14,6 @@ message CreateEventRequest {
 	string description = 3;
 	google.protobuf.Timestamp startTime = 4;
 	google.protobuf.Timestamp stopTime = 5;
-	UUID userID = 6;
 }
 
 message CreateEventResponse {
@@ -51,7 +50,7 @@ message DeleteEventRequest {
 
 // Days Ahead Request
 message ListEventsForUserRequest {
-	int64 user_id = 1;
+	string access_token = 1;
 	int32 days = 2;
 	google.protobuf.Timestamp date = 3;
 }

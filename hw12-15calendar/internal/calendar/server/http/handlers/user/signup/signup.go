@@ -15,7 +15,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-//go:generate go run github.com/vektra/mockery/v2@v2.38.0 --name=UserCreator
 type UserCreator interface {
 	CreateUser(ctx context.Context, user *storage.User) (uuid.UUID, error)
 }

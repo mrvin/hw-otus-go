@@ -38,8 +38,7 @@ func (s *Server) CreateUser(ctx context.Context, userpb *calendarapi.CreateUserR
 func (s *Server) GetUser(ctx context.Context, _ *calendarapi.GetUserRequest) (*calendarapi.UserResponse, error) {
 	userName := GetUserName(ctx)
 	if userName == "" {
-		err := fmt.Errorf("get user: user name is empty")
-		return nil, err
+		panic("get user: user name is empty")
 	}
 	user, err := s.authService.GetUser(ctx, userName)
 	if err != nil {
@@ -81,8 +80,7 @@ func (s *Server) ListUsers(ctx context.Context, _ *calendarapi.ListUsersRequest)
 func (s *Server) UpdateUser(ctx context.Context, userpb *calendarapi.UpdateUserRequest) (*emptypb.Empty, error) {
 	userName := GetUserName(ctx)
 	if userName == "" {
-		err := fmt.Errorf("update user: user name is empty")
-		return nil, err
+		panic("update user: user name is empty")
 	}
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(userpb.GetPassword()), bcrypt.DefaultCost)
 	if err != nil {
@@ -107,8 +105,7 @@ func (s *Server) UpdateUser(ctx context.Context, userpb *calendarapi.UpdateUserR
 func (s *Server) DeleteUser(ctx context.Context, _ *calendarapi.DeleteUserRequest) (*emptypb.Empty, error) {
 	userName := GetUserName(ctx)
 	if userName == "" {
-		err := fmt.Errorf("delete user: user name is empty")
-		return nil, err
+		panic("delete user: user name is empty")
 	}
 	if err := s.authService.DeleteUser(ctx, userName); err != nil {
 		err := fmt.Errorf("delete user: %w", err)
@@ -117,14 +114,4 @@ func (s *Server) DeleteUser(ctx context.Context, _ *calendarapi.DeleteUserReques
 	}
 
 	return &emptypb.Empty{}, nil
-}
-
-func GetUserName(ctx context.Context) string {
-	if ctx == nil {
-		return ""
-	}
-	if userName, ok := ctx.Value("username").(string); ok {
-		return userName
-	}
-	return ""
 }

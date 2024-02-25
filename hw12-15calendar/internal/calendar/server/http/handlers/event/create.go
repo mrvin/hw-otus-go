@@ -15,11 +15,11 @@ import (
 )
 
 type RequestCreateEvent struct {
-	Title       string    `json:"title" validate:"required,min=2,max=64"`
+	Title       string    `json:"title"       validate:"required,min=2,max=64"`
 	Description string    `json:"description" validate:"omitempty,min=2,max=512"`
-	StartTime   time.Time `json:"start_time" validate:"required"`
-	StopTime    time.Time `json:"stop_time" validate:"required"`
-	UserID      uuid.UUID `json:"user_id" validate:"min=1"`
+	StartTime   time.Time `json:"start_time"  validate:"required"`
+	StopTime    time.Time `json:"stop_time"   validate:"required"`
+	UserID      uuid.UUID `json:"user_id"     validate:"min=1"`
 }
 
 type ResponseCreateEvent struct {

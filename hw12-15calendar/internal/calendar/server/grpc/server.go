@@ -102,16 +102,34 @@ func (s *Server) Auth(
 	handler grpc.UnaryHandler,
 ) (response interface{}, err error) {
 	if info.FullMethod != "/calendar.UserService/CreateUser" && info.FullMethod != "/calendar.UserService/Login" {
-		reqTokenGetter := req.(TokenGetter)
+		reqTokenGetter, ok := req.(TokenGetter)
+		if !ok {
+			panic("cant make request TokenGetter interface")
+		}
 		tokenString := reqTokenGetter.GetAccessToken()
 
 		claims, err := s.authService.ParseToken(tokenString)
 		if err != nil {
 			return nil, err
 		}
-
+		if info.FullMethod == "/calendar.UserService/ListUsers" {
+			role := claims["role"]
+			if role != "admin" {
+				return nil, fmt.Errorf("not authorization")
+			}
+		}
 		username := claims["username"]
 		ctx = context.WithValue(ctx, "username", username)
 	}
 	return handler(ctx, req)
+}
+
+func GetUserName(ctx context.Context) string {
+	if ctx == nil {
+		return ""
+	}
+	if userName, ok := ctx.Value("username").(string); ok {
+		return userName
+	}
+	return ""
 }

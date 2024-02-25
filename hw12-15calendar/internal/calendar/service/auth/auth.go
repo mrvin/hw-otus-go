@@ -80,13 +80,15 @@ func (a *AuthService) ListUsers(ctx context.Context) ([]storage.User, error) {
 }
 
 func (a *AuthService) Authenticate(ctx context.Context, username, password string) (string, error) {
-	if err := a.validCredentials(ctx, username, password); err != nil {
+	role, err := a.validCredentials(ctx, username, password)
+	if err != nil {
 		return "", fmt.Errorf("invalid credentials: %w", err)
 	}
 	token := jwt.NewWithClaims(
 		jwt.SigningMethodHS256,
 		jwt.MapClaims{
 			"username": username,
+			"role":     role,
 			"iat":      time.Now().Unix(),                                                              // IssuedAt
 			"exp":      time.Now().Add(time.Duration(a.conf.TokenValidityPeriod) * time.Minute).Unix(), // ExpiresAt
 		},
@@ -99,10 +101,10 @@ func (a *AuthService) Authenticate(ctx context.Context, username, password strin
 	return tokenString, nil
 }
 
-func (a *AuthService) validCredentials(ctx context.Context, username, password string) error {
+func (a *AuthService) validCredentials(ctx context.Context, username, password string) (string, error) {
 	user, err := a.authSt.GetUser(ctx, username)
 	if err != nil {
-		return fmt.Errorf("get user by name: %w", err)
+		return "", fmt.Errorf("get user by name: %w", err)
 	}
 
 	slog.Debug(
@@ -111,10 +113,10 @@ func (a *AuthService) validCredentials(ctx context.Context, username, password s
 		slog.String("hashedPassword", user.HashPassword),
 	)
 	if err := bcrypt.CompareHashAndPassword([]byte(user.HashPassword), []byte(password)); err != nil {
-		return fmt.Errorf("compare hash and password: %w", err)
+		return "", fmt.Errorf("compare hash and password: %w", err)
 	}
 
-	return nil
+	return user.Role, nil
 }
 func (a *AuthService) ParseToken(tokenString string) (jwt.MapClaims, error) {
 	// Validate token.

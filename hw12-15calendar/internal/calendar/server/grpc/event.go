@@ -24,9 +24,10 @@ func (s *Server) CreateEvent(ctx context.Context, pbEvent *calendarapi.CreateEve
 		return nil, err
 	}
 
-	userUUID, err := uuid.Parse(pbEvent.GetUserID().GetValue())
+	userName := GetUserName(ctx)
+	user, err := s.authService.GetUser(ctx, userName)
 	if err != nil {
-		err = fmt.Errorf("parse uuid: %w", err)
+		err = fmt.Errorf("get user: %w", err)
 		slog.Error(err.Error())
 		return nil, err
 	}
@@ -36,7 +37,7 @@ func (s *Server) CreateEvent(ctx context.Context, pbEvent *calendarapi.CreateEve
 		Description: pbEvent.GetDescription(),
 		StartTime:   pbEvent.StartTime.AsTime(),
 		StopTime:    pbEvent.StopTime.AsTime(),
-		UserID:      userUUID,
+		UserID:      user.ID,
 	}
 
 	id, err := s.eventService.CreateEvent(ctx, &event)
@@ -89,6 +90,7 @@ func (s *Server) ListEventsForUser(ctx context.Context, req *calendarapi.ListEve
 		slog.Error(err.Error())
 		return nil, err
 	}
+
 	events, err := s.eventService.ListEventsForUser(ctx, userName, date, int(req.Days))
 	if err != nil {
 		err := fmt.Errorf("get events for user: %w", err)
