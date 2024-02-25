@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/client"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/httpserver/handler"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/httpserver/handlers"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/logger"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver"
 	regexpresolver "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver/regex"
@@ -27,22 +27,26 @@ type Server struct {
 func New(conf *Conf, client client.Calendar) *Server {
 	res := regexpresolver.New()
 
-	h := handler.New(client)
+	h := handlers.New(client)
 
-	res.Add("GET /list-users", h.DisplayListUsers)
-	res.Add(`GET \/list-events\?id=([0-9]+)\&days=([0-9]+$)`, h.DisplayListEventsForUser)
+	res.Add("GET /form-user", h.DisplayFormRegistration)
+	res.Add("POST /create-user", h.Registration)
+
+	res.Add("GET /form-login", h.DisplayFormLogin)
+	res.Add("POST /login-user", h.Login)
+
+	res.Add(`GET \/list-events\?`, h.DisplayListEventsForUser)
+
+	res.Add(`GET \/form-event`, h.DisplayFormEvent)
+	res.Add("POST /create-event", h.CreateEvent)
+
+	//	res.Add("GET /list-users", h.DisplayListUsers)
 
 	res.Add(`GET \/user\?id=([0-9]+$)`, h.DisplayUser)
-	res.Add(`GET \/event\?id=([0-9]+$)`, h.DisplayEvent)
+	res.Add(`GET \/event\?`, h.DisplayEvent)
 
 	res.Add(`GET \/delete-user\?id=([0-9]+$)`, h.DeleteUser)
-	res.Add(`GET \/delete-event\?id=([0-9]+$)`, h.DeleteEvent)
-
-	res.Add("GET /form-user", h.DisplayFormUser)
-	res.Add("POST /create-user", h.CreateUser)
-
-	res.Add(`GET \/form-event\?id=([0-9]+$)`, h.DisplayFormEvent)
-	res.Add("POST /create-event", h.CreateEvent)
+	res.Add(`GET \/delete-event\?`, h.DeleteEvent)
 
 	loggerServer := logger.Logger{Inner: otelhttp.NewHandler(&Router{res}, "HTTP")}
 

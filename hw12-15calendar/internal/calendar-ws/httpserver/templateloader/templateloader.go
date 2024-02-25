@@ -28,6 +28,9 @@ func (t *TemplateLoader) Load(templatesDir string) {
 	t.templates["form-user.html"] = template.Must(template.ParseFS(files,
 		filepath.Join(templatesDir, "base.html"),
 		filepath.Join(templatesDir, "form-user.html")))
+	t.templates["form-login.html"] = template.Must(template.ParseFS(files,
+		filepath.Join(templatesDir, "base.html"),
+		filepath.Join(templatesDir, "form-login.html")))
 	t.templates["form-event.html"] = template.Must(template.ParseFS(files,
 		filepath.Join(templatesDir, "base.html"),
 		filepath.Join(templatesDir, "form-event.html")))
@@ -37,18 +40,30 @@ func (t *TemplateLoader) Load(templatesDir string) {
 	t.templates["list-users.html"] = template.Must(template.ParseFS(files,
 		filepath.Join(templatesDir, "base.html"),
 		filepath.Join(templatesDir, "list-users.html")))
-	t.templates["list-events.html"] = template.Must(template.ParseFS(files,
-		filepath.Join(templatesDir, "base.html"),
-		filepath.Join(templatesDir, "list-events.html")))
+
+	name := "base.html"
+	t.templates["list-events.html"] = template.Must(
+		template.New(name).
+			Funcs(template.FuncMap{"dateFormat": dateFormat}).
+			ParseFS(files,
+				filepath.Join(templatesDir, name),
+				filepath.Join(templatesDir, "list-events.html"),
+			),
+	)
 	t.templates["user.html"] = template.Must(template.ParseFS(files,
 		filepath.Join(templatesDir, "base.html"),
 		filepath.Join(templatesDir, "user.html")))
 
-	name := "base.html"
-	t.templates["event.html"] = template.Must(template.New(name).
-		Funcs(template.FuncMap{"dateFormat": dateFormat}).
-		ParseFS(files, filepath.Join(templatesDir, name),
-			filepath.Join(templatesDir, "event.html")))
+	name = "base.html"
+	t.templates["event.html"] = template.Must(
+		template.New(name).
+			Funcs(template.FuncMap{"dateFormat": dateFormat}).
+			ParseFS(
+				files,
+				filepath.Join(templatesDir, name),
+				filepath.Join(templatesDir, "event.html"),
+			),
+	)
 }
 
 func (t *TemplateLoader) Execute(nameTemp string, res http.ResponseWriter, data any) error {

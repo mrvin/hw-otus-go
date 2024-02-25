@@ -89,7 +89,7 @@ func main() {
 
 	var client client.Calendar
 	if conf.Client == "grpc" {
-		client, err = grpcclient.New(&conf.GRPCClient)
+		client, err = grpcclient.New(ctx, &conf.GRPCClient)
 		if err != nil {
 			slog.Error("Failed to init gRPC client: " + err.Error())
 			return

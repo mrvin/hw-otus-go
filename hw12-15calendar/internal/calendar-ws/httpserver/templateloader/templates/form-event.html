@@ -1,6 +1,6 @@
 {{define "body"}}
 <form action="/create-event" method="POST">
-	<input type="hidden" name="id" value={{.UserID}} />
+  <input type="hidden" name="jwt-token" value={{.AccessToken}} />
 	Title: <input name="title" type="text"><br>
 	Description: <input name="description" type="text"><br>
 	Event start time: <input name="startTime" type="datetime-local"><br>
