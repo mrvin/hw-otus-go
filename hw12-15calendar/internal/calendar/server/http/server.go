@@ -19,8 +19,6 @@ import (
 	authservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/auth"
 	eventservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/event"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/logger"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver"
-	pathresolver "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver/path"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
@@ -44,23 +42,24 @@ type Server struct {
 }
 
 func New(conf *Conf, auth *authservice.AuthService, events *eventservice.EventService) *Server {
-	res := pathresolver.New()
+
+	mux := http.NewServeMux()
 
 	handlerEvent := handlerevent.New(events)
 
-	res.Add(http.MethodPost+" /signup", handlerusersignup.New(auth))
-	res.Add(http.MethodGet+" /login", handlerusersignin.New(auth))
+	mux.HandleFunc(http.MethodPost+" /signup", handlerusersignup.New(auth))
+	mux.HandleFunc(http.MethodGet+" /login", handlerusersignin.New(auth))
 
-	res.Add(http.MethodGet+" /user", auth.Authorized(handleruserget.New(auth)))
-	res.Add(http.MethodPut+" /user", auth.Authorized(handleruserupdate.New(auth)))
-	res.Add(http.MethodDelete+" /user", auth.Authorized(handleruserdelete.New(auth)))
+	mux.HandleFunc(http.MethodGet+" /user", auth.Authorized(handleruserget.New(auth)))
+	mux.HandleFunc(http.MethodPut+" /user", auth.Authorized(handleruserupdate.New(auth)))
+	mux.HandleFunc(http.MethodDelete+" /user", auth.Authorized(handleruserdelete.New(auth)))
 
-	res.Add("POST /event", auth.Authorized(handlerEvent.CreateEvent))
-	res.Add("GET /event", auth.Authorized(handlerEvent.GetEvent))
-	res.Add("PUT /event", auth.Authorized(handlerEvent.UpdateEvent))
-	res.Add("DELETE /event", auth.Authorized(handlerEvent.DeleteEvent))
+	mux.HandleFunc(http.MethodPost+" /event", auth.Authorized(handlerEvent.CreateEvent))
+	mux.HandleFunc(http.MethodGet+" /event", auth.Authorized(handlerEvent.GetEvent))
+	mux.HandleFunc(http.MethodPut+" /event", auth.Authorized(handlerEvent.UpdateEvent))
+	mux.HandleFunc(http.MethodDelete+" /event", auth.Authorized(handlerEvent.DeleteEvent))
 
-	loggerServer := logger.Logger{Inner: otelhttp.NewHandler(&Router{res}, "HTTP")}
+	loggerServer := logger.Logger{Inner: otelhttp.NewHandler(mux, "HTTP")}
 
 	var tlsConf *tls.Config
 	if conf.IsHTTPS {
@@ -115,18 +114,4 @@ func (s *Server) Stop(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-type Router struct {
-	resolver.Resolver
-}
-
-func (r *Router) ServeHTTP(res http.ResponseWriter, req *http.Request) {
-	check := req.Method + " " + req.URL.Path
-	if handlerFunc := r.Get(check); handlerFunc != nil {
-		handlerFunc(res, req)
-		return
-	}
-
-	http.NotFound(res, req)
 }

@@ -1,4 +1,4 @@
-FROM golang:1.21.1-alpine
+FROM golang:1.22.0-alpine
 
 MAINTAINER mrvin <v.v.vinogradovv@gmail.com>
 
