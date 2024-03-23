@@ -22,10 +22,7 @@ services:
         environment:
          ENV: PROD
         depends_on:
-          postgres:
-            condition: service_healthy
-#          otel_collector:
-#            condition: service_healthy
+         - migrate
         volumes:
          - ./../configs/calendar.yml:/etc/calendar/calendar.yml
 
@@ -51,6 +48,15 @@ services:
        volumes:
         - ./../configs/sender.yml:/etc/calendar/sender.yml
 
+    migrate:
+        image: migrate/migrate:v4.17.0
+        command: ["-path", "/migrations", "-database",  "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable", "up"]
+        depends_on:
+          postgres:
+            condition: service_healthy
+        volumes:
+         - ./../migrations:/migrations
+
     # Create service with PostgreSQL.
     postgres:
         image: postgres:15.2-alpine3.17
@@ -62,7 +68,7 @@ services:
         healthcheck:
           test: ["CMD", "pg_isready", "-q", "-d", "${POSTGRES_DB}", "-U", "${POSTGRES_USER}"]
         volumes:
-         - ${HOME}/volumes_docker/postgres-data:/var/lib/postgresql/data
+         - ${HOME}/volumes_docker/calendar/postgres-data:/var/lib/postgresql/data
 
     # Create service with RabbitMQ.
     rabbitmq:
@@ -111,4 +117,4 @@ services:
          - prometheus
         volumes:
          - ./../configs/grafana/provisioning:/etc/grafana/provisioning
-         - ${HOME}/volumes_docker/grafana-data:/var/lib/grafana
+         - ${HOME}/volumes_docker/calendar/grafana-data:/var/lib/grafana

@@ -2,15 +2,15 @@ test:
 	go test -race ./internal/storage/... -cover
 	cd cmd/calendar && make test
 build:
-	docker-compose -f deployments/docker-compose.yaml build
+	docker compose -f deployments/docker-compose.yaml --env-file deployments/postgres.env build
 build-calendar:
-	docker-compose -f deployments/docker-compose.yaml build calendar
+	docker compose -f deployments/docker-compose.yaml build calendar
 build-calendar-ws:
-	docker-compose -f deployments/docker-compose.yaml build calendar-ws
+	docker compose -f deployments/docker-compose.yaml build calendar-ws
 up:
-	docker-compose -f deployments/docker-compose.yaml --env-file deployments/postgres.env up
+	docker compose -f deployments/docker-compose.yaml --env-file deployments/postgres.env up
 down:
-	docker-compose -f deployments/docker-compose.yaml down
+	docker compose -f deployments/docker-compose.yaml --env-file deployments/postgres.env down
 lint:
 	golangci-lint run ./internal/...
 codegen:

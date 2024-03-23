@@ -48,10 +48,6 @@ func New(ctx context.Context, conf *Conf) (*Storage, error) {
 		return nil, fmt.Errorf("new database connection: %w", err)
 	}
 
-	if err := MigrationsUp(conf); err != nil {
-		return nil, fmt.Errorf("database migrations: %w", err)
-	}
-
 	if err := st.prepareQuery(ctx); err != nil {
 		return nil, fmt.Errorf("prepare query: %w", err)
 	}
