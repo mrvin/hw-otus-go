@@ -50,7 +50,7 @@ jobs:
         which migrate
 
     - name: Run migrations
-      run: migrate -path ./migrations -database  "postgres://event-db:event-db@postgres:5432/event-db?sslmode=disable" up
+      run: migrate -path "hw12-15calendar/migrations" -database  "postgres://event-db:event-db@postgres:5432/event-db?sslmode=disable" up
 
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v4
