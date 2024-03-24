@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"time"
 )
 
 type Conf struct {
@@ -13,7 +14,10 @@ type Conf struct {
 
 func Init(conf *Conf) (*os.File, error) {
 	var level slog.Level
-	level.UnmarshalText([]byte(conf.Level))
+
+	if err := level.UnmarshalText([]byte(conf.Level)); err != nil {
+		return nil, fmt.Errorf("getting level from text: %w", err)
+	}
 
 	var err error
 	var logFile *os.File
@@ -25,10 +29,19 @@ func Init(conf *Conf) (*os.File, error) {
 			return nil, fmt.Errorf("failed open log file: %w", err)
 		}
 	}
-	// todo: setting format cfg.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("Jan 02 15:04:05.000000000")
+
+	replaceAttr := func(_ []string, a slog.Attr) slog.Attr {
+		if a.Key == slog.TimeKey {
+			t := a.Value.Any().(time.Time) //nolint:forcetypeassert
+			a.Value = slog.StringValue(t.Format(time.StampNano))
+		}
+		return a
+	}
+
 	handler := slog.NewJSONHandler(logFile, &slog.HandlerOptions{
-		AddSource: true,
-		Level:     level,
+		AddSource:   true,
+		Level:       level,
+		ReplaceAttr: replaceAttr,
 	})
 
 	logger := slog.New(handler)
