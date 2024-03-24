@@ -6,7 +6,7 @@ import (
 	"context"
 	"errors"
 	"flag"
-	stdlog "log"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -41,31 +41,30 @@ type Config struct {
 	Auth   authservice.Conf `yaml:"auth"`
 }
 
-// TODO: ctx
-var ctx = context.Background()
-
 func main() {
+	ctx := context.Background()
+
 	configFile := flag.String("config", "/etc/calendar/calendar.yml", "path to configuration file")
 	flag.Parse()
 
 	var conf Config
 	if err := config.Parse(*configFile, &conf); err != nil {
-		stdlog.Printf("Parse config: %v", err)
+		log.Printf("Parse config: %v", err)
 		return
 	}
 
 	logFile, err := logger.Init(&conf.Logger)
 	if err != nil {
-		stdlog.Printf("Init logger: %v\n", err)
+		log.Printf("Init logger: %v\n", err)
 		return
-	} else {
-		slog.Info("Init logger", slog.String("Logging level", conf.Logger.Level))
-		defer func() {
-			if err := logFile.Close(); err != nil {
-				slog.Error("Close log file: " + err.Error())
-			}
-		}()
 	}
+	slog.Info("Init logger", slog.String("Logging level", conf.Logger.Level))
+	defer func() {
+		if err := logFile.Close(); err != nil {
+			slog.Error("Close log file: " + err.Error())
+		}
+	}()
+
 	if conf.Tracer.Enable {
 		ctxTracer, cancel := context.WithTimeout(ctx, 2*time.Second)
 		defer cancel()
@@ -110,6 +109,15 @@ func main() {
 			slog.Error("Failed to init storage: " + err.Error())
 			return
 		}
+		defer func() {
+			if storageSQL, ok := storage.(*sqlstorage.Storage); ok {
+				if err := storageSQL.Close(); err != nil {
+					slog.Error("Failed to close storage: " + err.Error())
+				} else {
+					slog.Info("Closing the database connection")
+				}
+			}
+		}()
 		slog.Info("Connected to database")
 	}
 
@@ -124,7 +132,7 @@ func main() {
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT /*(Control-C)*/, syscall.SIGTERM)
-	go listenForShutdown(signals, serverHTTP, serverGRPC)
+	go listenForShutdown(ctx, signals, serverHTTP, serverGRPC)
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -153,18 +161,15 @@ func main() {
 
 	wg.Wait()
 
-	if storageSQL, ok := storage.(*sqlstorage.Storage); ok {
-		if err := storageSQL.Close(); err != nil {
-			slog.Error("Failed to close storage: " + err.Error())
-		} else {
-			slog.Info("Closing the database connection")
-		}
-	}
-
 	slog.Info("Stop service " + serviceName)
 }
 
-func listenForShutdown(signals chan os.Signal, serverHTTP *httpserver.Server, serverGRPC *grpcserver.Server) {
+func listenForShutdown(
+	ctx context.Context,
+	signals chan os.Signal,
+	serverHTTP *httpserver.Server,
+	serverGRPC *grpcserver.Server,
+) {
 	<-signals
 	signal.Stop(signals)
 
