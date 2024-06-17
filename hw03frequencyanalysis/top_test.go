@@ -67,7 +67,7 @@ func testTop10Match(t *testing.T, text string, want []string) {
 
 	sort.Strings(got)
 	sort.Strings(want)
-	if reflect.DeepEqual(got, want) {
+	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got: %v(after sorting); want: %v(after sorting)", got, want)
 	}
 }
