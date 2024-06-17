@@ -1,8 +1,9 @@
 // That program prints the current local time
 // and the exact time obtained using the NTP library
 // (github.com/beevik/ntp) in the format:
-// 		current time: <time>
-// 		exact time: <time>
+//
+//	current time: <time>
+//	exact time: <time>
 package main
 
 import (
@@ -18,14 +19,7 @@ import (
 
 var out io.Writer = os.Stdout // modified during testing.
 
-var getTimeNTP = func(srvNTP string) (exactTime time.Time, err error) {
-	exactTime, err = ntp.Time(srvNTP)
-	if err != nil {
-		return
-	}
-
-	return
-}
+var getTimeNTP = ntp.Time
 
 var getTimeNow = time.Now
 
