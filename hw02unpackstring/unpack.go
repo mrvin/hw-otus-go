@@ -16,7 +16,7 @@ type state uint8
 
 const (
 	start state = iota
-	print
+	printSt
 	backSlash
 	exit
 )
@@ -31,7 +31,7 @@ func Unpack(str string) (string, error) {
 		switch state {
 		case start:
 			state = startState(ch)
-		case print:
+		case printSt:
 			state = printState(ch, prevCh, &resultStr)
 		case backSlash:
 			state = backSlashState(ch)
@@ -59,7 +59,7 @@ func startState(ch rune) state {
 	case ch == '\\':
 		return backSlash
 	default:
-		return print
+		return printSt
 	}
 }
 
@@ -74,13 +74,13 @@ func printState(ch rune, prevCh rune, resultStr *strings.Builder) state {
 		return backSlash
 	default:
 		resultStr.WriteRune(prevCh)
-		return print
+		return printSt
 	}
 }
 
 func backSlashState(ch rune) state {
 	if unicode.IsDigit(ch) || ch == '\\' {
-		return print
+		return printSt
 	}
 	return exit
 }
