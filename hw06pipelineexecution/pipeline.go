@@ -50,7 +50,7 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 }
 
 func emptyReading(out Out) {
-	for range out {
+	for range out { //nolint:revive
 		// do nothing.
 	}
 }
