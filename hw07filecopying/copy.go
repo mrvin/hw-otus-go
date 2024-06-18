@@ -19,6 +19,9 @@ func Copy(fromPath, toPath string, offset, limit int64, isQuiet bool) error {
 	if err != nil {
 		return fmt.Errorf("file to read from: %w", err)
 	}
+	if !infFromFile.Mode().IsRegular() {
+		return fmt.Errorf("file to read from: %w", ErrUnsupportedFile)
+	}
 
 	if offset > infFromFile.Size() {
 		return fmt.Errorf("file to read from: %w", ErrOffsetExceedsFileSize)
