@@ -2,8 +2,11 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
+
+	"github.com/cheggaaa/pb/v3"
 )
 
 var (
@@ -11,14 +14,14 @@ var (
 	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
 )
 
-func Copy(fromPath string, toPath string, offset, limit int64) error {
+func Copy(fromPath, toPath string, offset, limit int64, isQuiet bool) error {
 	infFromFile, err := os.Stat(fromPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("file to read from: %w", err)
 	}
 
 	if offset > infFromFile.Size() {
-		return ErrOffsetExceedsFileSize
+		return fmt.Errorf("file to read from: %w", ErrOffsetExceedsFileSize)
 	}
 	if limit == 0 || limit+offset > infFromFile.Size() {
 		limit = infFromFile.Size() - offset
@@ -26,21 +29,28 @@ func Copy(fromPath string, toPath string, offset, limit int64) error {
 
 	fromFile, err := os.Open(fromPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("file to read from: %w", err)
 	}
 	defer fromFile.Close()
 
 	_, err = fromFile.Seek(offset, io.SeekStart)
 	if err != nil {
-		return err
+		return fmt.Errorf("file to read from: %w", err)
 	}
 
 	toFile, err := os.OpenFile(toPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, infFromFile.Mode())
 	if err != nil {
-		return err
+		return fmt.Errorf("file to write to: %w", err)
 	}
 
-	_, err = io.CopyN(toFile, fromFile, limit)
+	var reader io.Reader = fromFile
+	if !isQuiet {
+		bar := pb.Full.Start64(limit)
+		reader = bar.NewProxyReader(fromFile)
+		defer bar.Finish()
+	}
+
+	_, err = io.CopyN(toFile, reader, limit)
 
 	if closeErr := toFile.Close(); err == nil {
 		err = closeErr

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"testing"
 )
@@ -9,6 +10,7 @@ import (
 func TestCopy(t *testing.T) {
 	fromPath := "testdata/input.txt"
 	toPath := "out.txt"
+	isQuiet := true
 	var tests = []struct {
 		offset int64
 		limit  int64
@@ -23,7 +25,7 @@ func TestCopy(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if err := Copy(fromPath, toPath, test.offset, test.limit); err != nil {
+		if err := Copy(fromPath, toPath, test.offset, test.limit, isQuiet); err != nil {
 			t.Errorf("err = %v, want %v", err, nil)
 		}
 		defer os.Remove(toPath)
@@ -37,10 +39,11 @@ func TestCopy(t *testing.T) {
 func TestCopyExceededOffset(t *testing.T) {
 	fromPath := "testdata/input.txt"
 	toPath := "out.txt"
+	isQuiet := true
 
 	infFile, _ := os.Stat(fromPath)
 
-	if err := Copy(fromPath, toPath, infFile.Size()+100, 0); err != ErrOffsetExceedsFileSize {
+	if err := Copy(fromPath, toPath, infFile.Size()+100, 0, isQuiet); !errors.Is(err, ErrOffsetExceedsFileSize) {
 		t.Errorf("err = %v, want %v", err, nil)
 	}
 }
