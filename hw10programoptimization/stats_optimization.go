@@ -1,94 +1,68 @@
 package hw10programoptimization
 
 import (
-	"bytes"
+	"bufio"
+	"fmt"
 	"io"
+	"strings"
 
-	"github.com/mrvin/hw-otus-go/hw10programoptimization/user"
-	"github.com/ugorji/go/codec"
+	"github.com/mailru/easyjson"
 )
 
+const sizeScannerBuffer = 256
+const itemsInitializDomainStat = 512
+
+type UserEmail struct {
+	Email string
+}
+
+func getDomain(email, firstLevelDomain string) string {
+	indexA := strings.LastIndex(email, "@")
+	if indexA == -1 {
+		return ""
+	}
+
+	domain := strings.ToLower(email[indexA+1:])
+
+	lenDomain := len(domain)
+	lenFirstLevelDomain := len(firstLevelDomain)
+
+	if lenFirstLevelDomain+1 > lenDomain {
+		return ""
+	}
+	for i := 1; i <= lenFirstLevelDomain; i++ {
+		if domain[lenDomain-i] != firstLevelDomain[lenFirstLevelDomain-i] {
+			return ""
+		}
+		if domain[lenDomain-(lenFirstLevelDomain+1)] != byte('.') {
+			return ""
+		}
+	}
+
+	return domain
+}
+
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
-	content, err := io.ReadAll(r)
-	if err != nil {
-		return nil, err
-	}
-	lines := bytes.Split(content, []byte{'\n'})
+	input := bufio.NewScanner(r)
+	buf := make([]byte, sizeScannerBuffer)
+	input.Buffer(buf, sizeScannerBuffer)
 
-	jh := new(codec.JsonHandle)
-	dotDomain := []byte("." + domain)
-	var user user.User
-	resultDomainStat := make(DomainStat)
-	for _, line := range lines {
-		err = codec.NewDecoderBytes(line, jh).Decode(&user)
-		if err == nil {
-			byteEmail := []byte(user.Email)
-			if bytes.HasSuffix(byteEmail, dotDomain) {
-				resultDomainStat[string(bytes.ToLower(bytes.SplitN(byteEmail, []byte{'@'}, 2)[1]))]++
-			}
+	var user UserEmail
+	var err error
+	var allDomain string
+	result := make(DomainStat, itemsInitializDomainStat)
+	for input.Scan() {
+		if err = easyjson.Unmarshal(input.Bytes(), &user); err != nil {
+			return result, fmt.Errorf("unmarshal line: %w", err)
+		}
+		allDomain = getDomain(user.Email, domain)
+		if allDomain != "" {
+			result[allDomain]++
 		}
 	}
-
-	return resultDomainStat, err
-}
-
-var numGoroutin = 4
-
-type result struct {
-	res string
-	err error
-}
-
-func GetDomainStatLongLivedGorout(r io.Reader, domain string) (DomainStat, error) {
-	content, err := io.ReadAll(r)
-	if err != nil {
-		return nil, err
-	}
-	lines := bytes.Split(content, []byte{'\n'})
-	numLines := len(lines)
-
-	if numLines < numGoroutin {
-		numGoroutin = numLines
-	}
-	perGorout := numLines / numGoroutin
-	remGorout := numLines % numGoroutin
-	resultCh := make(chan *result, numGoroutin)
-
-	jh := new(codec.JsonHandle)
-	dotDomain := []byte("." + domain)
-	from, to := 0, 0
-	for i := 0; i < numGoroutin; i++ {
-		to += perGorout
-		if i < remGorout {
-			to++
-		}
-		go func(partLines [][]byte) {
-			var user user.User
-			for _, line := range partLines {
-				err = codec.NewDecoderBytes(line, jh).Decode(&user)
-				if err == nil {
-					byteEmail := []byte(user.Email)
-					if bytes.HasSuffix(byteEmail, dotDomain) {
-						resultCh <- &result{string(bytes.ToLower(bytes.SplitN(byteEmail, []byte{'@'}, 2)[1])), nil}
-						continue
-					}
-				}
-				resultCh <- &result{"", err}
-			}
-		}(lines[from:to])
-		from = to
+	if err = input.Err(); err != nil {
+		return result, fmt.Errorf("read line: %w", err)
 	}
 
-	resultDomainStat := make(DomainStat)
-	for i := 0; i < numLines; i++ {
-		res := <-resultCh
-		resultDomainStat[res.res]++
-		if res.err != nil {
-			err = res.err
-		}
-	}
-	delete(resultDomainStat, "")
-	close(resultCh)
-
-	return resultDomainStat, err
+	return result, nil
 }

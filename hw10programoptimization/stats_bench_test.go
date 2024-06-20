@@ -22,9 +22,3 @@ func BenchmarkGetDomainStat(b *testing.B) {
 		GetDomainStat(bytes.NewBufferString(data), "biz")
 	}
 }
-
-func BenchmarkGetDomainStatLongLivedGorout(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		GetDomainStatLongLivedGorout(bytes.NewBufferString(data), "biz")
-	}
-}

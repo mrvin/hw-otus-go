@@ -32,7 +32,7 @@ func TestGetDomainStat_Time_And_Memory(t *testing.T) {
 		require.NoError(t, err)
 
 		b.StartTimer()
-		stat, err := GetDomainStatLongLivedGorout(data, "biz")
+		stat, err := GetDomainStat(data, "biz")
 		b.StopTimer()
 		require.NoError(t, err)
 
@@ -41,8 +41,8 @@ func TestGetDomainStat_Time_And_Memory(t *testing.T) {
 
 	result := testing.Benchmark(bench)
 	mem := result.MemBytes
-	t.Logf("time used: %s", result.T)
-	t.Logf("memory used: %dMb", mem/mb)
+	t.Logf("time used: %s / %s", result.T, timeLimit)
+	t.Logf("memory used: %dMb / %dMb", mem/mb, memoryLimit/mb)
 
 	require.Less(t, int64(result.T), int64(timeLimit), "the program is too slow")
 	require.Less(t, mem, memoryLimit, "the program is too greedy")
