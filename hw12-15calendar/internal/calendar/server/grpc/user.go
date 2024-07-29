@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-api"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/grpcapi"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-func (s *Server) CreateUser(ctx context.Context, userpb *calendarapi.CreateUserRequest) (*calendarapi.CreateUserResponse, error) {
+func (s *Server) CreateUser(ctx context.Context, userpb *grpcapi.CreateUserRequest) (*emptypb.Empty, error) {
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(userpb.GetPassword()), bcrypt.DefaultCost)
 	if err != nil {
 		err := fmt.Errorf("create user: generate hash password: %w", err)
@@ -24,18 +24,16 @@ func (s *Server) CreateUser(ctx context.Context, userpb *calendarapi.CreateUserR
 		Email:        userpb.GetEmail(),
 		Role:         "user",
 	}
-	id, err := s.authService.CreateUser(ctx, &user)
-	if err != nil {
+	if err := s.authService.CreateUser(ctx, &user); err != nil {
 		err = fmt.Errorf("create user: %w", err)
 		slog.Error(err.Error())
 		return nil, err
 	}
-	uuid := calendarapi.UUID{Value: id.String()}
 
-	return &calendarapi.CreateUserResponse{Id: &uuid}, nil
+	return &emptypb.Empty{}, nil
 }
 
-func (s *Server) GetUser(ctx context.Context, _ *calendarapi.GetUserRequest) (*calendarapi.UserResponse, error) {
+func (s *Server) GetUser(ctx context.Context, _ *grpcapi.GetUserRequest) (*grpcapi.UserResponse, error) {
 	userName := GetUserName(ctx)
 	if userName == "" {
 		panic("get user: user name is empty")
@@ -46,17 +44,15 @@ func (s *Server) GetUser(ctx context.Context, _ *calendarapi.GetUserRequest) (*c
 		slog.Error(err.Error())
 		return nil, err
 	}
-	uuid := calendarapi.UUID{Value: user.ID.String()}
 
-	return &calendarapi.UserResponse{
-		Id:           &uuid,
+	return &grpcapi.UserResponse{
 		Name:         user.Name,
 		HashPassword: user.HashPassword,
 		Email:        user.Email,
 	}, nil
 }
 
-func (s *Server) ListUsers(ctx context.Context, _ *calendarapi.ListUsersRequest) (*calendarapi.ListUsersResponse, error) {
+func (s *Server) ListUsers(ctx context.Context, _ *grpcapi.ListUsersRequest) (*grpcapi.ListUsersResponse, error) {
 	users, err := s.authService.ListUsers(ctx)
 	if err != nil {
 		err := fmt.Errorf("get all users: %w", err)
@@ -64,20 +60,18 @@ func (s *Server) ListUsers(ctx context.Context, _ *calendarapi.ListUsersRequest)
 		return nil, err
 	}
 
-	pbUsers := make([]*calendarapi.UserResponse, len(users))
+	pbUsers := make([]*grpcapi.UserResponse, len(users))
 	for i, user := range users {
-		uuid := calendarapi.UUID{Value: user.ID.String()}
-		pbUsers[i] = &calendarapi.UserResponse{
-			Id:    &uuid,
+		pbUsers[i] = &grpcapi.UserResponse{
 			Name:  user.Name,
 			Email: user.Email,
 		}
 	}
 
-	return &calendarapi.ListUsersResponse{Users: pbUsers}, nil
+	return &grpcapi.ListUsersResponse{Users: pbUsers}, nil
 }
 
-func (s *Server) UpdateUser(ctx context.Context, userpb *calendarapi.UpdateUserRequest) (*emptypb.Empty, error) {
+func (s *Server) UpdateUser(ctx context.Context, userpb *grpcapi.UpdateUserRequest) (*emptypb.Empty, error) {
 	userName := GetUserName(ctx)
 	if userName == "" {
 		panic("update user: user name is empty")
@@ -93,7 +87,7 @@ func (s *Server) UpdateUser(ctx context.Context, userpb *calendarapi.UpdateUserR
 		HashPassword: string(hashPassword),
 		Email:        userpb.GetEmail(),
 	}
-	if err := s.authService.UpdateUser(ctx, userName, &user); err != nil {
+	if err := s.authService.UpdateUser(ctx, &user); err != nil {
 		err := fmt.Errorf("update user: %w", err)
 		slog.Error(err.Error())
 		return nil, err
@@ -102,7 +96,7 @@ func (s *Server) UpdateUser(ctx context.Context, userpb *calendarapi.UpdateUserR
 	return &emptypb.Empty{}, nil
 }
 
-func (s *Server) DeleteUser(ctx context.Context, _ *calendarapi.DeleteUserRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteUser(ctx context.Context, _ *grpcapi.DeleteUserRequest) (*emptypb.Empty, error) {
 	userName := GetUserName(ctx)
 	if userName == "" {
 		panic("delete user: user name is empty")

@@ -15,7 +15,7 @@ func (s *Storage) CreateEvent(ctx context.Context, event *storage.Event) (int64,
 		event.Description,
 		event.StartTime,
 		event.StopTime,
-		event.UserID,
+		event.UserName,
 	).Scan(&event.ID); err != nil {
 		return 0, fmt.Errorf("create event: %w", err)
 	}
@@ -32,7 +32,7 @@ func (s *Storage) GetEvent(ctx context.Context, id int64) (*storage.Event, error
 		&event.Description,
 		&event.StartTime,
 		&event.StopTime,
-		&event.UserID,
+		&event.UserName,
 	); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("%w: %d", storage.ErrNoEvent, id)
@@ -41,40 +41,6 @@ func (s *Storage) GetEvent(ctx context.Context, id int64) (*storage.Event, error
 	}
 
 	return &event, nil
-}
-
-func (s *Storage) ListEvents(ctx context.Context) ([]storage.Event, error) {
-	events := make([]storage.Event, 0)
-
-	rows, err := s.listEvents.QueryContext(ctx)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return events, nil
-		}
-		return nil, fmt.Errorf("can't get all events: %w", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var event storage.Event
-		err = rows.Scan(
-			&event.ID,
-			&event.Title,
-			&event.Description,
-			&event.StartTime,
-			&event.StopTime,
-			&event.UserID,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("can't scan next row: %w", err)
-		}
-		events = append(events, event)
-	}
-	if err := rows.Err(); err != nil {
-		return events, fmt.Errorf("rows error: %w", err)
-	}
-
-	return events, nil
 }
 
 func (s *Storage) UpdateEvent(ctx context.Context, event *storage.Event) error {
@@ -125,15 +91,44 @@ func (s *Storage) DeleteEvent(ctx context.Context, id int64) error {
 	return nil
 }
 
+func (s *Storage) ListEvents(ctx context.Context) ([]storage.Event, error) {
+	events := make([]storage.Event, 0)
+
+	rows, err := s.listEvents.QueryContext(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return events, nil
+		}
+		return nil, fmt.Errorf("can't get all events: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var event storage.Event
+		err = rows.Scan(
+			&event.ID,
+			&event.Title,
+			&event.Description,
+			&event.StartTime,
+			&event.StopTime,
+			&event.UserName,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("can't scan next row: %w", err)
+		}
+		events = append(events, event)
+	}
+	if err := rows.Err(); err != nil {
+		return events, fmt.Errorf("rows error: %w", err)
+	}
+
+	return events, nil
+}
+
 func (s *Storage) ListEventsForUser(ctx context.Context, name string) ([]storage.Event, error) {
 	events := make([]storage.Event, 0)
 
-	user, err := s.GetUser(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := s.listEventsForUser.QueryContext(ctx, user.ID)
+	rows, err := s.listEventsForUser.QueryContext(ctx, name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return events, nil
@@ -150,7 +145,7 @@ func (s *Storage) ListEventsForUser(ctx context.Context, name string) ([]storage
 			&event.Description,
 			&event.StartTime,
 			&event.StopTime,
-			&event.UserID,
+			&event.UserName,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("can't scan next row: %w", err)

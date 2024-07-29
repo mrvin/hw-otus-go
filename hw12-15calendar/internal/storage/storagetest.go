@@ -6,8 +6,6 @@ import (
 	"reflect"
 	"testing"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 var users = []User{
@@ -34,12 +32,9 @@ var events = []Event{
 func TestUserCRUD(ctx context.Context, t *testing.T, st Storage) {
 	// Create users
 	for i := range users {
-		id, err := st.CreateUser(ctx, &users[i])
+		err := st.CreateUser(ctx, &users[i])
 		if err != nil {
 			t.Errorf("CreateUser: %v", err)
-		}
-		if id == uuid.Nil {
-			t.Errorf("CreateUser: can't get ID")
 		}
 	}
 
@@ -47,11 +42,11 @@ func TestUserCRUD(ctx context.Context, t *testing.T, st Storage) {
 	for i := range users {
 		user, err := st.GetUser(ctx, users[i].Name)
 		if err != nil {
-			t.Errorf("GetUser(id = %d): %v", users[i].ID, err)
+			t.Errorf("GetUser(name = %q): %v", users[i].Name, err)
 		}
 
 		if !reflect.DeepEqual(*user, users[i]) {
-			t.Errorf("GetUser(id = %d):\n\thave: %v\n\twant: %v", users[i].ID, *user, users[i])
+			t.Errorf("GetUser(name = %q):\n\thave: %v\n\twant: %v", users[i].Name, *user, users[i])
 		}
 	}
 
@@ -62,15 +57,15 @@ func TestUserCRUD(ctx context.Context, t *testing.T, st Storage) {
 
 	// Update user name
 	users[0].Email = "Bill@mail.ru"
-	if err := st.UpdateUser(ctx, users[0].Name, &users[0]); err != nil {
-		t.Errorf("UpdateUser(id = %v): %v", users[0].ID, err)
+	if err := st.UpdateUser(ctx, &users[0]); err != nil {
+		t.Errorf("UpdateUser(name = %q): %v", users[0].Name, err)
 	}
 	user, err := st.GetUser(ctx, users[0].Name)
 	if err != nil {
-		t.Errorf("UpdateUser: get user with id = %d: %v", users[0].ID, err)
+		t.Errorf("UpdateUser: get user with name = %q: %v", users[0].Name, err)
 	}
 	if user.Name != users[0].Name {
-		t.Errorf("UpdateUser:(id = %d):\n\thave: %v\n\twant: %v", users[0].ID, *user, users[0])
+		t.Errorf("UpdateUser:(name = %q):\n\thave: %v\n\twant: %v", users[0].Name, *user, users[0])
 	}
 
 	// Delete all users
@@ -83,27 +78,24 @@ func TestUserCRUD(ctx context.Context, t *testing.T, st Storage) {
 	// Trying get, update, delete user that doesn't exist
 	_, err = st.GetUser(ctx, users[0].Name)
 	if !errors.Is(err, ErrNoUser) {
-		t.Errorf("GetUser(id = %d): %v", users[0].ID, err)
+		t.Errorf("GetUser(name = %q): %v", users[0].Name, err)
 	}
-	err = st.UpdateUser(ctx, users[1].Name, &users[1])
+	err = st.UpdateUser(ctx, &users[1])
 	if !errors.Is(err, ErrNoUser) {
-		t.Errorf("UpdateUser(id = %d): %v", users[1].ID, err)
+		t.Errorf("UpdateUser(name = %q): %v", users[1].Name, err)
 	}
 	err = st.DeleteUser(ctx, users[2].Name)
 	if !errors.Is(err, ErrNoUser) {
-		t.Errorf("DeleteUser(id = %d): %v", users[2].ID, err)
+		t.Errorf("DeleteUser(name = %q): %v", users[2].Name, err)
 	}
 }
 
 func TestEventCRUD(ctx context.Context, t *testing.T, st Storage) { //nolint:funlen,gocognit,cyclop
 	// Create users
 	for i := range users {
-		id, err := st.CreateUser(ctx, &users[i])
+		err := st.CreateUser(ctx, &users[i])
 		if err != nil {
 			t.Errorf("CreateUser: %v", err)
-		}
-		if id == uuid.Nil {
-			t.Errorf("CreateUser: can't get ID")
 		}
 	}
 
@@ -111,7 +103,7 @@ func TestEventCRUD(ctx context.Context, t *testing.T, st Storage) { //nolint:fun
 	for i := range users {
 		for j := range events {
 			if i != j {
-				events[j].UserID = users[i].ID
+				events[j].UserName = users[i].Name
 
 				id, err := st.CreateEvent(ctx, &events[j])
 				if err != nil {
@@ -128,7 +120,7 @@ func TestEventCRUD(ctx context.Context, t *testing.T, st Storage) { //nolint:fun
 	for i := range users {
 		user, err := st.GetUser(ctx, users[i].Name)
 		if err != nil {
-			t.Errorf("GetUser(id = %d): %v", users[i].ID, err)
+			t.Errorf("GetUser(name = %q): %v", users[i].Name, err)
 		}
 
 		cmpUsers(t, user, &users[i])
@@ -188,9 +180,6 @@ func TestEventCRUD(ctx context.Context, t *testing.T, st Storage) { //nolint:fun
 
 func cmpUsers(t *testing.T, u1, u2 *User) {
 	t.Helper()
-	if u1.ID != u2.ID {
-		t.Errorf("mismatch id user: %d, %d", u1.ID, u2.ID)
-	}
 	if u1.Name != u2.Name {
 		t.Errorf("mismatch name user: %s, %s", u1.Name, u2.Name)
 	}
@@ -216,7 +205,7 @@ func cmpEvent(t *testing.T, e1, e2 *Event) {
 	if !e1.StopTime.Equal(e2.StopTime) {
 		t.Errorf("mismatch stop time event: %v, %v", e1.StopTime, e2.StopTime)
 	}
-	if e1.UserID != e2.UserID {
-		t.Errorf("mismatch user id for event: %d, %d", e1.UserID, e2.UserID)
+	if e1.UserName != e2.UserName {
+		t.Errorf("mismatch user name for event: %q, %q", e1.UserName, e2.UserName)
 	}
 }

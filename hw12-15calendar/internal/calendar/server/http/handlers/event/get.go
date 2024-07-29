@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	httpresponse "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/response"
 )
@@ -19,7 +18,7 @@ type ResponseGetEvent struct {
 	Description string    `json:"description,omitempty"`
 	StartTime   time.Time `json:"start_time"`
 	StopTime    time.Time `json:"stop_time,omitempty"`
-	UserID      uuid.UUID `json:"user_id"`
+	UserName    string    `json:"user_name"`
 	Status      string    `json:"status,required"`
 }
 
@@ -55,7 +54,7 @@ func (h *Handler) GetEvent(res http.ResponseWriter, req *http.Request) {
 		Description: event.Description,
 		StartTime:   event.StartTime,
 		StopTime:    event.StopTime,
-		UserID:      event.UserID,
+		UserName:    event.UserName,
 		Status:      "OK",
 	}
 	jsonResponseEvent, err := json.Marshal(response)

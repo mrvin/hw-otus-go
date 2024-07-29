@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	httpserver "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http"
 	handlerevent "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers/event"
 	handlerusersignin "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers/user/signin"
@@ -26,7 +25,6 @@ import (
 
 //nolint:tagliatelle
 type User struct {
-	ID       uuid.UUID
 	Name     string
 	Password string
 	Email    string
@@ -111,7 +109,7 @@ func testHandleUser(t *testing.T, server *httpserver.Server) {
 
 	// Create users
 	for i, user := range users {
-		users[i].ID = testHandleSignUp(t, server, &user, http.StatusCreated)
+		testHandleSignUp(t, server, &user, http.StatusCreated)
 		users[i].Token = testHandleLogin(t, server, &user, http.StatusOK)
 	}
 
@@ -221,7 +219,7 @@ func testHandleEvent(t *testing.T, server *httpserver.Server) {
 	testHandleDeleteEvent(t, server, user.Token, int64(len(events)), http.StatusBadRequest)
 }
 
-func testHandleSignUp(t *testing.T, server *httpserver.Server, user *User, status int) uuid.UUID {
+func testHandleSignUp(t *testing.T, server *httpserver.Server, user *User, status int) {
 	res := httptest.NewRecorder()
 
 	request := handlerusersignup.RequestSignUp{

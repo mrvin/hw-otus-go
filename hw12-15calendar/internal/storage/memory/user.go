@@ -4,18 +4,21 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
 
-func (s *Storage) CreateUser(_ context.Context, user *storage.User) (uuid.UUID, error) {
+func (s *Storage) CreateUser(_ context.Context, user *storage.User) error {
 	s.muUsers.Lock()
 	defer s.muUsers.Unlock()
 
-	user.ID = uuid.New()
+	_, ok := s.mUsers[user.Name]
+	if ok {
+		return fmt.Errorf("user with name %q already exists", user.Name)
+	}
+
 	s.mUsers[user.Name] = *user
 
-	return user.ID, nil
+	return nil
 }
 
 func (s *Storage) GetUser(_ context.Context, name string) (*storage.User, error) {
@@ -30,34 +33,19 @@ func (s *Storage) GetUser(_ context.Context, name string) (*storage.User, error)
 	return &user, nil
 }
 
-func (s *Storage) GetUserByID(_ context.Context, id uuid.UUID) (*storage.User, error) {
-	s.muUsers.RLock()
-	defer s.muUsers.RUnlock()
-
-	for _, user := range s.mUsers {
-		if user.ID == id {
-			return &user, nil
-		}
-	}
-
-	return nil, fmt.Errorf("%w: %v", storage.ErrNoUser, id)
-}
-
-func (s *Storage) UpdateUser(_ context.Context, name string, user *storage.User) error {
+func (s *Storage) UpdateUser(_ context.Context, newUser *storage.User) error {
 	s.muUsers.Lock()
 	defer s.muUsers.Unlock()
 
-	oldUser, ok := s.mUsers[name]
+	oldUser, ok := s.mUsers[newUser.Name]
 	if !ok {
-		return fmt.Errorf("%w: %s", storage.ErrNoUser, user.Name)
+		return fmt.Errorf("%w: %q", storage.ErrNoUser, newUser.Name)
 	}
-	if name != user.Name {
-		delete(s.mUsers, name)
-	}
-	user.ID = oldUser.ID
-	user.Role = oldUser.Role
 
-	s.mUsers[user.Name] = *user
+	oldUser.HashPassword = newUser.HashPassword
+	oldUser.Email = newUser.Email
+
+	s.mUsers[oldUser.Name] = oldUser
 
 	return nil
 }
@@ -74,7 +62,7 @@ func (s *Storage) DeleteUser(_ context.Context, name string) error {
 
 	s.muEvents.Lock()
 	for _, event := range s.mEvents {
-		if event.UserID == user.ID {
+		if event.UserName == user.Name {
 			delete(s.mEvents, event.ID)
 		}
 	}

@@ -86,7 +86,7 @@ func main() {
 			}
 			nowTime := time.Now()
 			if event.StartTime.After(nowTime) && event.StartTime.Before(nowTime.Add(schedPeriod)) {
-				user, err := st.GetUser(ctx, event.UserID)
+				user, err := st.GetUser(ctx, event.UserName)
 				if err != nil {
 					slog.Error(err.Error())
 					continue

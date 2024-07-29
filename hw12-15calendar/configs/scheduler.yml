@@ -1,5 +1,5 @@
 # queue settings
-queue: 
+queue:
     host: rabbitmq
     port: 5672
     user_name: guest
@@ -8,6 +8,7 @@ queue:
 
 # database settings
 db:
+    driver: postgres
     host: postgres
     port: 5432
     user: event-db

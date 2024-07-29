@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"net"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-api"
 	authservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/auth"
 	eventservice "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/service/event"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/grpcapi"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 
@@ -48,8 +48,8 @@ func New(conf *Conf, auth *authservice.AuthService, events *eventservice.EventSe
 			server.Auth,
 		),
 	)
-	calendarapi.RegisterEventServiceServer(server.serv, &server)
-	calendarapi.RegisterUserServiceServer(server.serv, &server)
+	grpcapi.RegisterEventServiceServer(server.serv, &server)
+	grpcapi.RegisterUserServiceServer(server.serv, &server)
 
 	return &server, nil
 }

@@ -4,7 +4,7 @@ package calendar;
 
 import "google/protobuf/empty.proto";
 
-option go_package = ".;calendarapi";
+option go_package = ".;grpcapi";
 
 message CreateUserRequest {
 	string name = 1;
@@ -13,16 +13,7 @@ message CreateUserRequest {
 	string email = 4;
 }
 
-message UUID {
-	string value = 1;
-}
-
-message CreateUserResponse {
-	UUID id = 1;
-}
-
 message UserResponse {
-	UUID id = 1;
 	string name = 2;
 	string hash_password = 3;
 	string role = 4;
@@ -63,7 +54,7 @@ message LoginResponse {
 }
 
 service UserService {
-	rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {}
+	rpc CreateUser (CreateUserRequest) returns (google.protobuf.Empty) {}
 	rpc Login(LoginRequest) returns (LoginResponse){}
 
 	rpc GetUser (GetUserRequest) returns (UserResponse) {}

@@ -5,33 +5,31 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/google/uuid"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-api"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/grpcapi"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
 
-func (c *Client) Registration(ctx context.Context, name, password, email string) (uuid.UUID, error) {
-	user := &calendarapi.CreateUserRequest{
+func (c *Client) Registration(ctx context.Context, name, password, email string) error {
+	user := &grpcapi.CreateUserRequest{
 		Name:     name,
 		Password: password,
 		Email:    email,
 	}
-	response, err := c.userService.CreateUser(ctx, user)
+	_, err := c.userService.CreateUser(ctx, user)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("gRPC: %w", err)
+		return fmt.Errorf("gRPC: %w", err)
 	}
 	slog.Debug("Added user",
-		slog.String("id", response.GetId().GetValue()),
-		slog.String("username", user.Name),
-		slog.String("password", user.Password),
-		slog.String("email", user.Email),
+		slog.String("username", user.GetName()),
+		slog.String("password", user.GetPassword()),
+		slog.String("email", user.GetEmail()),
 	)
 
-	return uuid.MustParse(response.GetId().GetValue()), nil
+	return nil
 }
 
 func (c *Client) Login(ctx context.Context, name, password string) (string, error) {
-	reqLogin := &calendarapi.LoginRequest{
+	reqLogin := &grpcapi.LoginRequest{
 		Username: name,
 		Password: password,
 	}
@@ -44,7 +42,7 @@ func (c *Client) Login(ctx context.Context, name, password string) (string, erro
 }
 
 func (c *Client) GetUser(ctx context.Context, token string) (*storage.User, error) {
-	reqUser := &calendarapi.GetUserRequest{
+	reqUser := &grpcapi.GetUserRequest{
 		AccessToken: token,
 	}
 	user, err := c.userService.GetUser(ctx, reqUser)
@@ -53,15 +51,14 @@ func (c *Client) GetUser(ctx context.Context, token string) (*storage.User, erro
 	}
 
 	return &storage.User{
-		ID:           uuid.MustParse(user.Id.String()),
-		Name:         user.Name,
-		HashPassword: user.HashPassword,
-		Email:        user.Email,
+		Name:         user.GetName(),
+		HashPassword: user.GetHashPassword(),
+		Email:        user.GetEmail(),
 	}, nil
 }
 
 func (c *Client) UpdateUser(ctx context.Context, token, name, password, email string) error {
-	user := &calendarapi.UpdateUserRequest{
+	user := &grpcapi.UpdateUserRequest{
 		AccessToken: token,
 		Name:        name,
 		Password:    password,
@@ -79,7 +76,7 @@ func (c *Client) UpdateUser(ctx context.Context, token, name, password, email st
 }
 
 func (c *Client) DeleteUser(ctx context.Context, token string) error {
-	reqDeleteUser := &calendarapi.DeleteUserRequest{
+	reqDeleteUser := &grpcapi.DeleteUserRequest{
 		AccessToken: token,
 	}
 	if _, err := c.userService.DeleteUser(ctx, reqDeleteUser); err != nil {
@@ -90,7 +87,7 @@ func (c *Client) DeleteUser(ctx context.Context, token string) error {
 }
 
 func (c *Client) ListUsers(ctx context.Context, token string) ([]storage.User, error) {
-	reqListUsers := &calendarapi.ListUsersRequest{
+	reqListUsers := &grpcapi.ListUsersRequest{
 		AccessToken: token,
 	}
 	users, err := c.userService.ListUsers(ctx, reqListUsers)
@@ -98,13 +95,12 @@ func (c *Client) ListUsers(ctx context.Context, token string) ([]storage.User, e
 		return nil, fmt.Errorf("gRPC: %w", err)
 	}
 
-	listUsers := make([]storage.User, 0, len(users.Users))
-	for _, user := range users.Users {
+	listUsers := make([]storage.User, 0, len(users.GetUsers()))
+	for _, user := range users.GetUsers() {
 		listUsers = append(listUsers, storage.User{
-			ID:           uuid.MustParse(user.Id.String()),
-			Name:         user.Name,
-			HashPassword: user.HashPassword,
-			Email:        user.Email,
+			Name:         user.GetName(),
+			HashPassword: user.GetHashPassword(),
+			Email:        user.GetEmail(),
 		})
 	}
 

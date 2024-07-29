@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/google/uuid"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	httpresponse "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/response"
 )
@@ -19,7 +19,6 @@ type RequestCreateEvent struct {
 	Description string    `json:"description" validate:"omitempty,min=2,max=512"`
 	StartTime   time.Time `json:"start_time"  validate:"required"`
 	StopTime    time.Time `json:"stop_time"   validate:"required"`
-	UserID      uuid.UUID `json:"user_id"     validate:"min=1"`
 }
 
 type ResponseCreateEvent struct {
@@ -28,6 +27,14 @@ type ResponseCreateEvent struct {
 }
 
 func (h *Handler) CreateEvent(res http.ResponseWriter, req *http.Request) {
+	userName := handler.GetUserName(req.Context())
+	if userName == "" {
+		err := fmt.Errorf("CreateEvent: user name is empty")
+		slog.Error(err.Error())
+		httpresponse.WriteError(res, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	// Read json request
 	var request RequestCreateEvent
 
@@ -69,7 +76,7 @@ func (h *Handler) CreateEvent(res http.ResponseWriter, req *http.Request) {
 		Description: request.Description,
 		StartTime:   request.StartTime,
 		StopTime:    request.StopTime,
-		UserID:      request.UserID,
+		UserName:    userName,
 	}
 
 	id, err := h.eventService.CreateEvent(req.Context(), &event)

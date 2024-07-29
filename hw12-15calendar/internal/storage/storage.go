@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 var ErrNoUser = errors.New("no user with name")
@@ -22,9 +20,9 @@ type EventStorage interface {
 }
 
 type UserStorage interface {
-	CreateUser(ctx context.Context, user *User) (uuid.UUID, error)
+	CreateUser(ctx context.Context, user *User) error
 	GetUser(ctx context.Context, name string) (*User, error)
-	UpdateUser(ctx context.Context, name string, user *User) error
+	UpdateUser(ctx context.Context, user *User) error
 	DeleteUser(ctx context.Context, name string) error
 
 	ListUsers(ctx context.Context) ([]User, error)
@@ -42,16 +40,15 @@ type Event struct {
 	Description string    `json:"description,omitempty"`
 	StartTime   time.Time `json:"start_time"`
 	StopTime    time.Time `json:"stop_time,omitempty"`
-	UserID      uuid.UUID `json:"user_id"`
+	UserName    string    `json:"user_name"`
 	//	CreatedAt   time.Time
 	//	UpdatedAt   time.Time
 }
 
 //nolint:tagliatelle
 type User struct {
-	ID           uuid.UUID `json:"id"`
-	Name         string    `json:"name"`
-	HashPassword string    `json:"hash_password"`
-	Email        string    `json:"email"`
-	Role         string    `json:"role"`
+	Name         string `json:"name"`
+	HashPassword string `json:"hash_password"`
+	Email        string `json:"email"`
+	Role         string `json:"role"`
 }

@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	httpresponse "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/response"
@@ -19,12 +18,11 @@ type UserGetter interface {
 }
 
 type ResponseGetUser struct {
-	ID           uuid.UUID `json:"id"`
-	Name         string    `json:"name"`
-	HashPassword string    `json:"hashPassword"`
-	Email        string    `json:"email"`
-	Role         string    `json:"role"`
-	Status       string    `json:"status"`
+	Name         string `json:"name"`
+	HashPassword string `json:"hashPassword"`
+	Email        string `json:"email"`
+	Role         string `json:"role"`
+	Status       string `json:"status"`
 }
 
 func New(getter UserGetter) http.HandlerFunc {
@@ -49,7 +47,6 @@ func New(getter UserGetter) http.HandlerFunc {
 
 		// Write json response
 		response := ResponseGetUser{
-			ID:           user.ID,
 			Name:         user.Name,
 			HashPassword: user.HashPassword,
 			Email:        user.Email,

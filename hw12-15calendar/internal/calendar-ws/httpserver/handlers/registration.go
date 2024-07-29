@@ -25,7 +25,7 @@ func (h *Handler) Registration(res http.ResponseWriter, req *http.Request) {
 	password := req.FormValue("password")
 	email := req.FormValue("email")
 
-	if _, err := h.client.Registration(req.Context(), name, password, email); err != nil {
+	if err := h.client.Registration(req.Context(), name, password, email); err != nil {
 		slog.Error("Create user: " + err.Error())
 		return
 	}

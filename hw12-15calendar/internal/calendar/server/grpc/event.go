@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/google/uuid"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-api"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/grpcapi"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (s *Server) CreateEvent(ctx context.Context, pbEvent *calendarapi.CreateEventRequest) (*calendarapi.CreateEventResponse, error) {
+func (s *Server) CreateEvent(ctx context.Context, pbEvent *grpcapi.CreateEventRequest) (*grpcapi.CreateEventResponse, error) {
 	if err := pbEvent.StartTime.CheckValid(); err != nil {
 		err = fmt.Errorf("incorrect value StartTime: %w", err)
 		slog.Error(err.Error())
@@ -37,7 +36,7 @@ func (s *Server) CreateEvent(ctx context.Context, pbEvent *calendarapi.CreateEve
 		Description: pbEvent.GetDescription(),
 		StartTime:   pbEvent.StartTime.AsTime(),
 		StopTime:    pbEvent.StopTime.AsTime(),
-		UserID:      user.ID,
+		UserName:    user.Name,
 	}
 
 	id, err := s.eventService.CreateEvent(ctx, &event)
@@ -47,19 +46,19 @@ func (s *Server) CreateEvent(ctx context.Context, pbEvent *calendarapi.CreateEve
 		return nil, err
 	}
 
-	return &calendarapi.CreateEventResponse{Id: id}, nil
+	return &grpcapi.CreateEventResponse{Id: id}, nil
 }
 
-func (s *Server) Login(ctx context.Context, req *calendarapi.LoginRequest) (*calendarapi.LoginResponse, error) {
+func (s *Server) Login(ctx context.Context, req *grpcapi.LoginRequest) (*grpcapi.LoginResponse, error) {
 	tokenString, err := s.authService.Authenticate(ctx, req.GetUsername(), req.GetPassword())
 	if err != nil {
 		slog.Error(err.Error())
 		return nil, err
 	}
-	return &calendarapi.LoginResponse{AccessToken: tokenString}, nil
+	return &grpcapi.LoginResponse{AccessToken: tokenString}, nil
 }
 
-func (s *Server) GetEvent(ctx context.Context, req *calendarapi.GetEventRequest) (*calendarapi.EventResponse, error) {
+func (s *Server) GetEvent(ctx context.Context, req *grpcapi.GetEventRequest) (*grpcapi.EventResponse, error) {
 	event, err := s.eventService.GetEvent(ctx, req.GetId())
 	if err != nil {
 		err := fmt.Errorf("get event: %w", err)
@@ -67,18 +66,17 @@ func (s *Server) GetEvent(ctx context.Context, req *calendarapi.GetEventRequest)
 		return nil, err
 	}
 
-	userUUID := calendarapi.UUID{Value: event.UserID.String()}
-	return &calendarapi.EventResponse{
+	return &grpcapi.EventResponse{
 		Id:          event.ID,
 		Title:       event.Title,
 		Description: event.Description,
 		StartTime:   timestamppb.New(event.StartTime),
 		StopTime:    timestamppb.New(event.StopTime),
-		UserID:      &userUUID,
+		UserName:    event.UserName,
 	}, nil
 }
 
-func (s *Server) ListEventsForUser(ctx context.Context, req *calendarapi.ListEventsForUserRequest) (*calendarapi.ListEventsResponse, error) {
+func (s *Server) ListEventsForUser(ctx context.Context, req *grpcapi.ListEventsForUserRequest) (*grpcapi.ListEventsResponse, error) {
 	if err := req.Date.CheckValid(); err != nil {
 		return nil, fmt.Errorf("incorrect value date: %w", err)
 	}
@@ -98,23 +96,22 @@ func (s *Server) ListEventsForUser(ctx context.Context, req *calendarapi.ListEve
 		return nil, err
 	}
 
-	pbEvents := make([]*calendarapi.EventResponse, len(events), len(events))
+	pbEvents := make([]*grpcapi.EventResponse, len(events), len(events))
 	for i, event := range events {
-		userUUID := calendarapi.UUID{Value: event.UserID.String()}
-		pbEvents[i] = &calendarapi.EventResponse{
+		pbEvents[i] = &grpcapi.EventResponse{
 			Id:          event.ID,
 			Title:       event.Title,
 			Description: event.Description,
 			StartTime:   timestamppb.New(event.StartTime),
 			StopTime:    timestamppb.New(event.StopTime),
-			UserID:      &userUUID,
+			UserName:    event.UserName,
 		}
 	}
 
-	return &calendarapi.ListEventsResponse{Events: pbEvents}, nil
+	return &grpcapi.ListEventsResponse{Events: pbEvents}, nil
 }
 
-func (s *Server) UpdateEvent(ctx context.Context, pbEvent *calendarapi.UpdateEventRequest) (*emptypb.Empty, error) {
+func (s *Server) UpdateEvent(ctx context.Context, pbEvent *grpcapi.UpdateEventRequest) (*emptypb.Empty, error) {
 	if err := pbEvent.StartTime.CheckValid(); err != nil {
 		err = fmt.Errorf("incorrect value StartTime: %w", err)
 		slog.Error(err.Error())
@@ -125,19 +122,13 @@ func (s *Server) UpdateEvent(ctx context.Context, pbEvent *calendarapi.UpdateEve
 		slog.Error(err.Error())
 		return nil, err
 	}
-	userUUID, err := uuid.Parse(pbEvent.GetUserID().GetValue())
-	if err != nil {
-		err = fmt.Errorf("parse uuid: %w", err)
-		slog.Error(err.Error())
-		return nil, err
-	}
 	event := storage.Event{
 		ID:          0,
 		Title:       pbEvent.GetTitle(),
 		Description: pbEvent.GetDescription(),
 		StartTime:   pbEvent.StartTime.AsTime(),
 		StopTime:    pbEvent.StopTime.AsTime(),
-		UserID:      userUUID,
+		UserName:    pbEvent.GetUserName(),
 	}
 
 	if err := s.eventService.UpdateEvent(ctx, &event); err != nil {
@@ -149,7 +140,7 @@ func (s *Server) UpdateEvent(ctx context.Context, pbEvent *calendarapi.UpdateEve
 	return &emptypb.Empty{}, nil
 }
 
-func (s *Server) DeleteEvent(ctx context.Context, req *calendarapi.DeleteEventRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteEvent(ctx context.Context, req *grpcapi.DeleteEventRequest) (*emptypb.Empty, error) {
 	if err := s.eventService.DeleteEvent(ctx, req.GetId()); err != nil {
 		err := fmt.Errorf("delete event: %w", err)
 		slog.Error(err.Error())

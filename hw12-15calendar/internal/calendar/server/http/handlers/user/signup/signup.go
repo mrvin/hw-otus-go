@@ -9,14 +9,13 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/google/uuid"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	httpresponse "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/response"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserCreator interface {
-	CreateUser(ctx context.Context, user *storage.User) (uuid.UUID, error)
+	CreateUser(ctx context.Context, user *storage.User) error
 }
 
 type RequestSignUp struct {
@@ -26,8 +25,7 @@ type RequestSignUp struct {
 }
 
 type ResponseSignUp struct {
-	ID     uuid.UUID `json:"id"`
-	Status string    `json:"status"`
+	Status string `json:"status"`
 }
 
 // SignUp registers a new user.
@@ -83,8 +81,7 @@ func New(creator UserCreator) http.HandlerFunc {
 			Role:         "user",
 		}
 
-		id, err := creator.CreateUser(req.Context(), &user)
-		if err != nil {
+		if err = creator.CreateUser(req.Context(), &user); err != nil {
 			err := fmt.Errorf("SignUp: saving user to storage: %w", err)
 			slog.Error(err.Error())
 			httpresponse.WriteError(res, err.Error(), http.StatusInternalServerError)
@@ -93,7 +90,6 @@ func New(creator UserCreator) http.HandlerFunc {
 
 		// Write json response
 		response := ResponseSignUp{
-			ID:     id,
 			Status: "OK",
 		}
 

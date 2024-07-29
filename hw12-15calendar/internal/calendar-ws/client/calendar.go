@@ -4,12 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 )
 
 type Calendar interface {
-	Registration(ctx context.Context, name, password, email string) (uuid.UUID, error)
+	Registration(ctx context.Context, name, password, email string) error
 	Login(ctx context.Context, name, password string) (string, error)
 
 	GetUser(ctx context.Context, token string) (*storage.User, error)
@@ -25,7 +24,7 @@ type Calendar interface {
 	UpdateEvent(ctx context.Context, token string,
 		title, description string,
 		startTime, stopTime time.Time,
-		userID uuid.UUID) error
+	) error
 	DeleteEvent(ctx context.Context, token string, id int64) error
 
 	//ListEvents(ctx context.Context) ([]Event, error)

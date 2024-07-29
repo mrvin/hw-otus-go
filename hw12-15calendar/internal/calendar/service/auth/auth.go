@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
@@ -36,7 +35,7 @@ func New(st storage.UserStorage, conf *Conf) *AuthService {
 	}
 }
 
-func (a *AuthService) CreateUser(ctx context.Context, user *storage.User) (uuid.UUID, error) {
+func (a *AuthService) CreateUser(ctx context.Context, user *storage.User) error {
 	cctx, sp := a.tr.Start(ctx, "CreateUser")
 	defer sp.End()
 
@@ -58,11 +57,11 @@ func (a *AuthService) GetUser(ctx context.Context, userName string) (*storage.Us
 	return a.authSt.GetUser(cctx, userName)
 }
 
-func (a *AuthService) UpdateUser(ctx context.Context, name string, user *storage.User) error {
+func (a *AuthService) UpdateUser(ctx context.Context, user *storage.User) error {
 	cctx, sp := a.tr.Start(ctx, "UpdateUser")
 	defer sp.End()
 
-	return a.authSt.UpdateUser(cctx, name, user)
+	return a.authSt.UpdateUser(cctx, user)
 }
 
 func (a *AuthService) DeleteUser(ctx context.Context, userName string) error {

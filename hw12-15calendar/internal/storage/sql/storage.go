@@ -89,6 +89,35 @@ func (s *Storage) prepareQuery(ctx context.Context) error {
 	var err error
 	fmtStrErr := "prepare \"%s\" query: %w"
 
+	// User query prepare
+	sqlInsertUser := `
+		INSERT INTO users (
+			name,
+			hash_password,
+			email
+		)
+		VALUES ($1, $2, $3)`
+	s.insertUser, err = s.db.PrepareContext(ctx, sqlInsertUser)
+	if err != nil {
+		return fmt.Errorf(fmtStrErr, "insertUser", err)
+	}
+	sqlGetUser := `
+		SELECT name, hash_password, email
+		FROM users
+		WHERE name = $1`
+	s.getUser, err = s.db.PrepareContext(ctx, sqlGetUser)
+	if err != nil {
+		return fmt.Errorf(fmtStrErr, "getUser", err)
+	}
+	sqlGetAllUsers := `
+		SELECT name, hash_password, email
+		FROM users
+	`
+	s.listUsers, err = s.db.PrepareContext(ctx, sqlGetAllUsers)
+	if err != nil {
+		return fmt.Errorf(fmtStrErr, "getAllUsers", err)
+	}
+
 	// Event query prepare
 	sqlInsertEvent := `
 		INSERT INTO events (
@@ -96,7 +125,7 @@ func (s *Storage) prepareQuery(ctx context.Context) error {
 			description,
 			start_time,
 			stop_time,
-			user_id
+			user_name
 		)
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id`
@@ -105,7 +134,7 @@ func (s *Storage) prepareQuery(ctx context.Context) error {
 		return fmt.Errorf(fmtStrErr, "insertEvent", err)
 	}
 	sqlGetEvent := `
-		SELECT id, title, description, start_time, stop_time, user_id
+		SELECT id, title, description, start_time, stop_time, user_name
 		FROM events
 		WHERE id = $1`
 	s.getEvent, err = s.db.PrepareContext(ctx, sqlGetEvent)
@@ -113,63 +142,33 @@ func (s *Storage) prepareQuery(ctx context.Context) error {
 		return fmt.Errorf(fmtStrErr, "getEvent", err)
 	}
 	sqlGetAllEvent := `
-		SELECT id, title, description, start_time, stop_time, user_id
+		SELECT id, title, description, start_time, stop_time, user_name
 		FROM events`
 	s.listEvents, err = s.db.PrepareContext(ctx, sqlGetAllEvent)
 	if err != nil {
 		return fmt.Errorf(fmtStrErr, "getAllEvents", err)
 	}
 	sqlGetEventsForUser := `
-		SELECT id, title, description, start_time, stop_time, user_id
+		SELECT id, title, description, start_time, stop_time, user_name
 		FROM events
-		WHERE user_id = $1`
+		WHERE user_name = $1`
 	s.listEventsForUser, err = s.db.PrepareContext(ctx, sqlGetEventsForUser)
 	if err != nil {
 		return fmt.Errorf(fmtStrErr, "getEventsForUser", err)
-	}
-
-	// User query prepare
-	sqlInsertUser := `
-		INSERT INTO users (
-			name,
-			hash_password,
-			email
-		)
-		VALUES ($1, $2, $3)
-		RETURNING id`
-	s.insertUser, err = s.db.PrepareContext(ctx, sqlInsertUser)
-	if err != nil {
-		return fmt.Errorf(fmtStrErr, "insertUser", err)
-	}
-	sqlGetUser := `
-		SELECT id, name, hash_password, email
-		FROM users
-		WHERE name = $1`
-	s.getUser, err = s.db.PrepareContext(ctx, sqlGetUser)
-	if err != nil {
-		return fmt.Errorf(fmtStrErr, "getUser", err)
-	}
-	sqlGetAllUsers := `
-		SELECT id, name, hash_password, email
-		FROM users
-	`
-	s.listUsers, err = s.db.PrepareContext(ctx, sqlGetAllUsers)
-	if err != nil {
-		return fmt.Errorf(fmtStrErr, "getAllUsers", err)
 	}
 
 	return nil
 }
 
 func (s *Storage) Close() error {
+	s.insertUser.Close()
+	s.getUser.Close()
+	s.listUsers.Close()
+
 	s.insertEvent.Close()
 	s.getEvent.Close()
 	s.listEvents.Close()
 	s.listEventsForUser.Close()
-
-	s.insertUser.Close()
-	s.getUser.Close()
-	s.listUsers.Close()
 
 	return s.db.Close() //nolint:wrapcheck
 }

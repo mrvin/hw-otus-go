@@ -8,7 +8,7 @@ import (
 )
 
 func (s *Storage) CreateEvent(ctx context.Context, event *storage.Event) (int64, error) {
-	if _, err := s.GetUserByID(ctx, event.UserID); err != nil {
+	if _, err := s.GetUser(ctx, event.UserName); err != nil {
 		return 0, err
 	}
 
@@ -34,29 +34,21 @@ func (s *Storage) GetEvent(_ context.Context, id int64) (*storage.Event, error) 
 	return &user, nil
 }
 
-func (s *Storage) ListEvents(_ context.Context) ([]storage.Event, error) {
-	events := make([]storage.Event, 0)
-
-	s.muEvents.RLock()
-	for _, event := range s.mEvents {
-		events = append(events, event)
-	}
-	s.muEvents.RUnlock()
-
-	return events, nil
-}
-
-func (s *Storage) UpdateEvent(_ context.Context, event *storage.Event) error {
+func (s *Storage) UpdateEvent(_ context.Context, newEvent *storage.Event) error {
 	s.muEvents.Lock()
 	defer s.muEvents.Unlock()
 
-	oldEvent, ok := s.mEvents[event.ID]
+	oldEvent, ok := s.mEvents[newEvent.ID]
 	if !ok {
-		return fmt.Errorf("%w: %d", storage.ErrNoEvent, event.ID)
+		return fmt.Errorf("%w: %d", storage.ErrNoEvent, newEvent.ID)
 	}
-	event.UserID = oldEvent.UserID
 
-	s.mEvents[event.ID] = *event
+	oldEvent.Title = newEvent.Title
+	oldEvent.Description = newEvent.Description
+	oldEvent.StartTime = newEvent.StartTime
+	oldEvent.StopTime = newEvent.StopTime
+
+	s.mEvents[newEvent.ID] = oldEvent
 
 	return nil
 }
@@ -73,17 +65,24 @@ func (s *Storage) DeleteEvent(_ context.Context, id int64) error {
 	return nil
 }
 
-func (s *Storage) ListEventsForUser(ctx context.Context, name string) ([]storage.Event, error) {
+func (s *Storage) ListEvents(_ context.Context) ([]storage.Event, error) {
 	events := make([]storage.Event, 0)
-
-	user, err := s.GetUser(ctx, name)
-	if err != nil {
-		return nil, err
-	}
 
 	s.muEvents.RLock()
 	for _, event := range s.mEvents {
-		if event.UserID == user.ID {
+		events = append(events, event)
+	}
+	s.muEvents.RUnlock()
+
+	return events, nil
+}
+
+func (s *Storage) ListEventsForUser(ctx context.Context, name string) ([]storage.Event, error) {
+	events := make([]storage.Event, 0)
+
+	s.muEvents.RLock()
+	for _, event := range s.mEvents {
+		if event.UserName == name {
 			events = append(events, event)
 		}
 	}

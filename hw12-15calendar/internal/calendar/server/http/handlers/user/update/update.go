@@ -17,11 +17,10 @@ import (
 )
 
 type UserUpdater interface {
-	UpdateUser(ctx context.Context, name string, user *storage.User) error
+	UpdateUser(ctx context.Context, user *storage.User) error
 }
 
 type RequestUpdateUser struct {
-	UserName string `json:"userName" validate:"required,min=3,max=20"`
 	Password string `json:"password" validate:"required,min=6,max=32"`
 	Email    string `json:"email"    validate:"required,email"`
 }
@@ -49,7 +48,6 @@ func New(updater UserUpdater) http.HandlerFunc {
 
 		slog.Debug(
 			"Update user request",
-			slog.String("username", request.UserName),
 			slog.String("password", request.Password),
 			slog.String("email", request.Email),
 		)
@@ -70,19 +68,20 @@ func New(updater UserUpdater) http.HandlerFunc {
 			return
 		}
 
+		userName := handler.GetUserName(req.Context())
+		if userName == "" {
+			err := fmt.Errorf("UpdateUser: user name is empty")
+			slog.Error(err.Error())
+			httpresponse.WriteError(res, err.Error(), http.StatusBadRequest)
+			return
+		}
 		user := storage.User{
-			Name:         request.UserName,
+			Name:         userName,
 			HashPassword: string(hashPassword),
 			Email:        request.Email,
 		}
 
-		userName := handler.GetUserName(req.Context())
-		if userName == "" {
-			err := fmt.Errorf("UpdateUser: user name is empty")
-			httpresponse.WriteError(res, err.Error(), http.StatusBadRequest)
-			return
-		}
-		if err := updater.UpdateUser(req.Context(), userName, &user); err != nil {
+		if err := updater.UpdateUser(req.Context(), &user); err != nil {
 			err := fmt.Errorf("UpdateUser: update user in storage: %w", err)
 			slog.Error(err.Error())
 			if errors.Is(err, storage.ErrNoUser) {

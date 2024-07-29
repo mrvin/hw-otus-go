@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-api"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/grpcapi"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 )
@@ -16,8 +16,8 @@ type Conf struct {
 }
 
 type Client struct {
-	eventService calendarapi.EventServiceClient
-	userService  calendarapi.UserServiceClient
+	eventService grpcapi.EventServiceClient
+	userService  grpcapi.UserServiceClient
 	conn         *grpc.ClientConn
 }
 
@@ -40,8 +40,8 @@ func New(ctx context.Context, conf *Conf) (*Client, error) {
 		return nil, fmt.Errorf("connect to %s: %w", address, err)
 	}
 
-	client.eventService = calendarapi.NewEventServiceClient(client.conn)
-	client.userService = calendarapi.NewUserServiceClient(client.conn)
+	client.eventService = grpcapi.NewEventServiceClient(client.conn)
+	client.userService = grpcapi.NewUserServiceClient(client.conn)
 
 	return &client, nil
 }
