@@ -53,9 +53,9 @@ jobs:
       run: migrate -path "hw12-15calendar/migrations" -database  "postgres://event-db:event-db@localhost:5432/event-db?sslmode=disable" up
 
     - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@v4
+      uses: golangci/golangci-lint-action@v6
       with:
-        version: v1.57
+        version: v1.59.1
         args: --timeout 3m --config=../.golangci.yml
         working-directory: hw12-15calendar/
 
