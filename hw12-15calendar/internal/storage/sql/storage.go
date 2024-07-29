@@ -13,6 +13,10 @@ import (
 
 const retriesConnect = 5
 
+const maxOpenConns = 25
+const maxIdleConns = 25
+const connMaxLifetime = 5 // in minute
+
 type Conf struct {
 	Driver   string `yaml:"driver"`
 	Host     string `yaml:"host"`
@@ -69,9 +73,9 @@ func (s *Storage) Connect(ctx context.Context) error {
 	}
 
 	// Setting db connections pool.
-	s.db.SetMaxOpenConns(25)
-	s.db.SetMaxIdleConns(25)
-	s.db.SetConnMaxLifetime(5 * time.Minute)
+	s.db.SetMaxOpenConns(maxOpenConns)
+	s.db.SetMaxIdleConns(maxIdleConns)
+	s.db.SetConnMaxLifetime(connMaxLifetime * time.Minute)
 
 	return nil
 }
@@ -85,6 +89,7 @@ func (s *Storage) RetryConnect(ctx context.Context, retries int) error {
 	return nil
 }
 
+//nolint:funlen
 func (s *Storage) prepareQuery(ctx context.Context) error {
 	var err error
 	fmtStrErr := "prepare \"%s\" query: %w"
