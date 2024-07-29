@@ -56,7 +56,7 @@ jobs:
       uses: golangci/golangci-lint-action@v4
       with:
         version: v1.57
-        args: --timeout 3m --config=.golangci.yml
+        args: --timeout 3m --config=../.golangci.yml
         working-directory: hw12-15calendar/
 
     - name: Build
