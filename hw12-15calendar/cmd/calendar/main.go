@@ -29,6 +29,8 @@ import (
 )
 
 const serviceName = "Calendar"
+const ctxTimeout = 2 // in second
+const numServer = 2  // HTTP and gRPC
 
 type Config struct {
 	InMem  bool             `yaml:"inmemory"`
@@ -41,6 +43,7 @@ type Config struct {
 	Auth   authservice.Conf `yaml:"auth"`
 }
 
+//nolint:funlen,gocognit,cyclop
 func main() {
 	ctx := context.Background()
 
@@ -66,7 +69,7 @@ func main() {
 	}()
 
 	if conf.Tracer.Enable {
-		ctxTracer, cancel := context.WithTimeout(ctx, 2*time.Second)
+		ctxTracer, cancel := context.WithTimeout(ctx, ctxTimeout*time.Second)
 		defer cancel()
 		tp, err := tracer.Init(ctxTracer, &conf.Tracer, serviceName)
 		if err != nil {
@@ -82,7 +85,7 @@ func main() {
 	}
 
 	if conf.Metric.Enable {
-		ctxMetric, cancel := context.WithTimeout(ctx, 2*time.Second)
+		ctxMetric, cancel := context.WithTimeout(ctx, ctxTimeout*time.Second)
 		defer cancel()
 		mp, err := metric.Init(ctxMetric, &conf.Metric, serviceName)
 		if err != nil {
@@ -98,6 +101,7 @@ func main() {
 	}
 
 	var storage storage.Storage
+	//nolint:nestif
 	if conf.InMem {
 		slog.Info("Storage in memory")
 		storage = memorystorage.New()
@@ -135,7 +139,7 @@ func main() {
 	go listenForShutdown(ctx, signals, serverHTTP, serverGRPC)
 
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(numServer)
 	go func() {
 		defer wg.Done()
 
