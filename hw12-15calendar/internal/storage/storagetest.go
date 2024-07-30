@@ -8,12 +8,14 @@ import (
 	"time"
 )
 
+//nolint:exhaustruct
 var users = []User{
 	{Name: "Bob", Email: "bobi@mail.com"},
 	{Name: "Alis", Email: "alisia.jones@gmail.com"},
 	{Name: "Jim", Email: "jimihendrix@yandex.ru"},
 }
 
+//nolint:exhaustruct
 var events = []Event{
 	{Title: "Bob's Birthday", Description: "Birthday February 24, 1993. Party in nature.",
 		StartTime: time.Date(2022, time.February, 27, 10, 0, 0, 0, time.UTC),
@@ -90,7 +92,7 @@ func TestUserCRUD(ctx context.Context, t *testing.T, st Storage) {
 	}
 }
 
-func TestEventCRUD(ctx context.Context, t *testing.T, st Storage) { //nolint:funlen,gocognit,cyclop
+func TestEventCRUD(ctx context.Context, t *testing.T, st Storage) { //nolint:gocognit,cyclop
 	// Create users
 	for i := range users {
 		err := st.CreateUser(ctx, &users[i])

@@ -22,6 +22,10 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
+const readTimeout = 5   // in second
+const writeTimeout = 10 // in second
+const idleTimeout = 1   // in minute
+
 //nolint:tagliatelle
 type ConfHTTPS struct {
 	CertFile       string `yaml:"cert_file"`
@@ -42,7 +46,6 @@ type Server struct {
 }
 
 func New(conf *Conf, auth *authservice.AuthService, events *eventservice.EventService) *Server {
-
 	mux := http.NewServeMux()
 
 	handlerEvent := handlerevent.New(events)
@@ -70,11 +73,12 @@ func New(conf *Conf, auth *authservice.AuthService, events *eventservice.EventSe
 			pool := x509.NewCertPool()
 			pool.AppendCertsFromPEM(clientCert)
 
+			//nolint:exhaustruct
 			tlsConf = &tls.Config{
 				ClientCAs:  pool,
 				ClientAuth: tls.RequireAndVerifyClientCert,
+				MinVersion: tls.VersionTLS12,
 			}
-			tlsConf.BuildNameToCertificate()
 		}
 	}
 
@@ -83,9 +87,9 @@ func New(conf *Conf, auth *authservice.AuthService, events *eventservice.EventSe
 		http.Server{
 			Addr:         fmt.Sprintf("%s:%d", conf.Host, conf.Port),
 			Handler:      &loggerServer,
-			ReadTimeout:  5 * time.Second,
-			WriteTimeout: 10 * time.Second,
-			IdleTimeout:  1 * time.Minute,
+			ReadTimeout:  readTimeout * time.Second,
+			WriteTimeout: writeTimeout * time.Second,
+			IdleTimeout:  idleTimeout * time.Minute,
 			TLSConfig:    tlsConf,
 		},
 	}

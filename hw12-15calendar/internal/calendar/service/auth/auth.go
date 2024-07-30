@@ -139,7 +139,7 @@ func (a *AuthService) ParseToken(tokenString string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
-// Authorized is middleware
+// Authorized is middleware.
 func (a *AuthService) Authorized(next http.HandlerFunc) http.HandlerFunc {
 	handler := func(res http.ResponseWriter, req *http.Request) {
 		authHeaderValue := req.Header.Get("Authorization")

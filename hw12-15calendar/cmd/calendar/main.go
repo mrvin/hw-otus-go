@@ -43,7 +43,7 @@ type Config struct {
 	Auth   authservice.Conf `yaml:"auth"`
 }
 
-//nolint:funlen,gocognit,cyclop
+//nolint:gocognit,cyclop
 func main() {
 	ctx := context.Background()
 

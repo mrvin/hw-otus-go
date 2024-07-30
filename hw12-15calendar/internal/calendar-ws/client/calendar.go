@@ -27,6 +27,6 @@ type Calendar interface {
 	) error
 	DeleteEvent(ctx context.Context, token string, id int64) error
 
-	//ListEvents(ctx context.Context) ([]Event, error)
+	// ListEvents(ctx context.Context) ([]Event, error)
 	ListEventsForUser(ctx context.Context, token string, days int) ([]storage.Event, error)
 }

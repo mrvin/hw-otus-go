@@ -18,10 +18,11 @@ type UserCreator interface {
 	CreateUser(ctx context.Context, user *storage.User) error
 }
 
+//nolint:tagliatelle
 type RequestSignUp struct {
-	UserName string `json:"userName" validate:"required,min=3,max=20"`
-	Password string `json:"password" validate:"required,min=6,max=32"`
-	Email    string `json:"email"    validate:"required,email"`
+	UserName string `json:"user_name" validate:"required,min=3,max=20"`
+	Password string `json:"password"  validate:"required,min=6,max=32"`
+	Email    string `json:"email"     validate:"required,email"`
 }
 
 type ResponseSignUp struct {
@@ -60,7 +61,7 @@ func New(creator UserCreator) http.HandlerFunc {
 		// Validation
 		if err := validator.New().Struct(request); err != nil {
 			errors := err.(validator.ValidationErrors)
-			err := fmt.Errorf("SignUp: invalid request: %s", errors)
+			err := fmt.Errorf("SignUp: invalid request: %w", errors)
 			slog.Error(err.Error())
 			httpresponse.WriteError(res, err.Error(), http.StatusBadRequest)
 			return

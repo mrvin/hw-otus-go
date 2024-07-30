@@ -10,7 +10,7 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers"
+	handler "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	httpresponse "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/response"
 	"golang.org/x/crypto/bcrypt"
@@ -27,6 +27,14 @@ type RequestUpdateUser struct {
 
 func New(updater UserUpdater) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
+		userName := handler.GetUserNameFromContext(req.Context())
+		if userName == "" {
+			err := fmt.Errorf("UpdateUser: %w", handler.ErrUserNameIsEmpty)
+			slog.Error(err.Error())
+			httpresponse.WriteError(res, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		// Read json request
 		var request RequestUpdateUser
 
@@ -68,17 +76,11 @@ func New(updater UserUpdater) http.HandlerFunc {
 			return
 		}
 
-		userName := handler.GetUserName(req.Context())
-		if userName == "" {
-			err := fmt.Errorf("UpdateUser: user name is empty")
-			slog.Error(err.Error())
-			httpresponse.WriteError(res, err.Error(), http.StatusBadRequest)
-			return
-		}
 		user := storage.User{
 			Name:         userName,
 			HashPassword: string(hashPassword),
 			Email:        request.Email,
+			Role:         "user",
 		}
 
 		if err := updater.UpdateUser(req.Context(), &user); err != nil {

@@ -14,6 +14,7 @@ import (
 	httpresponse "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/response"
 )
 
+//nolint:tagliatelle
 type RequestUpdateEvent struct {
 	ID          int64     `json:"id"`
 	Title       string    `json:"title"       validate:"required,min=2,max=64"`

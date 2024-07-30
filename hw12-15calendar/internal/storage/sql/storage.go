@@ -89,7 +89,6 @@ func (s *Storage) RetryConnect(ctx context.Context, retries int) error {
 	return nil
 }
 
-//nolint:funlen
 func (s *Storage) prepareQuery(ctx context.Context) error {
 	var err error
 	fmtStrErr := "prepare \"%s\" query: %w"

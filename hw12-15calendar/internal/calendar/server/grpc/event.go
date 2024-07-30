@@ -12,12 +12,12 @@ import (
 )
 
 func (s *Server) CreateEvent(ctx context.Context, pbEvent *grpcapi.CreateEventRequest) (*grpcapi.CreateEventResponse, error) {
-	if err := pbEvent.StartTime.CheckValid(); err != nil {
+	if err := pbEvent.GetStartTime().CheckValid(); err != nil {
 		err = fmt.Errorf("incorrect value StartTime: %w", err)
 		slog.Error(err.Error())
 		return nil, err
 	}
-	if err := pbEvent.StopTime.CheckValid(); err != nil {
+	if err := pbEvent.GetStopTime().CheckValid(); err != nil {
 		err = fmt.Errorf("incorrect value StopTime: %w", err)
 		slog.Error(err.Error())
 		return nil, err
@@ -34,8 +34,8 @@ func (s *Server) CreateEvent(ctx context.Context, pbEvent *grpcapi.CreateEventRe
 		ID:          0,
 		Title:       pbEvent.GetTitle(),
 		Description: pbEvent.GetDescription(),
-		StartTime:   pbEvent.StartTime.AsTime(),
-		StopTime:    pbEvent.StopTime.AsTime(),
+		StartTime:   pbEvent.GetStartTime().AsTime(),
+		StopTime:    pbEvent.GetStopTime().AsTime(),
 		UserName:    user.Name,
 	}
 
@@ -77,10 +77,10 @@ func (s *Server) GetEvent(ctx context.Context, req *grpcapi.GetEventRequest) (*g
 }
 
 func (s *Server) ListEventsForUser(ctx context.Context, req *grpcapi.ListEventsForUserRequest) (*grpcapi.ListEventsResponse, error) {
-	if err := req.Date.CheckValid(); err != nil {
+	if err := req.GetDate().CheckValid(); err != nil {
 		return nil, fmt.Errorf("incorrect value date: %w", err)
 	}
-	date := req.Date.AsTime()
+	date := req.GetDate().AsTime()
 
 	userName := GetUserName(ctx)
 	if userName == "" {
@@ -89,7 +89,7 @@ func (s *Server) ListEventsForUser(ctx context.Context, req *grpcapi.ListEventsF
 		return nil, err
 	}
 
-	events, err := s.eventService.ListEventsForUser(ctx, userName, date, int(req.Days))
+	events, err := s.eventService.ListEventsForUser(ctx, userName, date, int(req.GetDays()))
 	if err != nil {
 		err := fmt.Errorf("get events for user: %w", err)
 		slog.Error(err.Error())
@@ -112,12 +112,12 @@ func (s *Server) ListEventsForUser(ctx context.Context, req *grpcapi.ListEventsF
 }
 
 func (s *Server) UpdateEvent(ctx context.Context, pbEvent *grpcapi.UpdateEventRequest) (*emptypb.Empty, error) {
-	if err := pbEvent.StartTime.CheckValid(); err != nil {
+	if err := pbEvent.GetStartTime().CheckValid(); err != nil {
 		err = fmt.Errorf("incorrect value StartTime: %w", err)
 		slog.Error(err.Error())
 		return nil, err
 	}
-	if err := pbEvent.StopTime.CheckValid(); err != nil {
+	if err := pbEvent.GetStopTime().CheckValid(); err != nil {
 		err = fmt.Errorf("incorrect value StopTime: %w", err)
 		slog.Error(err.Error())
 		return nil, err
@@ -126,8 +126,8 @@ func (s *Server) UpdateEvent(ctx context.Context, pbEvent *grpcapi.UpdateEventRe
 		ID:          0,
 		Title:       pbEvent.GetTitle(),
 		Description: pbEvent.GetDescription(),
-		StartTime:   pbEvent.StartTime.AsTime(),
-		StopTime:    pbEvent.StopTime.AsTime(),
+		StartTime:   pbEvent.GetStartTime().AsTime(),
+		StopTime:    pbEvent.GetStopTime().AsTime(),
 		UserName:    pbEvent.GetUserName(),
 	}
 

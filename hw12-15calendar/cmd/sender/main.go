@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"flag"
-	stdlog "log"
+	"log"
 	"log/slog"
 	"os/signal"
 	"syscall"
@@ -21,28 +21,30 @@ type Config struct {
 	Logger logger.Conf `yaml:"logger"`
 }
 
+//nolint:cyclop
 func main() {
+	ctx := context.Background()
+
 	configFile := flag.String("config", "/etc/calendar/sender.yml", "path to configuration file")
 	flag.Parse()
 
 	var conf Config
 	if err := config.Parse(*configFile, &conf); err != nil {
-		stdlog.Printf("Parse config: %v", err)
+		log.Printf("Parse config: %v", err)
 		return
 	}
 
 	logFile, err := logger.Init(&conf.Logger)
 	if err != nil {
-		stdlog.Printf("Init logger: %v\n", err)
+		log.Printf("Init logger: %v\n", err)
 		return
-	} else {
-		slog.Info("Init logger")
-		defer func() {
-			if err := logFile.Close(); err != nil {
-				slog.Error("Close log file: " + err.Error())
-			}
-		}()
 	}
+	slog.Info("Init logger")
+	defer func() {
+		if err := logFile.Close(); err != nil {
+			slog.Error("Close log file: " + err.Error())
+		}
+	}()
 
 	var qm rabbitmq.Queue
 
@@ -61,7 +63,7 @@ func main() {
 		return
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT /*(Control-C)*/, syscall.SIGTERM, syscall.SIGQUIT)
+	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT /*(Control-C)*/, syscall.SIGTERM, syscall.SIGQUIT)
 	defer stop()
 	for {
 		select {

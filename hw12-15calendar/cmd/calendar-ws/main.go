@@ -4,14 +4,14 @@ import (
 	"context"
 	"errors"
 	"flag"
-	stdlog "log"
+	"log"
 	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/client"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/client/grpc"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/client/http"
+	grpcclient "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/client/grpc"
+	httpclient "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/client/http"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/httpserver"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/logger"
@@ -20,7 +20,9 @@ import (
 )
 
 const serviceName = "Calendar-ws"
+const ctxTimeout = 2 // in second
 
+//nolint:tagliatelle
 type Config struct {
 	Client     string          `yaml:"client"`
 	HTTPClient httpclient.Conf `yaml:"http-client"`
@@ -31,32 +33,33 @@ type Config struct {
 	Metric     metric.Conf     `yaml:"metrics"`
 }
 
-var ctx = context.Background()
-
+//nolint:gocognit,cyclop
 func main() {
+	ctx := context.Background()
+
 	configFile := flag.String("config", "/etc/calendar/calendar-ws.yml", "path to configuration file")
 	flag.Parse()
 
 	var conf Config
 	if err := config.Parse(*configFile, &conf); err != nil {
-		stdlog.Printf("Parse config: %v", err)
+		log.Printf("Parse config: %v", err)
 		return
 	}
 
 	logFile, err := logger.Init(&conf.Logger)
 	if err != nil {
-		stdlog.Printf("Init logger: %v\n", err)
+		log.Printf("Init logger: %v\n", err)
 		return
-	} else {
-		slog.Info("Init logger")
-		defer func() {
-			if err := logFile.Close(); err != nil {
-				slog.Error("Close log file: " + err.Error())
-			}
-		}()
 	}
+	slog.Info("Init logger")
+	defer func() {
+		if err := logFile.Close(); err != nil {
+			slog.Error("Close log file: " + err.Error())
+		}
+	}()
+
 	if conf.Tracer.Enable {
-		ctxTracer, cancel := context.WithTimeout(ctx, 2*time.Second)
+		ctxTracer, cancel := context.WithTimeout(ctx, ctxTimeout*time.Second)
 		defer cancel()
 		tp, err := tracer.Init(ctxTracer, &conf.Tracer, serviceName)
 		if err != nil {
@@ -72,7 +75,7 @@ func main() {
 	}
 
 	if conf.Metric.Enable {
-		ctxMetric, cancel := context.WithTimeout(ctx, 2*time.Second)
+		ctxMetric, cancel := context.WithTimeout(ctx, ctxTimeout*time.Second)
 		defer cancel()
 		mp, err := metric.Init(ctxMetric, &conf.Metric, serviceName)
 		if err != nil {
@@ -88,7 +91,7 @@ func main() {
 	}
 
 	var client client.Calendar
-	if conf.Client == "grpc" {
+	if conf.Client == "grpc" { //nolint:nestif
 		client, err = grpcclient.New(ctx, &conf.GRPCClient)
 		if err != nil {
 			slog.Error("Failed to init gRPC client: " + err.Error())

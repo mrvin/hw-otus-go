@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"flag"
-	stdlog "log"
+	"log"
 	"log/slog"
 	"os/signal"
 	"syscall"
@@ -16,6 +16,7 @@ import (
 	sqlstorage "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage/sql"
 )
 
+//nolint:tagliatelle
 type Config struct {
 	Queue       queue.Conf      `yaml:"queue"`
 	DB          sqlstorage.Conf `yaml:"db"`
@@ -23,30 +24,32 @@ type Config struct {
 	SchedPeriod int             `yaml:"schedule_period"`
 }
 
+//nolint:gocognit,cyclop
 func main() {
+	ctx := context.Background()
+
 	configFile := flag.String("config", "/etc/calendar/scheduler.yml", "path to configuration file")
 	flag.Parse()
 
 	var conf Config
 	if err := config.Parse(*configFile, &conf); err != nil {
-		stdlog.Printf("Parse config: %v", err)
+		log.Printf("Parse config: %v", err)
 		return
 	}
 
 	logFile, err := logger.Init(&conf.Logger)
 	if err != nil {
-		stdlog.Printf("Init logger: %v\n", err)
+		log.Printf("Init logger: %v\n", err)
 		return
-	} else {
-		slog.Info("Init logger")
-		defer func() {
-			if err := logFile.Close(); err != nil {
-				slog.Error("Close log file: " + err.Error())
-			}
-		}()
 	}
+	slog.Info("Init logger")
+	defer func() {
+		if err := logFile.Close(); err != nil {
+			slog.Error("Close log file: " + err.Error())
+		}
+	}()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 	st, err := sqlstorage.New(ctx, &conf.DB)
 	if err != nil {
@@ -67,13 +70,13 @@ func main() {
 	defer qm.Close()
 	slog.Info("Connected to queue")
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT /*(Control-C)*/, syscall.SIGTERM, syscall.SIGQUIT)
+	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT /*(Control-C)*/, syscall.SIGTERM, syscall.SIGQUIT)
 	defer stop()
 
 	schedPeriod := time.Duration(conf.SchedPeriod) * time.Minute
 	ticker := time.Tick(schedPeriod)
 	for {
-		ctxGetAllEvents, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		ctxGetAllEvents, cancel := context.WithTimeout(ctx, 1*time.Second)
 		defer cancel()
 		events, err := st.ListEvents(ctxGetAllEvents)
 		if err != nil {
@@ -100,7 +103,7 @@ func main() {
 					continue
 				}
 
-				ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+				ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 				defer cancel()
 				if err := qm.SendMsg(ctx, byteAlertEvent); err != nil {
 					slog.Error(err.Error())

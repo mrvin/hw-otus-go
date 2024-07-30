@@ -11,7 +11,6 @@ import (
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/grpcapi"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
-
 	"google.golang.org/grpc/peer"
 )
 
@@ -69,7 +68,7 @@ func (s *Server) Stop() {
 	s.ln.Close()
 }
 
-// LogRequest is a gRPC UnaryServerInterceptor that will log the API call to stdOut
+// LogRequest is a gRPC UnaryServerInterceptor that will log the API call to stdOut.
 func LogRequestGRPC(
 	ctx context.Context,
 	req interface{},
@@ -87,7 +86,7 @@ func LogRequestGRPC(
 		slog.String("addr", addr),
 		slog.String("Method", info.FullMethod),
 	)
-	// Last but super important, execute the handler so that the actualy gRPC request is also performed
+	// Last but super important, execute the handler so that the actually gRPC request is also performed
 	return handler(ctx, req)
 }
 

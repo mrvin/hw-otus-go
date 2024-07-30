@@ -31,5 +31,4 @@ func (h *Handler) DisplayUser(res http.ResponseWriter, req *http.Request) {
 		h.ErrMsg(res)
 		return
 	}
-
 }

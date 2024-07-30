@@ -8,7 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers"
+	handler "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	httpresponse "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/response"
 )
@@ -27,12 +27,14 @@ type ResponseGetUser struct {
 
 func New(getter UserGetter) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		userName := handler.GetUserName(req.Context())
+		userName := handler.GetUserNameFromContext(req.Context())
 		if userName == "" {
-			err := fmt.Errorf("GetUser: user name is empty")
+			err := fmt.Errorf("GetUser: %w", handler.ErrUserNameIsEmpty)
+			slog.Error(err.Error())
 			httpresponse.WriteError(res, err.Error(), http.StatusBadRequest)
 			return
 		}
+
 		user, err := getter.GetUser(req.Context(), userName)
 		if err != nil {
 			err := fmt.Errorf("GetUser: get user from storage: %w", err)

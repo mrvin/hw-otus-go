@@ -9,11 +9,12 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers"
+	handler "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar/server/http/handlers"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/storage"
 	httpresponse "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/response"
 )
 
+//nolint:tagliatelle
 type RequestCreateEvent struct {
 	Title       string    `json:"title"       validate:"required,min=2,max=64"`
 	Description string    `json:"description" validate:"omitempty,min=2,max=512"`
@@ -22,14 +23,14 @@ type RequestCreateEvent struct {
 }
 
 type ResponseCreateEvent struct {
-	ID     int64  `json:"id,required"`
-	Status string `json:"status,required"`
+	ID     int64  `json:"id"`
+	Status string `json:"status"`
 }
 
 func (h *Handler) CreateEvent(res http.ResponseWriter, req *http.Request) {
-	userName := handler.GetUserName(req.Context())
+	userName := handler.GetUserNameFromContext(req.Context())
 	if userName == "" {
-		err := fmt.Errorf("CreateEvent: user name is empty")
+		err := fmt.Errorf("CreateEvent: %w", handler.ErrUserNameIsEmpty)
 		slog.Error(err.Error())
 		httpresponse.WriteError(res, err.Error(), http.StatusBadRequest)
 		return

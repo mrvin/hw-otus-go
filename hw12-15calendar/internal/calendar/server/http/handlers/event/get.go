@@ -12,14 +12,15 @@ import (
 	httpresponse "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/response"
 )
 
+//nolint:tagliatelle
 type ResponseGetEvent struct {
-	ID          int64     `json:"id,required"`
+	ID          int64     `json:"id"`
 	Title       string    `json:"title"`
 	Description string    `json:"description,omitempty"`
 	StartTime   time.Time `json:"start_time"`
 	StopTime    time.Time `json:"stop_time,omitempty"`
 	UserName    string    `json:"user_name"`
-	Status      string    `json:"status,required"`
+	Status      string    `json:"status"`
 }
 
 func (h *Handler) GetEvent(res http.ResponseWriter, req *http.Request) {
