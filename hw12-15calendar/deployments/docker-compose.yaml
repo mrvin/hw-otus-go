@@ -1,18 +1,18 @@
-version: "3.9"
+name: calendar
 services:
-    calendar-ws:
+    frontend:
         build:
          context: ../
-         dockerfile: cmd/calendar-ws/Dockerfile
+         dockerfile: cmd/calendar-front/Dockerfile
         ports:
          - "8080:8080"
         depends_on:
-         - calendar
+         - backend
          - otel_collector
         volumes:
-         - ./../configs/calendar-ws.yml:/etc/calendar/calendar-ws.yml
+         - ./../configs/calendar-front.yml:/etc/calendar/calendar-front.yml
 
-    calendar:
+    backend:
         build:
          context: ../
          dockerfile: cmd/calendar/Dockerfile
@@ -67,6 +67,7 @@ services:
          - postgres.env
         healthcheck:
           test: ["CMD", "pg_isready", "-q", "-d", "${POSTGRES_DB}", "-U", "${POSTGRES_USER}"]
+          interval: 3s
         volumes:
          - ${HOME}/volumes_docker/calendar/postgres-data:/var/lib/postgresql/data
 

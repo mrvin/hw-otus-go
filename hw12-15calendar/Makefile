@@ -5,8 +5,8 @@ build:
 	docker compose -f deployments/docker-compose.yaml --env-file deployments/postgres.env build
 build-calendar:
 	docker compose -f deployments/docker-compose.yaml build calendar
-build-calendar-ws:
-	docker compose -f deployments/docker-compose.yaml build calendar-ws
+build-calendar-front:
+	docker compose -f deployments/docker-compose.yaml build calendar-front
 up:
 	docker compose -f deployments/docker-compose.yaml --env-file deployments/postgres.env up
 down:
@@ -23,5 +23,5 @@ certgen:
 		-keyout cert/clientKey.pem -out cert/clientCert.pem -days 365 \
 		-subj "/C=RU/L=Saint Petersburg/O=Calendar Corp./OU=Calendar/CN=calendar.com/emailAddress=v.v.vinogradovv@gmail.com"
 
-.PHONY: test build build-calendar build-calendar-ws up down lint codegen certgen
+.PHONY: test build build-calendar build-calendar-front up down lint codegen certgen
 

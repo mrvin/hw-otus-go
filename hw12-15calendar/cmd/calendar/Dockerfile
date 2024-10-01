@@ -1,8 +1,8 @@
-FROM golang:1.22.0-alpine
+FROM golang:1.23.1-alpine
 
-MAINTAINER mrvin <v.v.vinogradovv@gmail.com>
+LABEL maintainer="mrvin v.v.vinogradovv@gmail.com"
 
-RUN apk add --update make
+RUN apk update && apk add make && apk add tzdata
 
 WORKDIR /calendar/app
 
@@ -13,12 +13,13 @@ COPY pkg pkg
 
 COPY deployments/start.sh /
 
-COPY go.mod .
-COPY go.sum .
-# Download necessary Go modules
+# Copy and download dependency using go mod.
+COPY go.mod go.sum ./
 RUN go mod download
 
 RUN cd cmd/calendar/ && make build
+
+ENV TZ=Europe/Moscow
 
 EXPOSE 8088 55555
 

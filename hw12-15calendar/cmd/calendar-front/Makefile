@@ -1,5 +1,5 @@
 build:
-	go build -o ../../bin/calendar-ws -ldflags '-w -s'
+	go build -o ../../bin/calendar-front -ldflags '-w -s'
 
 run:
 	go run -race main.go

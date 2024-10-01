@@ -9,10 +9,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/client"
-	grpcclient "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/client/grpc"
-	httpclient "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/client/http"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/httpserver"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-front/client"
+	grpcclient "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-front/client/grpc"
+	httpclient "github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-front/client/http"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-front/httpserver"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/config"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/logger"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/metric"
@@ -37,7 +37,7 @@ type Config struct {
 func main() {
 	ctx := context.Background()
 
-	configFile := flag.String("config", "/etc/calendar/calendar-ws.yml", "path to configuration file")
+	configFile := flag.String("config", "/etc/calendar/calendar-front.yml", "path to configuration file")
 	flag.Parse()
 
 	var conf Config

@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/client"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/httpserver/templateloader"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-front/client"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-front/httpserver/templateloader"
 )
 
 var ErrIDEmpty = errors.New("id is empty")

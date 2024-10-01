@@ -7,7 +7,7 @@ grpc:
 http:
     host: localhost
     port: 8088
-    is_https: false # Enable HTTPS
+    is_https: true # Enable HTTPS
     https:
         cert_file: ../cert/serverCert.pem
         key_file: ../cert/serverKey.pem
@@ -18,7 +18,7 @@ inmemory: true
 # database settings
 db:
     driver: postgres
-    host: postgres
+    host: localhost
     port: 5432
     user: event-db
     password: event-db
@@ -44,4 +44,4 @@ metrics:
 # JWT auth
 auth:
     secret_key: PNvEBrLW+zU7SPi+nqmY5KD6FVecuQW1VHFRUI8xAGKM4JnIvR3zQescAq
-    token_validity_period: 15	# in minutes
+    token_validity_period: 15	 # in minutes

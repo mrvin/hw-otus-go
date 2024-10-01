@@ -2,32 +2,32 @@ client: "grpc"
 
 # HTTP client settings
 http-client:
-    host: calendar
+    host: localhost
     port: 8088
 
 # GRPC client settings
 grpc-client:
-    host: calendar
+    host: localhost
     port: 55555
 
 # HTTP server setting
 http:
-    host: calendar-ws
+    host: localhost
     port: 8080
 
 # logging settings
 logger:
-    filepath:
+    filepath: ../logs/calendar-front-log.json
     level: debug # debug, info, warn, error
 
 # tracing settings
 tracer:
-    enable: true
+    enable: false
     host: otel_collector
     port: 4317
 
 # metric settings
 metrics:
-    enable: true
+    enable: false
     host: otel_collector
     port: 4317

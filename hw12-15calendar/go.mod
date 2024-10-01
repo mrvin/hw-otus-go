@@ -1,6 +1,6 @@
 module github.com/mrvin/hw-otus-go/hw12-15calendar
 
-go 1.22.0
+go 1.23.1
 
 require (
 	github.com/go-playground/validator/v10 v10.22.0

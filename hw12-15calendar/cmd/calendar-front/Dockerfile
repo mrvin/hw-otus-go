@@ -8,7 +8,7 @@ RUN apk update && apk add make && apk add tzdata
 WORKDIR  /app
 
 # Copy the code into the container.
-COPY cmd/scheduler cmd/scheduler
+COPY cmd/calendar-front cmd/calendar-front
 COPY internal internal
 COPY pkg pkg
 
@@ -16,7 +16,7 @@ COPY pkg pkg
 COPY go.mod go.sum ./
 RUN go mod download
 
-RUN cd cmd/scheduler/ && make build
+RUN cd cmd/calendar-front/ && make build
 
 ## Deploy
 FROM scratch
@@ -24,8 +24,10 @@ FROM scratch
 WORKDIR /
 
 COPY --from=build ["/usr/share/zoneinfo", "/usr/share/zoneinfo"]
-COPY --from=build ["/app/bin/scheduler", "/usr/local/bin/scheduler"]
+COPY --from=build ["/app/bin/calendar-front", "/usr/local/bin/calendar-front"]
 
 ENV TZ=Europe/Moscow
 
-ENTRYPOINT ["/usr/local/bin/scheduler"]
+EXPOSE 8080
+
+ENTRYPOINT ["/usr/local/bin/calendar-front"]

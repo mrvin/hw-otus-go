@@ -49,9 +49,9 @@ func main() {
 		}
 	}()
 
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+	ctxInitStorag, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
-	st, err := sqlstorage.New(ctx, &conf.DB)
+	st, err := sqlstorage.New(ctxInitStorag, &conf.DB)
 	if err != nil {
 		slog.Error("Failed to init storag: " + err.Error())
 		return

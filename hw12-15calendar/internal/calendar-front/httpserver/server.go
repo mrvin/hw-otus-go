@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/client"
-	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-ws/httpserver/handlers"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-front/client"
+	"github.com/mrvin/hw-otus-go/hw12-15calendar/internal/calendar-front/httpserver/handlers"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/logger"
 	"github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver"
 	regexpresolver "github.com/mrvin/hw-otus-go/hw12-15calendar/pkg/http/resolver/regex"
