@@ -10,10 +10,12 @@ import (
 	"github.com/mrvin/hw-otus-go/hw11telnetclient/telnet"
 )
 
+const defaultPort = 13337
+const defaultTimeout = 10 // In seconds
+
 func usage() {
 	fmt.Printf("usage: %s -host hostname -port port -timeout timeout\n", os.Args[0])
 	flag.PrintDefaults()
-	os.Exit(2)
 }
 
 func main() {
@@ -21,19 +23,19 @@ func main() {
 	var host string
 	var timeout time.Duration
 
-	flag.IntVar(&port, "port", 8080, "port")
-	flag.DurationVar(&timeout, "timeout", 10*time.Second, "timeout")
+	flag.IntVar(&port, "port", defaultPort, "port")
+	flag.DurationVar(&timeout, "timeout", defaultTimeout*time.Second, "timeout")
 	flag.StringVar(&host, "host", "localhost", "dns name or ip address")
 	flag.Usage = usage
 	flag.Parse()
 
 	confHost := fmt.Sprintf("%s:%d", host, port)
-	fmt.Println(confHost)
 	client := telnet.NewClient(confHost, timeout, os.Stdin, os.Stdout)
 
 	if err := client.Connect(); err != nil {
 		log.Fatalf("telnetclient: %v", err)
 	}
+	defer client.Close()
 
 	done := make(chan struct{})
 	go func() {

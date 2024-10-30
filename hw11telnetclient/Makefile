@@ -1,7 +1,11 @@
-all:
-	go build -o go-telnet
-lint:
-	golangci-lint run .
-cover:
-	go test . -cover
+build:
+	go build -ldflags '-w -s' -o go-telnet
 
+test:
+	go test -race -cover -v ./telnet/
+	./test.sh
+
+lint:
+	golangci-lint run ./...
+
+.PHONY: build test lint

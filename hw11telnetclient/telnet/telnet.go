@@ -1,6 +1,7 @@
 package telnet
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -8,69 +9,70 @@ import (
 	"time"
 )
 
-type client struct {
-	conn    *net.TCPConn
+type ClientInterface interface {
+	Connect() error
+	io.Closer
+	Send() error
+	Receive() error
+}
+
+type Client struct {
+	conn    net.Conn
 	address string
 	timeout time.Duration
 	in      io.ReadCloser
 	out     io.Writer
 }
 
-type Client interface {
-	Connect() error
-	Close() error
-	Send() error
-	Receive() error
-}
-
-func NewClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) Client {
-	return &client{address: address,
+func NewClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) *Client {
+	return &Client{
+		conn:    nil,
+		address: address,
 		timeout: timeout,
 		in:      in,
-		out:     out}
+		out:     out,
+	}
 }
 
-func (c *client) Connect() error {
+func (c *Client) Connect() error {
 	var err error
-	addr, err := net.ResolveTCPAddr("tcp", c.address)
+	c.conn, err = net.DialTimeout("tcp", c.address, c.timeout)
 	if err != nil {
-		return fmt.Errorf("can't create: %v", err)
-	}
-
-	c.conn, err = net.DialTCP("tcp", nil, addr)
-	if err != nil {
-		return fmt.Errorf("can't connect: %v", err)
+		return fmt.Errorf("can't connect: %w", err)
 	}
 	log.Printf("...Connected to %s\n", c.address)
 
 	return nil
 }
 
-func (c *client) Close() error {
+func (c *Client) Close() error {
 	if err := c.conn.Close(); err != nil {
-		return fmt.Errorf("can't close: %v", err)
+		return fmt.Errorf("can't close: %w", err)
 	}
 
 	return nil
 }
 
-// Завершит копирование при нажатии <Ctrl+D>
-func (c *client) Send() error {
-	if _, err := io.Copy(c.conn, c.in); err != nil {
-		return fmt.Errorf("can't send: %v", err)
+// Завершит копирование при нажатии <Ctrl+D>.
+func (c *Client) Send() error {
+	_, err := io.Copy(c.conn, c.in)
+	if err != nil {
+		if errors.Is(err, io.ErrClosedPipe) {
+			return nil
+		}
+		return fmt.Errorf("can't send: %w", err)
 	}
+
 	log.Print("...EOF")
-	c.conn.CloseWrite()
 
 	return nil
 }
 
-func (c *client) Receive() error {
+func (c *Client) Receive() error {
 	if _, err := io.Copy(c.out, c.conn); err != nil {
-		return fmt.Errorf("can't receive: %v", err)
+		return fmt.Errorf("can't receive: %w", err)
 	}
 	log.Print("...Connection was closed by peer")
-	c.conn.CloseRead()
 
 	return nil
 }
