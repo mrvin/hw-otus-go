@@ -5,4 +5,3 @@ lint:
 	golangci-lint run .
 
 .PHONY: test lint
-
