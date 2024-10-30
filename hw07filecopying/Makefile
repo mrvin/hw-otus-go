@@ -9,3 +9,4 @@ lint:
 	golangci-lint run .
 
 .PHONY: build test lint
+
