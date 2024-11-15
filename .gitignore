@@ -9,6 +9,10 @@ go-cp
 go-envdir
 go-telnet
 
+# Binaries and logs folder
+log/
+bin/
+
 # Test binary, build with `go test -c`
 *.test
 
