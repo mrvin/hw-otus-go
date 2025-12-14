@@ -14,8 +14,7 @@
 13) [«API к Календарю»](./hw12-15calendar/docs/13_README.md)
 14) [«Кроликизация Календаря»](./hw12-15calendar/docs/14_README.md)
 15) [«Докеризация и интеграционное тестирование Календаря»](./hw12-15calendar/docs/15_README.md)
-16) [«Анти-брутфорс»](./anti-bruteforce)
-[«Проект»](https://github.com/OtusGolang/final_project)
+16) [«Проект»](https://github.com/OtusGolang/final_project)
 
 ---
 [Инструкция по сдаче ДЗ](https://github.com/OtusGolang/home_work/wiki#%D0%A1%D1%82%D1%83%D0%B4%D0%B5%D0%BD%D1%82%D0%B0%D0%BC).
